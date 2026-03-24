@@ -31,7 +31,7 @@ class User
     public static function fromLdapEntry(array $entry): self
     {
         $quotaBytes = (int) ($entry['mailQuota'] ?? 0);
-        $quotaMb = $quotaBytes > 0 ? (int) ($quotaBytes / 1048576) : 100;
+        $quotaMb = $quotaBytes > 0 ? (int) ($quotaBytes / 1048576) : 0;
 
         return new self(
             uid: $entry['uid'] ?? '',
