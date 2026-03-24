@@ -97,6 +97,23 @@ class IredapdController
         ]);
     }
 
+    public static function greylistTracking(TemplateEngine $tpl): void
+    {
+        Middleware::globalAdminRequired();
+        self::requireEnabled();
+
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $perPage = Settings::getInstance()->paginationPerPage;
+
+        $repo = RepositoryFactory::getIredapdRepository();
+        $paginatedResult = $repo->getGreylistTrackingPaginated($page, $perPage);
+
+        $tpl->render('greylistTracking.php', [
+            'entries' => $paginatedResult->items,
+            'paginatedResult' => $paginatedResult,
+        ]);
+    }
+
     private static function requireEnabled(): void
     {
         if (!Settings::getInstance()->iredapdEnabled) {

@@ -37,6 +37,7 @@
         <a href="/iredapd/throttle/@.">iRedAPD</a>
         <?php endif; ?>
         <a href="/deleted-mailboxes">Deleted Mailboxes</a>
+        <a href="/system-settings">System</a>
         <?php endif; ?>
         <?php endif; ?>
       </div>

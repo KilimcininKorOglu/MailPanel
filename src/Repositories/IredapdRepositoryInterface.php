@@ -14,4 +14,6 @@ interface IredapdRepositoryInterface
     public function getWhitelistedSenders(string $account): array;
     /** @param string[] $senders */
     public function setWhitelistedSenders(string $account, array $senders): void;
+
+    public function getGreylistTrackingPaginated(int $page, int $perPage): \App\Models\PaginatedResult;
 }

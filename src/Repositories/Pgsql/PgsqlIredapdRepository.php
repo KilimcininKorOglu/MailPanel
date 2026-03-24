@@ -166,4 +166,41 @@ class PgsqlIredapdRepository implements IredapdRepositoryInterface
             }
         }
     }
+
+    public function getGreylistTrackingPaginated(int $page, int $perPage): \App\Models\PaginatedResult
+    {
+        $conn = IredapdPgsqlConnection::getInstance();
+        if (!$conn->isAvailable()) {
+            return new \App\Models\PaginatedResult([], 0, $page, $perPage);
+        }
+
+        $pdo = $conn->getPdo();
+
+        try {
+            $countStmt = $pdo->query("SELECT COUNT(*) AS total FROM greylisting_tracking WHERE passed = 1");
+            $totalCount = (int) $countStmt->fetch()['total'];
+
+            $offset = ($page - 1) * $perPage;
+
+            $stmt = $pdo->prepare(
+                "SELECT sender, recipient, client_address, init_time, record_expired, passed, blocked_count
+                 FROM greylisting_tracking
+                 WHERE passed = 1
+                 ORDER BY init_time DESC
+                 LIMIT :perPage OFFSET :offset"
+            );
+            $stmt->bindValue('perPage', $perPage, \PDO::PARAM_INT);
+            $stmt->bindValue('offset', $offset, \PDO::PARAM_INT);
+            $stmt->execute();
+
+            $items = [];
+            while ($row = $stmt->fetch()) {
+                $items[] = $row;
+            }
+
+            return new \App\Models\PaginatedResult($items, $totalCount, $page, $perPage);
+        } catch (\PDOException $e) {
+            return new \App\Models\PaginatedResult([], 0, $page, $perPage);
+        }
+    }
 }

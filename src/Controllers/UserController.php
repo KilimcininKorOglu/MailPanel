@@ -234,6 +234,30 @@ class UserController
     /**
      * Handles bulk operations on selected users (POST only).
      */
+    public static function renameUser(TemplateEngine $tpl, string $domain, string $userUid): void
+    {
+        Middleware::globalAdminRequired();
+        CsrfProtection::validateToken();
+
+        $newUid = trim($_POST['newUid'] ?? '');
+        if ($newUid === '' || $newUid === $userUid) {
+            header("Location: /{$domain}/users/{$userUid}/general");
+            exit;
+        }
+
+        try {
+            $userRepo = RepositoryFactory::getUserRepository();
+            $userRepo->renameUser($domain, $userUid, $newUid);
+            ActivityLogger::logUpdate($domain, $newUid, "Renamed user from {$userUid}@{$domain} to {$newUid}@{$domain}");
+            header("Location: /{$domain}/users/{$newUid}/general");
+            exit;
+        } catch (\Exception $e) {
+            error_log("User rename failed: " . $e->getMessage());
+            header("Location: /{$domain}/users/{$userUid}/general");
+            exit;
+        }
+    }
+
     public static function bulkAction(TemplateEngine $tpl, string $domain): void
     {
         Middleware::domainAdminRequired($domain);

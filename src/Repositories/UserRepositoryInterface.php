@@ -57,4 +57,9 @@ interface UserRepositoryInterface
      * Verifies a user's current password.
      */
     public function verifyUserPassword(string $domain, string $userUid, string $password): bool;
+
+    /**
+     * Renames a user email address, updating all related records.
+     */
+    public function renameUser(string $domain, string $oldUid, string $newUid): void;
 }

@@ -13,12 +13,14 @@ use App\Controllers\DashboardController;
 use App\Controllers\DeletedMailboxController;
 use App\Controllers\DomainAliasController;
 use App\Controllers\DomainController;
+use App\Controllers\ExportController;
 use App\Controllers\Fail2banController;
 use App\Controllers\SpamPolicyController;
 use App\Controllers\WhiteBlacklistController;
 use App\Controllers\IredapdController;
 use App\Controllers\LogController;
 use App\Controllers\MailingListController;
+use App\Controllers\SystemSettingsController;
 use App\Controllers\UserController;
 use App\Exceptions\BackendConnectionException;
 use App\Router;
@@ -171,6 +173,30 @@ $router->addRoute('POST', '/logs/delete', function () use ($tpl) {
     LogController::deleteLogs($tpl);
 });
 
+// System settings
+$router->addRoute('GET', '/system-settings', function () use ($tpl) {
+    SystemSettingsController::view($tpl);
+});
+
+// Last login tracking
+$router->addRoute('GET', '/last-logins', function () use ($tpl) {
+    SystemSettingsController::lastLogins($tpl);
+});
+
+// Export
+$router->addRoute('GET', '/export/domain/{domain}', function (string $domain) {
+    ExportController::domainExport($domain);
+});
+
+$router->addRoute('GET', '/export/admins', function () {
+    ExportController::adminStats();
+});
+
+// User rename
+$router->addRoute('POST', '/{domain}/users/{userUid}/rename', function (string $domain, string $userUid) use ($tpl) {
+    UserController::renameUser($tpl, $domain, $userUid);
+});
+
 // Deleted mailboxes
 $router->addRoute('GET', '/deleted-mailboxes', function () use ($tpl) {
     DeletedMailboxController::list($tpl);
@@ -266,6 +292,10 @@ $router->addRoute(['GET', 'POST'], '/iredapd/throttle/{account}', function (stri
 
 $router->addRoute(['GET', 'POST'], '/iredapd/greylist/{account}', function (string $account) use ($tpl) {
     IredapdController::greylistView($tpl, $account);
+});
+
+$router->addRoute('GET', '/iredapd/greylist-tracking', function () use ($tpl) {
+    IredapdController::greylistTracking($tpl);
 });
 
 $router->setNotFoundHandler(function () use ($tpl) {

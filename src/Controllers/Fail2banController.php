@@ -9,6 +9,7 @@ use App\Middleware;
 use App\Models\Settings;
 use App\Services\ActivityLogger;
 use App\Services\Fail2banService;
+use App\Services\GeoIpService;
 use App\TemplateEngine;
 
 class Fail2banController
@@ -21,9 +22,22 @@ class Fail2banController
         $bannedIps = Fail2banService::getAllBannedIps();
         $jails = Fail2banService::getJails();
 
+        $geoIp = GeoIpService::getInstance();
+        $geoData = [];
+        if ($geoIp->isAvailable()) {
+            foreach ($bannedIps as $entry) {
+                $ip = $entry['ip'] ?? '';
+                if ($ip !== '' && !isset($geoData[$ip])) {
+                    $geoData[$ip] = $geoIp->lookup($ip);
+                }
+            }
+        }
+
         $tpl->render('fail2banStatus.php', [
             'bannedIps' => $bannedIps,
             'jails' => $jails,
+            'geoData' => $geoData,
+            'geoIpAvailable' => $geoIp->isAvailable(),
         ]);
     }
 

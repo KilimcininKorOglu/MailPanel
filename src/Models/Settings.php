@@ -28,6 +28,7 @@ class Settings
     public readonly string $allowedIpRanges;
     public readonly bool $sessionValidateIp;
     public readonly bool $checkUpdates;
+    public readonly string $geoIpDbPath;
 
     // Branding
     public readonly string $brandName;
@@ -122,6 +123,7 @@ class Settings
         $this->allowedIpRanges = $this->env('MAILPANEL_ALLOWED_IP_RANGES', '');
         $this->sessionValidateIp = $this->envBool('MAILPANEL_SESSION_VALIDATE_IP', false);
         $this->checkUpdates = $this->envBool('MAILPANEL_CHECK_UPDATES', true);
+        $this->geoIpDbPath = $this->env('MAILPANEL_GEOIP_DB_PATH', '');
 
         // Branding
         $this->brandName = $this->env('MAILPANEL_BRAND_NAME', 'MailPanel');

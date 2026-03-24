@@ -253,4 +253,21 @@ class LdapUserRepository implements UserRepositoryInterface
             throw new \RuntimeException("LDAP user deletion failed for '{$userUid}@{$domain}': " . ldap_error($conn));
         }
     }
+
+    public function renameUser(string $domain, string $oldUid, string $newUid): void
+    {
+        $conn = LdapConnection::getInstance()->getConn();
+        $oldDn = LdapUtils::getEmailDn("{$oldUid}@{$domain}");
+        $newRdn = "mail=" . ldap_escape("{$newUid}@{$domain}", '', LDAP_ESCAPE_DN);
+        $settings = \App\Models\Settings::getInstance();
+        $parentDn = "ou=Users,domainName=" . ldap_escape($domain, '', LDAP_ESCAPE_DN) . ",o=domains,{$settings->ldapRootDn}";
+
+        if (!@ldap_rename($conn, $oldDn, $newRdn, $parentDn, true)) {
+            throw new \RuntimeException("LDAP rename failed: " . ldap_error($conn));
+        }
+
+        // Update mail attribute
+        $newDn = "{$newRdn},{$parentDn}";
+        @ldap_modify($conn, $newDn, ['mail' => "{$newUid}@{$domain}"]);
+    }
 }

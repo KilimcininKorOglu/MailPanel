@@ -284,6 +284,44 @@ class PgsqlUserRepository implements UserRepositoryInterface
         return PasswordVerifier::verify($password, $row['password']);
     }
 
+    public function renameUser(string $domain, string $oldUid, string $newUid): void
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+        $oldEmail = "{$oldUid}@{$domain}";
+        $newEmail = "{$newUid}@{$domain}";
+
+        $pdo->beginTransaction();
+        try {
+            $pdo->prepare("UPDATE mailbox SET username = :new WHERE username = :old AND domain = :domain")
+                ->execute(['new' => $newEmail, 'old' => $oldEmail, 'domain' => $domain]);
+
+            $tables = [
+                ['forwardings', 'address'],
+                ['forwardings', 'forwarding'],
+                ['moderators', 'address'],
+                ['moderators', 'moderator'],
+                ['sender_bcc_user', 'username'],
+                ['recipient_bcc_user', 'username'],
+                ['sender_relayhost', 'account'],
+                ['domain_admins', 'username'],
+            ];
+
+            foreach ($tables as [$table, $column]) {
+                try {
+                    $pdo->prepare("UPDATE {$table} SET {$column} = :new WHERE {$column} = :old")
+                        ->execute(['new' => $newEmail, 'old' => $oldEmail]);
+                } catch (\PDOException $e) {
+                    // Table may not exist — skip
+                }
+            }
+
+            $pdo->commit();
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
     /**
      * Converts a database row to a User model.
      * Maps: name->cn, first_name->givenName, last_name->sn,

@@ -62,6 +62,26 @@
             <?php if ($editMode === 'general'): ?>
             <input type="hidden" value="<?= $e($user->uid) ?>" name="uid" />
 
+            <?php if (!empty($session['isGlobalAdmin'])): ?>
+            <details style="margin-bottom:1rem;">
+              <summary>Rename email address</summary>
+              <form method="post" action="/<?= $e($domain) ?>/users/<?= $e($user->uid) ?>/rename" style="margin-top:0.5rem;" onsubmit="return confirm('Rename user email?')">
+                <?= $csrfField ?>
+                <div class="row">
+                  <div class="col-6">
+                    <input type="text" name="newUid" placeholder="new-username" required />
+                  </div>
+                  <div class="col-3">
+                    <span>@<?= $e($domain) ?></span>
+                  </div>
+                  <div class="col-3">
+                    <button type="submit" class="button outline">Rename</button>
+                  </div>
+                </div>
+              </form>
+            </details>
+            <?php endif; ?>
+
             <div class="row">
               <div class="col">
                 <p>
