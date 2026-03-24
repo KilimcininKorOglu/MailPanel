@@ -5,7 +5,7 @@ A lightweight PHP web application for managing [iRedMail](https://www.iredmail.o
 Built with vanilla PHP 8.1+ -- no framework, no ORM, no template engine dependency. Uses the native `php-ldap` extension for all directory operations and `vlucas/phpdotenv` for environment configuration.
 
 ```
-kilimcininkoroglu/mailpanel
+kilimcininkoroglu/mailpanel v0.1.0
 ```
 
 ### Supported Backend

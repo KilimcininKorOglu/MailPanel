@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+define('APP_VERSION', '0.1.0');
+
 use App\Models\Settings;
 use Dotenv\Dotenv;
 

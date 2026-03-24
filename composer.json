@@ -1,5 +1,6 @@
 {
     "name": "kilimcininkoroglu/mailpanel",
+    "version": "0.1.0",
     "description": "Lightweight PHP admin panel for managing iRedMail users and domains via LDAP",
     "type": "project",
     "license": "Unlicense",
