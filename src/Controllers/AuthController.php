@@ -26,6 +26,7 @@ class AuthController
             $password = $_POST['password'] ?? '';
 
             if (self::authenticateUser($email, $password)) {
+                session_regenerate_id(true);
                 $_SESSION['email'] = $email;
                 header("Location: $next");
                 exit;
