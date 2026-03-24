@@ -29,6 +29,7 @@ use App\Controllers\Fail2banController;
 use App\Controllers\SpamPolicyController;
 use App\Controllers\WhiteBlacklistController;
 use App\Controllers\IredapdController;
+use App\Controllers\NewsletterController;
 use App\Controllers\LogController;
 use App\Controllers\MailingListController;
 use App\Controllers\SearchController;
@@ -355,6 +356,23 @@ $router->addRoute(['GET', 'POST'], '/iredapd/wblist-rdns', function () use ($tpl
 
 $router->addRoute(['GET', 'POST'], '/iredapd/wblist-senderscore', function () use ($tpl) {
     IredapdController::wblistSenderScore($tpl);
+});
+
+// Newsletter (public endpoints — no authentication required)
+$router->addRoute(['GET', 'POST'], '/newsletters/subscribe/{mlid}', function (string $mlid) use ($tpl) {
+    NewsletterController::subscribe($tpl, $mlid);
+});
+
+$router->addRoute(['GET', 'POST'], '/newsletters/unsubscribe/{mlid}', function (string $mlid) use ($tpl) {
+    NewsletterController::unsubscribe($tpl, $mlid);
+});
+
+$router->addRoute('GET', '/newsletters/confirm-sub/{mlid}/{token}', function (string $mlid, string $token) use ($tpl) {
+    NewsletterController::confirmSub($tpl, $mlid, $token);
+});
+
+$router->addRoute('GET', '/newsletters/confirm-unsub/{mlid}/{token}', function (string $mlid, string $token) use ($tpl) {
+    NewsletterController::confirmUnsub($tpl, $mlid, $token);
 });
 
 // ============================================================
