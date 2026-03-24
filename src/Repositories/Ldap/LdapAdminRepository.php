@@ -204,4 +204,29 @@ class LdapAdminRepository implements AdminRepositoryInterface
             throw new \RuntimeException('Failed to revoke domain admin: ' . ldap_error($conn));
         }
     }
+
+    public function enableDisableAdmin(string $username, bool $active): void
+    {
+        $conn = LdapConnection::getInstance()->getConn();
+        $settings = Settings::getInstance();
+        $safeUsername = ldap_escape($username, '', LDAP_ESCAPE_FILTER);
+
+        $result = @ldap_search(
+            $conn,
+            $settings->ldapRootDn,
+            "(&(objectClass=mailUser)(mail={$safeUsername}))",
+            ['dn']
+        );
+
+        if ($result === false || ldap_count_entries($conn, $result) === 0) {
+            throw new \RuntimeException("Admin user '{$username}' not found in LDAP");
+        }
+
+        $entries = ldap_get_entries($conn, $result);
+        $dn = $entries[0]['dn'];
+
+        if (!@ldap_mod_replace($conn, $dn, ['accountStatus' => $active ? 'active' : 'disabled'])) {
+            throw new \RuntimeException('LDAP admin status update failed: ' . ldap_error($conn));
+        }
+    }
 }

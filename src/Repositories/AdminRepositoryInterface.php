@@ -56,4 +56,9 @@ interface AdminRepositoryInterface
      * Revokes a domain assignment from an admin.
      */
     public function revokeDomainFromAdmin(string $adminUsername, string $domain): void;
+
+    /**
+     * Enables or disables an admin account.
+     */
+    public function enableDisableAdmin(string $username, bool $active): void;
 }

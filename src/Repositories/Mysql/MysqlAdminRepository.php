@@ -256,4 +256,19 @@ class MysqlAdminRepository implements AdminRepositoryInterface
         );
         $stmt->execute(['username' => $adminUsername, 'domain' => $domain]);
     }
+
+    public function enableDisableAdmin(string $username, bool $active): void
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+
+        // Try admin table first
+        $stmt = $pdo->prepare("UPDATE admin SET active = :active WHERE username = :username");
+        $stmt->execute(['active' => $active ? 1 : 0, 'username' => $username]);
+
+        // Also try mailbox table for mailbox-based admins
+        $stmt = $pdo->prepare(
+            "UPDATE mailbox SET active = :active WHERE username = :username AND (isadmin = 1 OR isglobaladmin = 1)"
+        );
+        $stmt->execute(['active' => $active ? 1 : 0, 'username' => $username]);
+    }
 }

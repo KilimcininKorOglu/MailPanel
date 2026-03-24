@@ -155,6 +155,44 @@ class DomainController
     }
 
     /**
+     * Handles bulk domain operations (POST only).
+     */
+    public static function bulkAction(TemplateEngine $tpl): void
+    {
+        Middleware::globalAdminRequired();
+        CsrfProtection::validateToken();
+
+        $selectedDomains = $_POST['selectedDomains'] ?? [];
+        $action = $_POST['action'] ?? '';
+        $adminEmail = $_SESSION['email'] ?? '';
+
+        if (empty($selectedDomains) || !is_array($selectedDomains)) {
+            header("Location: /domains");
+            exit;
+        }
+
+        $domainRepo = RepositoryFactory::getDomainRepository();
+
+        foreach ($selectedDomains as $domainName) {
+            try {
+                if ($action === 'enable') {
+                    $domainRepo->enableDisableDomain($domainName, true);
+                } elseif ($action === 'disable') {
+                    $domainRepo->enableDisableDomain($domainName, false);
+                } elseif ($action === 'delete') {
+                    $domainRepo->deleteDomain($domainName, $adminEmail);
+                }
+            } catch (\Exception $e) {
+                error_log("Bulk action '{$action}' failed for domain '{$domainName}': " . $e->getMessage());
+            }
+        }
+
+        ActivityLogger::log($action, '', '', "Bulk {$action} on " . count($selectedDomains) . " domains");
+        header("Location: /domains");
+        exit;
+    }
+
+    /**
      * Handles domain deletion (POST only).
      */
     public static function domainDelete(TemplateEngine $tpl, string $domainName): void

@@ -9,6 +9,7 @@ use App\Middleware;
 use App\Models\Admin;
 use App\Models\UserPassword;
 use App\Repositories\RepositoryFactory;
+use App\Services\ActivityLogger;
 use App\TemplateEngine;
 use App\Utils\PasswordUtils;
 
@@ -26,6 +27,43 @@ class AdminController
         $tpl->render('adminList.php', [
             'admins' => $admins,
         ]);
+    }
+
+    /**
+     * Handles bulk admin operations (POST only).
+     */
+    public static function bulkAction(TemplateEngine $tpl): void
+    {
+        Middleware::globalAdminRequired();
+        CsrfProtection::validateToken();
+
+        $selectedAdmins = $_POST['selectedAdmins'] ?? [];
+        $action = $_POST['action'] ?? '';
+
+        if (empty($selectedAdmins) || !is_array($selectedAdmins)) {
+            header("Location: /admins");
+            exit;
+        }
+
+        $adminRepo = RepositoryFactory::getAdminRepository();
+
+        foreach ($selectedAdmins as $adminUsername) {
+            try {
+                if ($action === 'enable') {
+                    $adminRepo->enableDisableAdmin($adminUsername, true);
+                } elseif ($action === 'disable') {
+                    $adminRepo->enableDisableAdmin($adminUsername, false);
+                } elseif ($action === 'delete') {
+                    $adminRepo->deleteAdmin($adminUsername);
+                }
+            } catch (\Exception $e) {
+                error_log("Bulk action '{$action}' failed for admin '{$adminUsername}': " . $e->getMessage());
+            }
+        }
+
+        ActivityLogger::log($action, '', '', "Bulk {$action} on " . count($selectedAdmins) . " admins");
+        header("Location: /admins");
+        exit;
     }
 
     /**

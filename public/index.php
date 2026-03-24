@@ -47,6 +47,10 @@ $router->addRoute('GET', '/domains', function () use ($tpl) {
     DomainController::domainList($tpl);
 });
 
+$router->addRoute('POST', '/domains/bulk', function () use ($tpl) {
+    DomainController::bulkAction($tpl);
+});
+
 $router->addRoute(['GET', 'POST'], '/domains/create', function () use ($tpl) {
     DomainController::domainCreate($tpl);
 });
@@ -66,6 +70,10 @@ $router->addRoute('POST', '/domains/{domain}/delete', function (string $domain) 
 // Admin management
 $router->addRoute('GET', '/admins', function () use ($tpl) {
     AdminController::adminList($tpl);
+});
+
+$router->addRoute('POST', '/admins/bulk', function () use ($tpl) {
+    AdminController::bulkAction($tpl);
 });
 
 $router->addRoute(['GET', 'POST'], '/admins/create', function () use ($tpl) {

@@ -10,9 +10,12 @@
         </div>
       </div>
 
+      <form method="post" action="/admins/bulk">
+        <?= $csrfField ?>
       <table class="striped">
         <thead>
           <tr>
+            <th><input type="checkbox" id="selectAll" onclick="document.querySelectorAll('input[name=\\'selectedAdmins[]\\']').forEach(c=>c.checked=this.checked)" /></th>
             <th>Email</th>
             <th>Name</th>
             <th>Global admin</th>
@@ -24,6 +27,7 @@
         <tbody>
           <?php foreach ($admins as $admin): ?>
           <tr>
+            <td><input type="checkbox" name="selectedAdmins[]" value="<?= $e($admin->username) ?>" /></td>
             <td>
               <a href="/admins/<?= $e($admin->username) ?>/general"><?= $e($admin->username) ?></a>
             </td>
@@ -33,15 +37,22 @@
             <td><?= $localize($admin->active) ?></td>
             <td>
               <a href="/admins/<?= $e($admin->username) ?>/general" class="button primary outline">Edit</a>
-              <form method="post" action="/admins/<?= $e($admin->username) ?>/delete" style="display:inline" onsubmit="return confirm('Delete admin <?= $e($admin->username) ?>?')">
-                <?= $csrfField ?>
-                <button type="submit" class="button error outline">Delete</button>
-              </form>
             </td>
           </tr>
           <?php endforeach; ?>
         </tbody>
       </table>
+
+      <div style="margin-top: 0.5rem;">
+        <select name="action" required>
+          <option value="">-- Bulk action --</option>
+          <option value="enable">Enable selected</option>
+          <option value="disable">Disable selected</option>
+          <option value="delete">Delete selected</option>
+        </select>
+        <button type="submit" class="button outline" onclick="return this.form.action.value==='delete' ? confirm('Delete selected admins?') : true">Apply</button>
+      </div>
+      </form>
     </div>
   </div>
 </div>
