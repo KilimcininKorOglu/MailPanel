@@ -2,6 +2,13 @@
 <div class="container">
   <h1>Dashboard</h1>
 
+  <?php if (!empty($newVersion)): ?>
+  <div class="card" style="border-left: 4px solid var(--color-primary, #1a73e8); margin-bottom: 1rem;">
+    <p>A new version of MailPanel is available: <strong>v<?= $e($newVersion) ?></strong>.
+    <a href="https://github.com/KilimcininKorOglu/MailPanel/releases/latest" target="_blank">View release</a></p>
+  </div>
+  <?php endif; ?>
+
   <div class="row">
     <div class="col-4">
       <div class="card">
@@ -67,4 +74,36 @@
       </div>
     </div>
   </div>
+
+  <?php if (!empty($systemInfo)): ?>
+  <div class="row" style="margin-top: 1rem;">
+    <div class="col">
+      <h2>System Information</h2>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-6">
+      <div class="card">
+        <header><h4>Server</h4></header>
+        <p>
+          Hostname: <strong><?= $e($systemInfo['hostname']) ?></strong><br />
+          <?php if ($systemInfo['uptime'] !== null): ?>
+          Uptime: <?= $e($systemInfo['uptime']['days']) ?>d <?= $e($systemInfo['uptime']['hours']) ?>h <?= $e($systemInfo['uptime']['minutes']) ?>m<br />
+          <?php endif; ?>
+          Load: <?= $e(implode(', ', array_map(fn($v) => number_format((float) $v, 2), $systemInfo['loadAverage']))) ?>
+        </p>
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="card">
+        <header><h4>Software</h4></header>
+        <p>
+          iRedMail: <strong><?= $e($systemInfo['iredmailVersion']) ?></strong><br />
+          PHP: <?= $e($systemInfo['phpVersion']) ?><br />
+          MailPanel: v<?= $e($systemInfo['mailpanelVersion']) ?>
+        </p>
+      </div>
+    </div>
+  </div>
+  <?php endif; ?>
 </div>

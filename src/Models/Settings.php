@@ -27,6 +27,7 @@ class Settings
     public readonly int $sessionTimeout;
     public readonly string $allowedIpRanges;
     public readonly bool $sessionValidateIp;
+    public readonly bool $checkUpdates;
 
     // Branding
     public readonly string $brandName;
@@ -113,6 +114,7 @@ class Settings
         $this->sessionTimeout = $this->envInt('MAILPANEL_SESSION_TIMEOUT', 1800);
         $this->allowedIpRanges = $this->env('MAILPANEL_ALLOWED_IP_RANGES', '');
         $this->sessionValidateIp = $this->envBool('MAILPANEL_SESSION_VALIDATE_IP', false);
+        $this->checkUpdates = $this->envBool('MAILPANEL_CHECK_UPDATES', true);
 
         // Branding
         $this->brandName = $this->env('MAILPANEL_BRAND_NAME', 'MailPanel');

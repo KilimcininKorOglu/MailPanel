@@ -6,7 +6,9 @@ namespace App\Controllers;
 
 use App\Middleware;
 use App\Repositories\RepositoryFactory;
+use App\Services\VersionChecker;
 use App\TemplateEngine;
+use App\Utils\SystemInfo;
 
 class DashboardController
 {
@@ -19,8 +21,24 @@ class DashboardController
 
         $stats = RepositoryFactory::getDashboardRepository()->getStats();
 
+        $systemInfo = null;
+        $newVersion = null;
+        if (Middleware::isGlobalAdmin()) {
+            $systemInfo = [
+                'hostname' => SystemInfo::getHostname(),
+                'uptime' => SystemInfo::getUptime(),
+                'loadAverage' => SystemInfo::getLoadAverage(),
+                'iredmailVersion' => SystemInfo::getIredMailVersion(),
+                'phpVersion' => SystemInfo::getPhpVersion(),
+                'mailpanelVersion' => SystemInfo::getMailPanelVersion(),
+            ];
+            $newVersion = VersionChecker::checkForUpdate();
+        }
+
         $tpl->render('dashboard.php', [
             'stats' => $stats,
+            'systemInfo' => $systemInfo,
+            'newVersion' => $newVersion,
         ]);
     }
 }
