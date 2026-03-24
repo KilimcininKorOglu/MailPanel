@@ -20,9 +20,16 @@ session_set_cookie_params([
 ]);
 session_start();
 
-// Validate settings eagerly (exit on failure, mirrors Python app.py behavior)
+// Validate settings and check required extensions
 try {
-    Settings::getInstance();
+    $settings = Settings::getInstance();
+
+    if ($settings->backend === 'ldap' && !extension_loaded('ldap')) {
+        throw new \RuntimeException("LDAP backend selected but ext-ldap is not installed");
+    }
+    if ($settings->backend === 'mysql' && !extension_loaded('pdo_mysql')) {
+        throw new \RuntimeException("MySQL backend selected but ext-pdo_mysql is not installed");
+    }
 } catch (\RuntimeException $e) {
     error_log("Settings validation failed: " . $e->getMessage());
     http_response_code(500);

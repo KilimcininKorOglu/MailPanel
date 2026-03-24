@@ -9,6 +9,7 @@ use App\Controllers\BaseController;
 use App\Controllers\DomainController;
 use App\Controllers\UserController;
 use App\Models\LdapConnectionException;
+use App\Repositories\Mysql\MysqlConnectionException;
 use App\Router;
 use App\TemplateEngine;
 
@@ -49,14 +50,13 @@ $router->setNotFoundHandler(function () use ($tpl) {
     BaseController::page404($tpl);
 });
 
-// Dispatch request — catch LDAP connection errors at top level
+// Dispatch request — catch backend connection errors at top level
 try {
     $router->dispatch(
         $_SERVER['REQUEST_URI'] ?? '/',
         $_SERVER['REQUEST_METHOD'] ?? 'GET'
     );
-} catch (LdapConnectionException $e) {
-    // LDAP connection error handler: redirect to logout (mirrors base_controller.py)
+} catch (LdapConnectionException | MysqlConnectionException $e) {
     header('Location: /logout');
     exit;
 }
