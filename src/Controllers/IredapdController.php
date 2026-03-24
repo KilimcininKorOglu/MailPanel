@@ -6,7 +6,7 @@ namespace App\Controllers;
 
 use App\Middleware;
 use App\Models\Settings;
-use App\Repositories\Mysql\MysqlIredapdRepository;
+use App\Repositories\RepositoryFactory;
 use App\Services\ActivityLogger;
 use App\TemplateEngine;
 
@@ -17,7 +17,7 @@ class IredapdController
         Middleware::globalAdminRequired();
         self::requireEnabled();
 
-        $repo = new MysqlIredapdRepository();
+        $repo = RepositoryFactory::getIredapdRepository();
         $success = null;
         $error = null;
 
@@ -52,7 +52,7 @@ class IredapdController
         Middleware::globalAdminRequired();
         self::requireEnabled();
 
-        $repo = new MysqlIredapdRepository();
+        $repo = RepositoryFactory::getIredapdRepository();
         $success = null;
         $error = null;
 

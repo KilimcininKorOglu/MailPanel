@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Models\Settings;
+use App\Repositories\Mysql\MysqlAmavisdRepository;
+use App\Repositories\Mysql\MysqlIredapdRepository;
 use App\Repositories\Ldap\LdapDashboardRepository;
 use App\Repositories\Ldap\LdapDomainAliasRepository;
 use App\Repositories\Ldap\LdapAdminRepository;
@@ -22,11 +24,13 @@ use App\Repositories\Mysql\MysqlForwardingRepository;
 use App\Repositories\Mysql\MysqlQuotaRepository;
 use App\Repositories\Mysql\MysqlUserRepository;
 use App\Repositories\Pgsql\PgsqlDashboardRepository;
+use App\Repositories\Pgsql\PgsqlAmavisdRepository;
 use App\Repositories\Pgsql\PgsqlDomainAliasRepository;
 use App\Repositories\Pgsql\PgsqlAdminRepository;
 use App\Repositories\Pgsql\PgsqlAuthRepository;
 use App\Repositories\Pgsql\PgsqlDomainRepository;
 use App\Repositories\Pgsql\PgsqlForwardingRepository;
+use App\Repositories\Pgsql\PgsqlIredapdRepository;
 use App\Repositories\Pgsql\PgsqlQuotaRepository;
 use App\Repositories\Pgsql\PgsqlUserRepository;
 
@@ -43,6 +47,8 @@ class RepositoryFactory
     private static ?QuotaRepositoryInterface $quotaRepo = null;
     private static ?DashboardRepositoryInterface $dashboardRepo = null;
     private static ?DomainAliasRepositoryInterface $domainAliasRepo = null;
+    private static ?AmavisdRepositoryInterface $amavisdRepo = null;
+    private static ?IredapdRepositoryInterface $iredapdRepo = null;
 
     public static function getAuthRepository(): AuthRepositoryInterface
     {
@@ -138,5 +144,27 @@ class RepositoryFactory
             };
         }
         return self::$domainAliasRepo;
+    }
+
+    public static function getAmavisdRepository(): AmavisdRepositoryInterface
+    {
+        if (self::$amavisdRepo === null) {
+            self::$amavisdRepo = match (Settings::getInstance()->backend) {
+                'pgsql' => new PgsqlAmavisdRepository(),
+                default => new MysqlAmavisdRepository(),
+            };
+        }
+        return self::$amavisdRepo;
+    }
+
+    public static function getIredapdRepository(): IredapdRepositoryInterface
+    {
+        if (self::$iredapdRepo === null) {
+            self::$iredapdRepo = match (Settings::getInstance()->backend) {
+                'pgsql' => new PgsqlIredapdRepository(),
+                default => new MysqlIredapdRepository(),
+            };
+        }
+        return self::$iredapdRepo;
     }
 }

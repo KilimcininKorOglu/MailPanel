@@ -7,7 +7,7 @@ namespace App\Controllers;
 use App\CsrfProtection;
 use App\Middleware;
 use App\Models\Settings;
-use App\Repositories\Mysql\MysqlAmavisdRepository;
+use App\Repositories\RepositoryFactory;
 use App\Services\ActivityLogger;
 use App\TemplateEngine;
 
@@ -23,7 +23,7 @@ class AmavisdController
         $perPage = $settings->paginationPerPage;
         $domain = $_GET['domain'] ?? null;
 
-        $repo = new MysqlAmavisdRepository();
+        $repo = RepositoryFactory::getAmavisdRepository();
         $paginatedResult = $repo->getQuarantinedMessages($page, $perPage, $domain);
 
         $tpl->render('quarantineList.php', [
@@ -40,7 +40,7 @@ class AmavisdController
         self::requireEnabled();
 
         try {
-            $repo = new MysqlAmavisdRepository();
+            $repo = RepositoryFactory::getAmavisdRepository();
             $repo->releaseMessage($mailId);
             ActivityLogger::log('update', '', '', "Released quarantined message: {$mailId}");
         } catch (\Exception $e) {
@@ -58,7 +58,7 @@ class AmavisdController
         self::requireEnabled();
 
         try {
-            $repo = new MysqlAmavisdRepository();
+            $repo = RepositoryFactory::getAmavisdRepository();
             $repo->deleteQuarantinedMessage($mailId);
             ActivityLogger::log('delete', '', '', "Deleted quarantined message: {$mailId}");
         } catch (\Exception $e) {
@@ -79,7 +79,7 @@ class AmavisdController
         $perPage = $settings->paginationPerPage;
         $email = $_GET['email'] ?? null;
 
-        $repo = new MysqlAmavisdRepository();
+        $repo = RepositoryFactory::getAmavisdRepository();
         $paginatedResult = $repo->getMailLog($page, $perPage, $email);
 
         $tpl->render('mailLog.php', [
@@ -96,7 +96,7 @@ class AmavisdController
         self::requireEnabled();
 
         $settings = Settings::getInstance();
-        $repo = new MysqlAmavisdRepository();
+        $repo = RepositoryFactory::getAmavisdRepository();
         $quarantineDeleted = $repo->cleanupQuarantined($settings->amavisdRemoveQuarantinedInDays);
         $logDeleted = $repo->cleanupMailLog($settings->amavisdRemoveMaillogInDays);
 
