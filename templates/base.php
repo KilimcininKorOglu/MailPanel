@@ -20,6 +20,7 @@
         <a href="/dashboard">Dashboard</a>
         <a href="/domains">Domains</a>
         <?php if (!empty($session['isGlobalAdmin'])): ?>
+        <a href="/domain-aliases">Aliases</a>
         <a href="/admins">Admins</a>
         <a href="/logs">Logs</a>
         <?php if (!empty($features['amavisd'])): ?>

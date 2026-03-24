@@ -10,6 +10,7 @@ use App\Controllers\AuthController;
 use App\Controllers\BaseController;
 use App\Controllers\DashboardController;
 use App\Controllers\DeletedMailboxController;
+use App\Controllers\DomainAliasController;
 use App\Controllers\DomainController;
 use App\Controllers\Fail2banController;
 use App\Controllers\IredapdController;
@@ -65,6 +66,19 @@ $router->addRoute(['GET', 'POST'], '/domains/{domain}/settings', function (strin
 
 $router->addRoute('POST', '/domains/{domain}/delete', function (string $domain) use ($tpl) {
     DomainController::domainDelete($tpl, $domain);
+});
+
+// Domain alias management
+$router->addRoute('GET', '/domain-aliases', function () use ($tpl) {
+    DomainAliasController::aliasList($tpl);
+});
+
+$router->addRoute(['GET', 'POST'], '/domain-aliases/create', function () use ($tpl) {
+    DomainAliasController::aliasCreate($tpl);
+});
+
+$router->addRoute('POST', '/domain-aliases/{aliasDomain}/delete', function (string $aliasDomain) use ($tpl) {
+    DomainAliasController::aliasDelete($tpl, $aliasDomain);
 });
 
 // Admin management

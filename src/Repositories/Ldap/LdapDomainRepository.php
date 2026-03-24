@@ -143,7 +143,18 @@ class LdapDomainRepository implements DomainRepositoryInterface
     public function deleteDomain(string $domainName, string $adminEmail): void
     {
         $conn = LdapConnection::getInstance()->getConn();
+        $settings = Settings::getInstance();
         $dn = LdapUtils::getDomainDn($domainName);
+        $safeDomain = ldap_escape($domainName, '', LDAP_ESCAPE_FILTER);
+
+        // Remove domainAliasName references from other domains pointing to this domain
+        $result = @ldap_search($conn, $settings->ldapRootDn, "(domainAliasName={$safeDomain})", ['dn', 'domainAliasName']);
+        if ($result !== false) {
+            $entries = ldap_get_entries($conn, $result);
+            for ($i = 0; $i < ($entries['count'] ?? 0); $i++) {
+                @ldap_mod_del($conn, $entries[$i]['dn'], ['domainAliasName' => $domainName]);
+            }
+        }
 
         // Recursively delete all entries under the domain DN
         self::deleteRecursive($conn, $dn);

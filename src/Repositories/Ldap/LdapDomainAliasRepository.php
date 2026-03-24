@@ -1,0 +1,140 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Repositories\Ldap;
+
+use App\Models\DomainAlias;
+use App\Models\LdapConnection;
+use App\Models\PaginatedResult;
+use App\Models\Settings;
+use App\Repositories\DomainAliasRepositoryInterface;
+use App\Utils\LdapUtils;
+
+class LdapDomainAliasRepository implements DomainAliasRepositoryInterface
+{
+    public function getAliasesForDomain(string $domain): array
+    {
+        $conn = LdapConnection::getInstance()->getConn();
+        $dn = LdapUtils::getDomainDn($domain);
+
+        $result = @ldap_read($conn, $dn, '(objectClass=mailDomain)', ['domainAliasName']);
+        if ($result === false) {
+            return [];
+        }
+
+        $entries = ldap_get_entries($conn, $result);
+        if (($entries['count'] ?? 0) === 0) {
+            return [];
+        }
+
+        $aliases = [];
+        $aliasNames = $entries[0]['domainaliasname'] ?? [];
+        $count = (int) ($aliasNames['count'] ?? 0);
+        for ($i = 0; $i < $count; $i++) {
+            $aliases[] = new DomainAlias(
+                aliasDomain: $aliasNames[$i],
+                targetDomain: $domain,
+                active: true,
+            );
+        }
+
+        return $aliases;
+    }
+
+    public function getAllAliasesPaginated(int $page, int $perPage): PaginatedResult
+    {
+        $conn = LdapConnection::getInstance()->getConn();
+        $settings = Settings::getInstance();
+
+        $result = @ldap_search(
+            $conn,
+            $settings->ldapRootDn,
+            '(&(objectClass=mailDomain)(domainAliasName=*))',
+            ['domainName', 'domainAliasName']
+        );
+
+        $allAliases = [];
+        if ($result !== false) {
+            $entries = ldap_get_entries($conn, $result);
+            for ($i = 0; $i < ($entries['count'] ?? 0); $i++) {
+                $targetDomain = $entries[$i]['domainname'][0] ?? '';
+                $aliasNames = $entries[$i]['domainaliasname'] ?? [];
+                $count = (int) ($aliasNames['count'] ?? 0);
+                for ($j = 0; $j < $count; $j++) {
+                    $allAliases[] = new DomainAlias(
+                        aliasDomain: $aliasNames[$j],
+                        targetDomain: $targetDomain,
+                        active: true,
+                    );
+                }
+            }
+        }
+
+        usort($allAliases, fn(DomainAlias $a, DomainAlias $b) => strcmp($a->aliasDomain, $b->aliasDomain));
+
+        $totalCount = count($allAliases);
+        $offset = ($page - 1) * $perPage;
+        $items = array_slice($allAliases, $offset, $perPage);
+
+        return new PaginatedResult($items, $totalCount, $page, $perPage);
+    }
+
+    public function getAlias(string $aliasDomain): ?DomainAlias
+    {
+        $conn = LdapConnection::getInstance()->getConn();
+        $settings = Settings::getInstance();
+        $safeAlias = ldap_escape($aliasDomain, '', LDAP_ESCAPE_FILTER);
+
+        $result = @ldap_search(
+            $conn,
+            $settings->ldapRootDn,
+            "(&(objectClass=mailDomain)(domainAliasName={$safeAlias}))",
+            ['domainName']
+        );
+
+        if ($result === false || ldap_count_entries($conn, $result) === 0) {
+            return null;
+        }
+
+        $entries = ldap_get_entries($conn, $result);
+        $targetDomain = $entries[0]['domainname'][0] ?? '';
+
+        return new DomainAlias(
+            aliasDomain: $aliasDomain,
+            targetDomain: $targetDomain,
+            active: true,
+        );
+    }
+
+    public function createAlias(DomainAlias $alias): void
+    {
+        $conn = LdapConnection::getInstance()->getConn();
+        $dn = LdapUtils::getDomainDn($alias->targetDomain);
+
+        if (!@ldap_mod_add($conn, $dn, ['domainAliasName' => $alias->aliasDomain])) {
+            throw new \RuntimeException('LDAP domain alias creation failed: ' . ldap_error($conn));
+        }
+    }
+
+    public function deleteAlias(string $aliasDomain): void
+    {
+        $alias = $this->getAlias($aliasDomain);
+        if ($alias === null) {
+            throw new \RuntimeException("Domain alias '{$aliasDomain}' not found");
+        }
+
+        $conn = LdapConnection::getInstance()->getConn();
+        $dn = LdapUtils::getDomainDn($alias->targetDomain);
+
+        if (!@ldap_mod_del($conn, $dn, ['domainAliasName' => $aliasDomain])) {
+            throw new \RuntimeException('LDAP domain alias deletion failed: ' . ldap_error($conn));
+        }
+    }
+
+    public function enableDisableAlias(string $aliasDomain, bool $active): void
+    {
+        // LDAP does not support per-alias active/inactive status.
+        // The domainAliasName attribute is either present (active) or not (deleted).
+    }
+}

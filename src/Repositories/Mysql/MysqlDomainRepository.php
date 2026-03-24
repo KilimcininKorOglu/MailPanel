@@ -182,6 +182,10 @@ class MysqlDomainRepository implements DomainRepositoryInterface
             $stmt = $pdo->prepare("DELETE FROM used_quota WHERE username LIKE :pattern");
             $stmt->execute(['pattern' => "%@{$domainName}"]);
 
+            // Delete domain alias entries referencing this domain
+            $stmt = $pdo->prepare("DELETE FROM alias_domain WHERE alias_domain = :d1 OR target_domain = :d2");
+            $stmt->execute(['d1' => $domainName, 'd2' => $domainName]);
+
             // Delete the domain itself
             $stmt = $pdo->prepare("DELETE FROM domain WHERE domain = :domain");
             $stmt->execute(['domain' => $domainName]);
