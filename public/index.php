@@ -425,6 +425,11 @@ $router->addRoute('DELETE', '/api/v1/domain-aliases/{aliasDomain}', function (st
     $apiAuth(); DomainAliasApiController::delete($aliasDomain);
 });
 
+// Password Verification API
+$router->addRoute('POST', '/api/v1/verify-password/{accountType}/{email}', function (string $accountType, string $email) use ($apiAuth) {
+    $apiAuth(); UserApiController::verifyPassword($accountType, $email);
+});
+
 // Spam Policy API
 $router->addRoute('GET', '/api/v1/spam-policy/{account}', function (string $account) use ($apiAuth) {
     $apiAuth(); SpamPolicyApiController::get($account);

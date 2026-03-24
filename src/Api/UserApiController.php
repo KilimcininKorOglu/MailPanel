@@ -94,6 +94,39 @@ class UserApiController
         ApiResponse::success(['message' => 'User updated']);
     }
 
+    public static function verifyPassword(string $accountType, string $email): void
+    {
+        $data = ApiMiddleware::getJsonBody();
+        $password = $data['password'] ?? '';
+
+        if ($password === '') {
+            ApiResponse::error('password is required');
+            return;
+        }
+
+        if ($accountType === 'user') {
+            [$uid, $domain] = self::parseEmail($email);
+            if ($uid === null) {
+                ApiResponse::error('Invalid email format');
+                return;
+            }
+
+            $repo = RepositoryFactory::getUserRepository();
+            $verified = $repo->verifyUserPassword($domain, $uid, $password);
+            ApiResponse::success(['verified' => $verified]);
+        } elseif ($accountType === 'admin') {
+            $repo = RepositoryFactory::getAuthRepository();
+            try {
+                $result = $repo->authenticate($email, $password);
+                ApiResponse::success(['verified' => $result !== null]);
+            } catch (\Exception $e) {
+                ApiResponse::success(['verified' => false]);
+            }
+        } else {
+            ApiResponse::error('accountType must be "user" or "admin"');
+        }
+    }
+
     public static function delete(string $email): void
     {
         [$uid, $domain] = self::parseEmail($email);
