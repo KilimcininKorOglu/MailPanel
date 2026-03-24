@@ -30,6 +30,10 @@
               <?php if ($editMode === 'forwarding'): ?>class="active"<?php endif; ?>
               href="/<?= $e($domain) ?>/users/<?= $e($user->uid) ?>/forwarding"
             >Forwarding</a>
+            <a
+              <?php if ($editMode === 'aliases'): ?>class="active"<?php endif; ?>
+              href="/<?= $e($domain) ?>/users/<?= $e($user->uid) ?>/aliases"
+            >Aliases</a>
           </nav>
         </div>
       </div>
@@ -235,6 +239,52 @@
             </p>
             <?php endif; ?>
           </form>
+
+          <?php if ($editMode === 'aliases'): ?>
+          <h3>Per-user Alias Addresses</h3>
+          <p class="text-light">Additional email addresses that deliver to this mailbox.</p>
+
+          <form method="post">
+            <?= $csrfField ?>
+            <input type="hidden" name="action" value="add" />
+            <div class="row">
+              <div class="col-8">
+                <input type="email" name="newAlias" placeholder="alias@example.com" required />
+              </div>
+              <div class="col-4">
+                <button type="submit" class="button primary outline">Add Alias</button>
+              </div>
+            </div>
+          </form>
+
+          <?php if (!empty($userAliases)): ?>
+          <table class="striped" style="margin-top:1rem;">
+            <thead>
+              <tr>
+                <th>Alias Address</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($userAliases as $aliasAddr): ?>
+              <tr>
+                <td><?= $e($aliasAddr) ?></td>
+                <td>
+                  <form method="post" style="display:inline">
+                    <?= $csrfField ?>
+                    <input type="hidden" name="action" value="remove" />
+                    <input type="hidden" name="aliasAddress" value="<?= $e($aliasAddr) ?>" />
+                    <button type="submit" class="button error outline" onclick="return confirm('Remove <?= $e($aliasAddr) ?>?')">Remove</button>
+                  </form>
+                </td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+          <?php else: ?>
+          <p class="text-light" style="margin-top:1rem;">No alias addresses configured for this user.</p>
+          <?php endif; ?>
+          <?php endif; ?>
         </div>
       </div>
     </div>

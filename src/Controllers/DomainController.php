@@ -94,7 +94,7 @@ class DomainController
     {
         Middleware::loginRequired();
 
-        if (!in_array($editMode, ['general', 'settings'], true)) {
+        if (!in_array($editMode, ['general', 'settings', 'catchall'], true)) {
             http_response_code(404);
             $tpl->render('page404.php');
             return;
@@ -130,6 +130,13 @@ class DomainController
                         ActivityLogger::logUpdate($domainName, '', "Domain settings updated: {$domainName}");
                         $success = 'Domain settings updated successfully!';
                     }
+                } elseif ($editMode === 'catchall') {
+                    CsrfProtection::validateToken();
+                    $catchallTarget = trim($_POST['catchallTarget'] ?? '');
+                    $aliasRepo = RepositoryFactory::getAliasRepository();
+                    $aliasRepo->setCatchall($domainName, $catchallTarget !== '' ? $catchallTarget : null);
+                    ActivityLogger::logUpdate($domainName, '', "Catch-all updated: {$domainName}");
+                    $success = 'Catch-all address updated successfully!';
                 }
             } catch (\Exception $e) {
                 $error = $e->getMessage();
@@ -145,10 +152,16 @@ class DomainController
 
         $domainSettings = DomainSettings::fromSettingsString($domain->settings);
 
+        $catchallTarget = null;
+        if ($editMode === 'catchall') {
+            $catchallTarget = RepositoryFactory::getAliasRepository()->getCatchall($domainName);
+        }
+
         $tpl->render('domainView.php', [
             'domain' => $domain,
             'domainSettings' => $domainSettings,
             'editMode' => $editMode,
+            'catchallTarget' => $catchallTarget,
             'error' => $error,
             'success' => $success,
         ]);

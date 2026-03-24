@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../src/bootstrap.php';
 
 use App\Controllers\AdminController;
+use App\Controllers\AliasController;
 use App\Controllers\AmavisdController;
 use App\Controllers\AuthController;
 use App\Controllers\BaseController;
@@ -79,6 +80,32 @@ $router->addRoute(['GET', 'POST'], '/domain-aliases/create', function () use ($t
 
 $router->addRoute('POST', '/domain-aliases/{aliasDomain}/delete', function (string $aliasDomain) use ($tpl) {
     DomainAliasController::aliasDelete($tpl, $aliasDomain);
+});
+
+// Mail alias management
+$router->addRoute('GET', '/aliases', function () use ($tpl) {
+    AliasController::list($tpl);
+});
+
+$router->addRoute('POST', '/aliases/bulk', function () use ($tpl) {
+    AliasController::bulkAction($tpl);
+});
+
+$router->addRoute(['GET', 'POST'], '/aliases/create', function () use ($tpl) {
+    AliasController::createForm($tpl);
+});
+
+$router->addRoute(['GET', 'POST'], '/aliases/{address}', function (string $address) use ($tpl) {
+    AliasController::view($tpl, $address);
+});
+
+$router->addRoute('POST', '/aliases/{address}/delete', function (string $address) use ($tpl) {
+    AliasController::delete($tpl, $address);
+});
+
+// Catch-all management
+$router->addRoute(['GET', 'POST'], '/domains/{domain}/catchall', function (string $domain) use ($tpl) {
+    DomainController::domainView($tpl, $domain, 'catchall');
 });
 
 // Admin management

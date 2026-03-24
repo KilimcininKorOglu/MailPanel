@@ -24,6 +24,8 @@
            href="/domains/<?= $e($domain->domainName) ?>/edit">General</a>
         <a <?php if (($editMode ?? '') === 'settings'): ?>class="active"<?php endif; ?>
            href="/domains/<?= $e($domain->domainName) ?>/settings">Settings</a>
+        <a <?php if (($editMode ?? '') === 'catchall'): ?>class="active"<?php endif; ?>
+           href="/domains/<?= $e($domain->domainName) ?>/catchall">Catch-all</a>
       </nav>
 
       <p class="text-light">
@@ -135,6 +137,25 @@
         </p>
 
         <button type="submit" class="button primary">Save settings</button>
+      </form>
+
+      <?php elseif (($editMode ?? '') === 'catchall'): ?>
+      <form method="post">
+        <?= $csrfField ?>
+
+        <fieldset>
+          <legend>Catch-all Address</legend>
+          <p class="text-light">A catch-all address receives all emails sent to non-existent addresses under this domain.</p>
+
+          <label for="catchallTarget">Forward to email address</label>
+          <input id="catchallTarget" type="email" name="catchallTarget"
+            value="<?= $e($catchallTarget ?? '') ?>"
+            placeholder="Leave empty to disable catch-all"
+          />
+          <p class="text-light">Leave empty and save to remove the catch-all address.</p>
+        </fieldset>
+
+        <button type="submit" class="button primary">Save catch-all</button>
       </form>
       <?php endif; ?>
     </div>

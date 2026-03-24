@@ -61,7 +61,7 @@ class UserController
     {
         Middleware::domainAdminRequired($domain);
 
-        if (!in_array($editMode, ['general', 'password', 'services', 'forwarding'], true)) {
+        if (!in_array($editMode, ['general', 'password', 'services', 'forwarding', 'aliases'], true)) {
             http_response_code(404);
             $tpl->render('page404.php');
             return;
@@ -129,6 +129,26 @@ class UserController
                     $forwardingRepo->setKeepCopy($email, $domain, $keepCopy);
                     ActivityLogger::logUpdate($domain, $userUid, "Forwarding settings updated");
                     $success = 'Forwarding settings updated successfully!';
+                } elseif ($editMode === 'aliases') {
+                    CsrfProtection::validateToken();
+                    $email = "{$userUid}@{$domain}";
+                    $aliasRepo = RepositoryFactory::getAliasRepository();
+                    $action = $_POST['action'] ?? '';
+
+                    if ($action === 'add') {
+                        $newAlias = trim($_POST['newAlias'] ?? '');
+                        if ($newAlias !== '') {
+                            $aliasRepo->addUserAlias($email, $newAlias);
+                            ActivityLogger::logUpdate($domain, $userUid, "Added alias: {$newAlias}");
+                        }
+                    } elseif ($action === 'remove') {
+                        $aliasToRemove = $_POST['aliasAddress'] ?? '';
+                        if ($aliasToRemove !== '') {
+                            $aliasRepo->removeUserAlias($email, $aliasToRemove);
+                            ActivityLogger::logUpdate($domain, $userUid, "Removed alias: {$aliasToRemove}");
+                        }
+                    }
+                    $success = 'Alias addresses updated successfully!';
                 }
             } catch (\Exception $e) {
                 $error = $e->getMessage();
@@ -152,6 +172,13 @@ class UserController
             $keepCopy = $forwardingRepo->getKeepCopy($email);
         }
 
+        // Fetch user aliases if on aliases tab
+        $userAliases = [];
+        if ($editMode === 'aliases') {
+            $email = "{$userUid}@{$domain}";
+            $userAliases = RepositoryFactory::getAliasRepository()->getUserAliases($email);
+        }
+
         $tpl->render('userView.php', [
             'domain' => $domain,
             'user' => $user,
@@ -161,6 +188,7 @@ class UserController
             'editMode' => $editMode,
             'forwardings' => $forwardings,
             'keepCopy' => $keepCopy,
+            'userAliases' => $userAliases,
             'requireOldPassword' => Settings::getInstance()->requireOldPasswordOnChange,
         ]);
     }

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Models\Settings;
+use App\Repositories\Mysql\MysqlAliasRepository;
 use App\Repositories\Mysql\MysqlAmavisdRepository;
 use App\Repositories\Mysql\MysqlIredapdRepository;
+use App\Repositories\Ldap\LdapAliasRepository;
 use App\Repositories\Ldap\LdapDashboardRepository;
 use App\Repositories\Ldap\LdapDomainAliasRepository;
 use App\Repositories\Ldap\LdapAdminRepository;
@@ -24,6 +26,7 @@ use App\Repositories\Mysql\MysqlForwardingRepository;
 use App\Repositories\Mysql\MysqlQuotaRepository;
 use App\Repositories\Mysql\MysqlUserRepository;
 use App\Repositories\Pgsql\PgsqlDashboardRepository;
+use App\Repositories\Pgsql\PgsqlAliasRepository;
 use App\Repositories\Pgsql\PgsqlAmavisdRepository;
 use App\Repositories\Pgsql\PgsqlDomainAliasRepository;
 use App\Repositories\Pgsql\PgsqlAdminRepository;
@@ -47,6 +50,7 @@ class RepositoryFactory
     private static ?QuotaRepositoryInterface $quotaRepo = null;
     private static ?DashboardRepositoryInterface $dashboardRepo = null;
     private static ?DomainAliasRepositoryInterface $domainAliasRepo = null;
+    private static ?AliasRepositoryInterface $aliasRepo = null;
     private static ?AmavisdRepositoryInterface $amavisdRepo = null;
     private static ?IredapdRepositoryInterface $iredapdRepo = null;
 
@@ -144,6 +148,18 @@ class RepositoryFactory
             };
         }
         return self::$domainAliasRepo;
+    }
+
+    public static function getAliasRepository(): AliasRepositoryInterface
+    {
+        if (self::$aliasRepo === null) {
+            self::$aliasRepo = match (Settings::getInstance()->backend) {
+                'mysql' => new MysqlAliasRepository(),
+                'pgsql' => new PgsqlAliasRepository(),
+                default => new LdapAliasRepository(),
+            };
+        }
+        return self::$aliasRepo;
     }
 
     public static function getAmavisdRepository(): AmavisdRepositoryInterface

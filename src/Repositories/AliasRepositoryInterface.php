@@ -1,0 +1,47 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Repositories;
+
+use App\Models\Alias;
+use App\Models\PaginatedResult;
+
+interface AliasRepositoryInterface
+{
+    public function getAliasesPaginated(int $page, int $perPage, ?string $domain = null): PaginatedResult;
+
+    public function getAlias(string $address): ?Alias;
+
+    public function createAlias(string $address, string $domain, string $name, array $members, string $accessPolicy): bool;
+
+    public function updateAlias(string $address, string $name, array $members, string $accessPolicy, bool $active): bool;
+
+    public function deleteAlias(string $address): bool;
+
+    /** @return string[] */
+    public function getAliasMembers(string $address): array;
+
+    public function addAliasMember(string $address, string $member): bool;
+
+    public function removeAliasMember(string $address, string $member): bool;
+
+    /** @return string[] */
+    public function getModerators(string $address): array;
+
+    /** @param string[] $moderators */
+    public function setModerators(string $address, array $moderators): bool;
+
+    /** @return string[] */
+    public function getUserAliases(string $email): array;
+
+    public function addUserAlias(string $email, string $aliasAddress): bool;
+
+    public function removeUserAlias(string $email, string $aliasAddress): bool;
+
+    public function getCatchall(string $domain): ?string;
+
+    public function setCatchall(string $domain, ?string $targetEmail): bool;
+
+    public function enableDisableAlias(string $address, bool $active): bool;
+}
