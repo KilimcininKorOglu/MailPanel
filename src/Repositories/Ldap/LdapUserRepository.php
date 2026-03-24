@@ -85,14 +85,18 @@ class LdapUserRepository implements UserRepositoryInterface
             LdapUtils::modReplace('accountStatus', $user->accountStatus ? 'active' : 'disabled'),
         ];
 
-        ldap_modify_batch($conn, $dn, $mods);
+        if (!ldap_modify_batch($conn, $dn, $mods)) {
+            throw new \RuntimeException('LDAP update failed: ' . ldap_error($conn));
+        }
     }
 
     public function updateUserPassword(string $domain, string $userUid, string $passwordHash): void
     {
         $conn = LdapConnection::getInstance()->getConn();
         $dn = LdapUtils::getEmailDn("{$userUid}@{$domain}");
-        ldap_mod_replace($conn, $dn, ['userPassword' => $passwordHash]);
+        if (!ldap_mod_replace($conn, $dn, ['userPassword' => $passwordHash])) {
+            throw new \RuntimeException('LDAP password update failed: ' . ldap_error($conn));
+        }
     }
 
     public function createUser(string $domain, User $user, string $passwordHash): void
