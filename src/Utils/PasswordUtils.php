@@ -41,7 +41,8 @@ class PasswordUtils
     public static function generateMd5Password(string $p): string
     {
         $salt = substr(base64_encode(random_bytes(6)), 0, 8);
-        return crypt($p, '$1$' . $salt . '$');
+        // @: crypt() deprecated in PHP 8.0 but no native alternative for MD5-crypt format
+        return @crypt($p, '$1$' . $salt . '$');
     }
 
     public static function generatePlainMd5Password(string $p): string

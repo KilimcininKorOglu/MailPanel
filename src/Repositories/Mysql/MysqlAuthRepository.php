@@ -44,7 +44,8 @@ class MysqlAuthRepository implements AuthRepositoryInterface
     {
         if (str_starts_with($storedHash, '{CRYPT}')) {
             $hash = substr($storedHash, 7);
-            return hash_equals(crypt($password, $hash), $hash);
+            // @: crypt() deprecated in PHP 8.0 but required for verifying MD5/SHA-crypt hashes
+            return hash_equals(@crypt($password, $hash), $hash);
         }
 
         if (str_starts_with($storedHash, '{SSHA512}')) {
