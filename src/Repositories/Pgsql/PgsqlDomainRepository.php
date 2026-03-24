@@ -1,0 +1,224 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Repositories\Pgsql;
+
+use App\Models\Domain;
+use App\Models\PaginatedResult;
+use App\Repositories\DomainRepositoryInterface;
+
+class PgsqlDomainRepository implements DomainRepositoryInterface
+{
+    public function getDomains(): array
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->query(
+            "SELECT d.domain AS domainName,
+                    d.active,
+                    COUNT(m.username) AS userCount
+             FROM domain d
+             LEFT JOIN mailbox m ON m.domain = d.domain
+             GROUP BY d.domain, d.active
+             ORDER BY d.domain"
+        );
+
+        $domains = [];
+        while ($row = $stmt->fetch()) {
+            $domains[] = [
+                'domainName' => $row['domainName'],
+                'accountStatus' => $row['active'] ? 'active' : 'disabled',
+                'domainCurrentUserNumber' => (string) $row['userCount'],
+            ];
+        }
+
+        return $domains;
+    }
+
+    public function getDomainsPaginated(int $page, int $perPage, ?bool $activeOnly = null): PaginatedResult
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+        $offset = ($page - 1) * $perPage;
+
+        $where = '1=1';
+        if ($activeOnly === true) {
+            $where = 'd.active = 1';
+        } elseif ($activeOnly === false) {
+            $where = 'd.active = 0';
+        }
+
+        $countStmt = $pdo->query("SELECT COUNT(*) AS total FROM domain d WHERE {$where}");
+        $totalCount = (int) $countStmt->fetch()['total'];
+
+        $stmt = $pdo->prepare(
+            "SELECT d.domain, d.description, d.active, d.maxquota, d.quota,
+                    d.mailboxes, d.aliases, d.transport, d.settings, d.created, d.modified,
+                    COUNT(m.username) AS userCount,
+                    COALESCE(SUM(m.quota), 0) AS quotaUsed
+             FROM domain d
+             LEFT JOIN mailbox m ON m.domain = d.domain
+             WHERE {$where}
+             GROUP BY d.domain
+             ORDER BY d.domain
+             LIMIT :perPage OFFSET :offset"
+        );
+        $stmt->bindValue('perPage', $perPage, \PDO::PARAM_INT);
+        $stmt->bindValue('offset', $offset, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        $items = [];
+        while ($row = $stmt->fetch()) {
+            $items[] = Domain::fromMysqlRow($row);
+        }
+
+        return new PaginatedResult($items, $totalCount, $page, $perPage);
+    }
+
+    public function getDomain(string $domainName): ?Domain
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->prepare(
+            "SELECT d.domain, d.description, d.active, d.maxquota, d.quota,
+                    d.mailboxes, d.aliases, d.transport, d.settings, d.created, d.modified,
+                    COUNT(m.username) AS userCount,
+                    COALESCE(SUM(m.quota), 0) AS quotaUsed
+             FROM domain d
+             LEFT JOIN mailbox m ON m.domain = d.domain
+             WHERE d.domain = :domain
+             GROUP BY d.domain
+             LIMIT 1"
+        );
+        $stmt->execute(['domain' => $domainName]);
+
+        $row = $stmt->fetch();
+        if ($row === false) {
+            return null;
+        }
+
+        return Domain::fromMysqlRow($row);
+    }
+
+    public function createDomain(Domain $domain): void
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->prepare(
+            "INSERT INTO domain (domain, description, active, maxquota, quota, mailboxes, aliases, transport, created)
+             VALUES (:domain, :description, :active, :maxquota, :quota, :mailboxes, :aliases, :transport, NOW())"
+        );
+        $stmt->execute([
+            'domain' => $domain->domainName,
+            'description' => $domain->description,
+            'active' => $domain->active ? 1 : 0,
+            'maxquota' => $domain->maxQuota,
+            'quota' => $domain->quota,
+            'mailboxes' => $domain->mailboxes,
+            'aliases' => $domain->aliases,
+            'transport' => $domain->transport,
+        ]);
+    }
+
+    public function updateDomain(Domain $domain): void
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->prepare(
+            "UPDATE domain SET
+                description = :description,
+                active = :active,
+                maxquota = :maxquota,
+                quota = :quota,
+                mailboxes = :mailboxes,
+                aliases = :aliases,
+                transport = :transport,
+                settings = :settings,
+                modified = NOW()
+             WHERE domain = :domain"
+        );
+        $stmt->execute([
+            'description' => $domain->description,
+            'active' => $domain->active ? 1 : 0,
+            'maxquota' => $domain->maxQuota,
+            'quota' => $domain->quota,
+            'mailboxes' => $domain->mailboxes,
+            'aliases' => $domain->aliases,
+            'transport' => $domain->transport,
+            'settings' => $domain->settings,
+            'domain' => $domain->domainName,
+        ]);
+
+        if ($stmt->rowCount() === 0) {
+            throw new \RuntimeException("Domain '{$domain->domainName}' not found");
+        }
+    }
+
+    public function deleteDomain(string $domainName, string $adminEmail): void
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+
+        $pdo->beginTransaction();
+        try {
+            // Record mailboxes for deferred deletion
+            $stmt = $pdo->prepare(
+                "INSERT INTO deleted_mailboxes (username, maildir, domain, admin)
+                 SELECT username,
+                        storagebasedirectory || '/' || storagenode || '/' || maildir,
+                        domain, :admin
+                 FROM mailbox
+                 WHERE domain = :domain"
+            );
+            $stmt->execute(['admin' => $adminEmail, 'domain' => $domainName]);
+
+            // Delete from all related tables
+            $tables = ['mailbox', 'alias', 'domain_admins', 'forwardings'];
+            foreach ($tables as $table) {
+                $stmt = $pdo->prepare("DELETE FROM {$table} WHERE domain = :domain");
+                $stmt->execute(['domain' => $domainName]);
+            }
+
+            // Delete used_quota entries for this domain's users
+            $stmt = $pdo->prepare("DELETE FROM used_quota WHERE username LIKE :pattern");
+            $stmt->execute(['pattern' => "%@{$domainName}"]);
+
+            // Delete domain alias entries referencing this domain
+            $stmt = $pdo->prepare("DELETE FROM alias_domain WHERE alias_domain = :d1 OR target_domain = :d2");
+            $stmt->execute(['d1' => $domainName, 'd2' => $domainName]);
+
+            // Delete the domain itself
+            $stmt = $pdo->prepare("DELETE FROM domain WHERE domain = :domain");
+            $stmt->execute(['domain' => $domainName]);
+
+            $pdo->commit();
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            throw new \RuntimeException("Failed to delete domain '{$domainName}': " . $e->getMessage());
+        }
+    }
+
+    public function enableDisableDomain(string $domainName, bool $active): void
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->prepare("UPDATE domain SET active = :active, modified = NOW() WHERE domain = :domain");
+        $stmt->execute(['active' => $active ? 1 : 0, 'domain' => $domainName]);
+
+        if ($stmt->rowCount() === 0) {
+            throw new \RuntimeException("Domain '{$domainName}' not found");
+        }
+    }
+
+    public function getDomainQuotaUsage(string $domainName): int
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->prepare(
+            "SELECT COALESCE(SUM(bytes), 0) AS totalBytes FROM used_quota WHERE username LIKE :pattern"
+        );
+        $stmt->execute(['pattern' => "%@{$domainName}"]);
+        $row = $stmt->fetch();
+
+        return (int) (($row['totalBytes'] ?? 0) / 1048576);
+    }
+}

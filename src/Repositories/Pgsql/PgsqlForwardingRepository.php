@@ -1,0 +1,94 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Repositories\Pgsql;
+
+use App\Repositories\ForwardingRepositoryInterface;
+
+class PgsqlForwardingRepository implements ForwardingRepositoryInterface
+{
+    public function getForwardings(string $email): array
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->prepare(
+            "SELECT forwarding FROM forwardings
+             WHERE address = :address AND forwarding != :self AND is_forwarding = 1 AND active = 1
+             ORDER BY forwarding"
+        );
+        $stmt->execute(['address' => $email, 'self' => $email]);
+
+        $forwardings = [];
+        while ($row = $stmt->fetch()) {
+            $forwardings[] = $row['forwarding'];
+        }
+
+        return $forwardings;
+    }
+
+    public function setForwardings(string $email, string $domain, array $forwardingAddresses): void
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+
+        // Delete existing forwardings (except self-forwarding)
+        $stmt = $pdo->prepare(
+            "DELETE FROM forwardings WHERE address = :address AND forwarding != :self AND is_forwarding = 1"
+        );
+        $stmt->execute(['address' => $email, 'self' => $email]);
+
+        // Insert new forwardings
+        if (!empty($forwardingAddresses)) {
+            $stmt = $pdo->prepare(
+                "INSERT INTO forwardings (address, forwarding, domain, dest_domain, is_forwarding, active)
+                 VALUES (:address, :forwarding, :domain, :destDomain, 1, 1)"
+            );
+            foreach ($forwardingAddresses as $forward) {
+                $forward = trim($forward);
+                if ($forward === '' || $forward === $email) {
+                    continue;
+                }
+                $destDomain = str_contains($forward, '@') ? explode('@', $forward, 2)[1] : $domain;
+                $stmt->execute([
+                    'address' => $email,
+                    'forwarding' => $forward,
+                    'domain' => $domain,
+                    'destDomain' => $destDomain,
+                ]);
+            }
+        }
+    }
+
+    public function getKeepCopy(string $email): bool
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->prepare(
+            "SELECT 1 FROM forwardings
+             WHERE address = :address AND forwarding = :self AND is_forwarding = 1 AND active = 1
+             LIMIT 1"
+        );
+        $stmt->execute(['address' => $email, 'self' => $email]);
+
+        return $stmt->fetch() !== false;
+    }
+
+    public function setKeepCopy(string $email, string $domain, bool $keepCopy): void
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+
+        if ($keepCopy) {
+            $stmt = $pdo->prepare(
+                "INSERT INTO forwardings (address, forwarding, domain, dest_domain, is_forwarding, active)
+                 VALUES (:address, :self, :domain, :domain2, 1, 1)
+                 ON CONFLICT (address, forwarding) DO NOTHING"
+            );
+            $stmt->execute(['address' => $email, 'self' => $email, 'domain' => $domain, 'domain2' => $domain]);
+        } else {
+            $stmt = $pdo->prepare(
+                "DELETE FROM forwardings WHERE address = :address AND forwarding = :self AND is_forwarding = 1"
+            );
+            $stmt->execute(['address' => $email, 'self' => $email]);
+        }
+    }
+}
