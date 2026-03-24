@@ -107,6 +107,7 @@ class MysqlUserRepository implements UserRepositoryInterface
     public function createUser(string $domain, User $user, string $passwordHash): void
     {
         $pdo = MysqlConnection::getInstance()->getPdo();
+        $settings = \App\Models\Settings::getInstance();
         $username = "{$user->uid}@{$domain}";
 
         $stmt = $pdo->prepare(
@@ -118,8 +119,8 @@ class MysqlUserRepository implements UserRepositoryInterface
              VALUES
                 (:username, :password, :cn, :givenName, :sn,
                  :quota, :employeeNumber, :title, :mobile, :telephoneNumber,
-                 :domain, :active, :isGlobalAdmin, '/var/vmail',
-                 'vmail1', :maildir, :localPart)"
+                 :domain, :active, :isGlobalAdmin, :storageBase,
+                 :storageNode, :maildir, :localPart)"
         );
         $stmt->execute([
             'username' => $username,
@@ -135,6 +136,8 @@ class MysqlUserRepository implements UserRepositoryInterface
             'domain' => $domain,
             'active' => $user->accountStatus ? 1 : 0,
             'isGlobalAdmin' => $user->domainGlobalAdmin ? 1 : 0,
+            'storageBase' => $settings->vmailPath,
+            'storageNode' => $settings->storageNode,
             'maildir' => "{$domain}/{$user->uid}/",
             'localPart' => $user->uid,
         ]);

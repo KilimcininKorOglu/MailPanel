@@ -35,6 +35,8 @@ class Settings
     public readonly int $mysqlPort;
     public readonly string $mysqlDatabase;
     public readonly string $mysqlUser;
+    public readonly string $vmailPath;
+    public readonly string $storageNode;
     public readonly string $mysqlPassword;
 
     private const ALLOWED_SCHEMES = [
@@ -82,12 +84,16 @@ class Settings
             $this->mysqlDatabase = '';
             $this->mysqlUser = '';
             $this->mysqlPassword = '';
+            $this->vmailPath = '/var/vmail';
+            $this->storageNode = 'vmail1';
         } else {
             $this->mysqlHost = $this->envRequired('MAILPANEL_MYSQL_HOST');
             $this->mysqlPort = $this->envInt('MAILPANEL_MYSQL_PORT', 3306);
             $this->mysqlDatabase = $this->envRequired('MAILPANEL_MYSQL_DATABASE');
             $this->mysqlUser = $this->envRequired('MAILPANEL_MYSQL_USER');
             $this->mysqlPassword = $this->envRequired('MAILPANEL_MYSQL_PASSWORD');
+            $this->vmailPath = $this->env('MAILPANEL_VMAIL_PATH', '/var/vmail');
+            $this->storageNode = $this->env('MAILPANEL_STORAGE_NODE', 'vmail1');
 
             $this->ldapUri = '';
             $this->ldapRootDn = '';
