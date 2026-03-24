@@ -229,4 +229,24 @@ class LdapAdminRepository implements AdminRepositoryInterface
             throw new \RuntimeException('LDAP admin status update failed: ' . ldap_error($conn));
         }
     }
+
+    public function updateAdminSettings(string $username, string $settingsJson): void
+    {
+        // LDAP admin settings are not stored as JSON; no-op for LDAP backend
+    }
+
+    public function getAdminsPaginated(int $page, int $perPage): \App\Models\PaginatedResult
+    {
+        $admins = $this->getAdmins();
+        $totalCount = count($admins);
+        $offset = ($page - 1) * $perPage;
+        $pageItems = array_slice($admins, $offset, $perPage);
+
+        return new \App\Models\PaginatedResult($pageItems, $totalCount, $page, $perPage);
+    }
+
+    public function countManagedDomains(string $adminUsername): int
+    {
+        return count($this->getManagedDomains($adminUsername));
+    }
 }

@@ -273,4 +273,53 @@ class PgsqlAdminRepository implements AdminRepositoryInterface
         );
         $stmt->execute(['active' => $active ? 1 : 0, 'username' => $username]);
     }
+
+    public function updateAdminSettings(string $username, string $settingsJson): void
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->prepare("UPDATE admin SET settings = :settings WHERE username = :username");
+        $stmt->execute(['settings' => $settingsJson, 'username' => $username]);
+    }
+
+    public function getAdminsPaginated(int $page, int $perPage): \App\Models\PaginatedResult
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+        $offset = ($page - 1) * $perPage;
+
+        $countStmt = $pdo->query("SELECT COUNT(*) AS total FROM admin");
+        $totalCount = (int) $countStmt->fetch()['total'];
+
+        $stmt = $pdo->prepare(
+            "SELECT a.username, a.name, a.active, a.created, a.passwordlastchange, a.settings,
+                    CASE WHEN da.domain = 'ALL' THEN 1 ELSE 0 END AS \"isGlobalAdmin\"
+             FROM admin a
+             LEFT JOIN domain_admins da ON a.username = da.username AND da.domain = 'ALL'
+             GROUP BY a.username, a.name, a.active, a.created, a.passwordlastchange, a.settings, da.domain
+             ORDER BY a.username
+             LIMIT :perPage OFFSET :offset"
+        );
+        $stmt->bindValue('perPage', $perPage, \PDO::PARAM_INT);
+        $stmt->bindValue('offset', $offset, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        $items = [];
+        while ($row = $stmt->fetch()) {
+            $items[] = \App\Models\Admin::fromMysqlRow($row);
+        }
+
+        return new \App\Models\PaginatedResult($items, $totalCount, $page, $perPage);
+    }
+
+    public function countManagedDomains(string $adminUsername): int
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->prepare(
+            "SELECT COUNT(*) AS total FROM domain_admins WHERE username = :username AND domain != 'ALL'"
+        );
+        $stmt->execute(['username' => $adminUsername]);
+
+        return (int) $stmt->fetch()['total'];
+    }
 }

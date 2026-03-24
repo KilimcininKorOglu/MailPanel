@@ -32,6 +32,10 @@
            href="/admins/<?= $e($admin->username) ?>/domains">
           Managed domains
         </a>
+        <a <?php if ($editMode === 'limits'): ?>class="active"<?php endif; ?>
+           href="/admins/<?= $e($admin->username) ?>/limits">
+          Resource limits
+        </a>
       </nav>
 
       <?php if ($editMode === 'general'): ?>
@@ -146,6 +150,54 @@
             <button type="submit" class="button primary outline">Assign</button>
           </div>
         </div>
+      </form>
+      <?php endif; ?>
+
+      <?php if ($editMode === 'limits'): ?>
+      <h3>Resource Limits</h3>
+      <p class="text-light">Set resource creation limits for this admin. Use -1 for unlimited.</p>
+
+      <form method="post">
+        <?= $csrfField ?>
+
+        <div class="row">
+          <div class="col-4">
+            <label for="createMaxDomains">Max Domains</label>
+            <input type="number" id="createMaxDomains" name="createMaxDomains" min="-1"
+              value="<?= $e($admin->createMaxDomains) ?>" />
+          </div>
+          <div class="col-4">
+            <label for="createMaxUsers">Max Users</label>
+            <input type="number" id="createMaxUsers" name="createMaxUsers" min="-1"
+              value="<?= $e($admin->createMaxUsers) ?>" />
+          </div>
+          <div class="col-4">
+            <label for="createMaxAliases">Max Aliases</label>
+            <input type="number" id="createMaxAliases" name="createMaxAliases" min="-1"
+              value="<?= $e($admin->createMaxAliases) ?>" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-4">
+            <label for="createMaxLists">Max Mailing Lists</label>
+            <input type="number" id="createMaxLists" name="createMaxLists" min="-1"
+              value="<?= $e($admin->createMaxLists) ?>" />
+          </div>
+          <div class="col-4">
+            <label for="createMaxQuota">Max Quota (MB)</label>
+            <input type="number" id="createMaxQuota" name="createMaxQuota" min="-1"
+              value="<?= $e($admin->createMaxQuota) ?>" />
+          </div>
+          <div class="col-4">
+            <label>
+              <input type="checkbox" name="createNewDomains" <?= $admin->createNewDomains ? 'checked' : '' ?> />
+              Allow domain creation
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="button primary">Save Limits</button>
       </form>
       <?php endif; ?>
     </div>

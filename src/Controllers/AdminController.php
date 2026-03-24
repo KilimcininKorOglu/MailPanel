@@ -123,7 +123,7 @@ class AdminController
     {
         Middleware::globalAdminRequired();
 
-        if (!in_array($editMode, ['general', 'password', 'domains'], true)) {
+        if (!in_array($editMode, ['general', 'password', 'domains', 'limits'], true)) {
             http_response_code(404);
             $tpl->render('page404.php');
             return;
@@ -167,6 +167,20 @@ class AdminController
                     } elseif ($action === 'revoke' && !empty($domain)) {
                         $adminRepo->revokeDomainFromAdmin($adminEmail, $domain);
                         $success = "Domain '{$domain}' revoked!";
+                    }
+                } elseif ($editMode === 'limits') {
+                    CsrfProtection::validateToken();
+                    $admin = $adminRepo->getAdmin($adminEmail);
+                    if ($admin !== null) {
+                        $admin->createMaxDomains = (int) ($_POST['createMaxDomains'] ?? -1);
+                        $admin->createMaxUsers = (int) ($_POST['createMaxUsers'] ?? -1);
+                        $admin->createMaxAliases = (int) ($_POST['createMaxAliases'] ?? -1);
+                        $admin->createMaxLists = (int) ($_POST['createMaxLists'] ?? -1);
+                        $admin->createMaxQuota = (int) ($_POST['createMaxQuota'] ?? -1);
+                        $admin->createNewDomains = isset($_POST['createNewDomains']);
+                        $adminRepo->updateAdminSettings($adminEmail, $admin->toSettingsJson());
+                        ActivityLogger::logUpdate('', $adminEmail, "Admin resource limits updated");
+                        $success = 'Resource limits updated!';
                     }
                 }
             } catch (\Exception $e) {

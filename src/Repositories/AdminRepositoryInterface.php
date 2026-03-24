@@ -61,4 +61,19 @@ interface AdminRepositoryInterface
      * Enables or disables an admin account.
      */
     public function enableDisableAdmin(string $username, bool $active): void;
+
+    /**
+     * Updates admin resource limits stored in settings JSON.
+     */
+    public function updateAdminSettings(string $username, string $settingsJson): void;
+
+    /**
+     * Returns paginated admin list.
+     */
+    public function getAdminsPaginated(int $page, int $perPage): \App\Models\PaginatedResult;
+
+    /**
+     * Counts domains managed by an admin.
+     */
+    public function countManagedDomains(string $adminUsername): int;
 }
