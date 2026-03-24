@@ -38,7 +38,7 @@ Edit `.env` with your LDAP server details, then start the application (see [Runn
 
 ## Configuration
 
-All settings use the `IREDADMIN_LIGHT_` prefix and are loaded from `.env` or `.env.prod` via [vlucas/phpdotenv](https://github.com/vlucas/phpdotenv).
+All settings use the `MAILPANEL_` prefix and are loaded from `.env` or `.env.prod` via [vlucas/phpdotenv](https://github.com/vlucas/phpdotenv).
 
 ### Required Variables
 
@@ -234,7 +234,7 @@ src/
   TemplateEngine.php         Layout inheritance via output buffering
   TemplateFilters.php        localize() and asMegabytes() helpers
   Models/
-    Settings.php            Singleton, reads IREDADMIN_LIGHT_* env vars
+    Settings.php            Singleton, reads MAILPANEL_* env vars
     LdapConnection.php      LDAP singleton with TLS/STARTTLS support
     User.php                Mail user data model (11 fields)
     UserPassword.php        Password validation (7 rules)

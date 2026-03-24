@@ -34,21 +34,21 @@ class Settings
 
     private function __construct()
     {
-        $this->name = $this->env('IREDADMIN_LIGHT_NAME', 'local');
-        $this->secretKey = $this->envRequired('IREDADMIN_LIGHT_SECRET_KEY');
-        $this->ldapUri = $this->envRequired('IREDADMIN_LIGHT_LDAP_URI');
-        $this->ldapRootDn = $this->envRequired('IREDADMIN_LIGHT_LDAP_ROOT_DN');
-        $this->ldapUser = $this->envRequired('IREDADMIN_LIGHT_LDAP_USER');
-        $this->ldapPassword = $this->envRequired('IREDADMIN_LIGHT_LDAP_PASSWORD');
-        $this->templatesAutoReload = $this->envBool('IREDADMIN_LIGHT_TEMPLATES_AUTO_RELOAD', true);
-        $this->passwordMinLength = $this->envInt('IREDADMIN_LIGHT_PASSWORD_MIN_LENGTH', 8);
-        $this->passwordIncludesSpecialChars = $this->envBool('IREDADMIN_LIGHT_PASSWORD_INCLUDES_SPECIAL_CHARS', true);
-        $this->passwordIncludesNumbers = $this->envBool('IREDADMIN_LIGHT_PASSWORD_INCLUDES_NUMBERS', true);
-        $this->passwordIncludesLowercase = $this->envBool('IREDADMIN_LIGHT_PASSWORD_INCLUDES_LOWERCASE', true);
-        $this->passwordIncludesUppercase = $this->envBool('IREDADMIN_LIGHT_PASSWORD_INCLUDES_UPPERCASE', true);
-        $this->passwordHashesUsePrefixedScheme = $this->envBool('IREDADMIN_LIGHT_PASSWORD_HASHES_USE_PREFIXED_SCHEME', true);
+        $this->name = $this->env('MAILPANEL_NAME', 'local');
+        $this->secretKey = $this->envRequired('MAILPANEL_SECRET_KEY');
+        $this->ldapUri = $this->envRequired('MAILPANEL_LDAP_URI');
+        $this->ldapRootDn = $this->envRequired('MAILPANEL_LDAP_ROOT_DN');
+        $this->ldapUser = $this->envRequired('MAILPANEL_LDAP_USER');
+        $this->ldapPassword = $this->envRequired('MAILPANEL_LDAP_PASSWORD');
+        $this->templatesAutoReload = $this->envBool('MAILPANEL_TEMPLATES_AUTO_RELOAD', true);
+        $this->passwordMinLength = $this->envInt('MAILPANEL_PASSWORD_MIN_LENGTH', 8);
+        $this->passwordIncludesSpecialChars = $this->envBool('MAILPANEL_PASSWORD_INCLUDES_SPECIAL_CHARS', true);
+        $this->passwordIncludesNumbers = $this->envBool('MAILPANEL_PASSWORD_INCLUDES_NUMBERS', true);
+        $this->passwordIncludesLowercase = $this->envBool('MAILPANEL_PASSWORD_INCLUDES_LOWERCASE', true);
+        $this->passwordIncludesUppercase = $this->envBool('MAILPANEL_PASSWORD_INCLUDES_UPPERCASE', true);
+        $this->passwordHashesUsePrefixedScheme = $this->envBool('MAILPANEL_PASSWORD_HASHES_USE_PREFIXED_SCHEME', true);
 
-        $scheme = strtoupper($this->env('IREDADMIN_LIGHT_PASSWORD_DEFAULT_SCHEME', 'SSHA512'));
+        $scheme = strtoupper($this->env('MAILPANEL_PASSWORD_DEFAULT_SCHEME', 'SSHA512'));
         if (!in_array($scheme, self::ALLOWED_SCHEMES, true)) {
             throw new \RuntimeException("Unsupported password scheme: $scheme");
         }
