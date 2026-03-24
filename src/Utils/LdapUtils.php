@@ -25,14 +25,6 @@ class LdapUtils
     }
 
     /**
-     * Builds LDAP DN from user ID and domain.
-     */
-    public static function getUserDn(string $userId, string $domain): string
-    {
-        return self::getEmailDn("{$userId}@{$domain}");
-    }
-
-    /**
      * Builds LDAP DN for a domain.
      * Example: domainName=example.com,o=domains,dc=example,dc=com
      */

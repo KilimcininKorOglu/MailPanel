@@ -114,20 +114,4 @@ class PasswordUtils
         return $pw;
     }
 
-    /**
-     * Checks if a password hash uses a supported scheme.
-     */
-    public static function isSupportedPasswordScheme(string $pwHash): bool
-    {
-        if (!str_starts_with($pwHash, '{') || !str_contains($pwHash, '}')) {
-            return false;
-        }
-
-        $scheme = strtoupper(substr($pwHash, 1, strpos($pwHash, '}') - 1));
-
-        return in_array($scheme, [
-            'PLAIN', 'CRYPT', 'MD5', 'PLAIN-MD5', 'SHA', 'SSHA',
-            'SHA512', 'SSHA512', 'SHA512-CRYPT', 'BCRYPT', 'CRAM-MD5', 'NTLM',
-        ], true);
-    }
 }
