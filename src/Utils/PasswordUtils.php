@@ -90,7 +90,7 @@ class PasswordUtils
 
         $pw = trim($output);
 
-        if ($settings->passwordHashesUsePrefixedScheme) {
+        if (!$settings->passwordHashesUsePrefixedScheme) {
             $pw = preg_replace('/^\{' . preg_quote($scheme, '/') . '\}/', '', $pw);
         }
 
