@@ -31,6 +31,9 @@ try {
     if ($settings->backend === 'mysql' && !extension_loaded('pdo_mysql')) {
         throw new \RuntimeException("MySQL backend selected but ext-pdo_mysql is not installed");
     }
+    if ($settings->backend === 'pgsql' && !extension_loaded('pdo_pgsql')) {
+        throw new \RuntimeException("PostgreSQL backend selected but ext-pdo_pgsql is not installed");
+    }
 } catch (\RuntimeException $e) {
     error_log("Settings validation failed: " . $e->getMessage());
     http_response_code(500);

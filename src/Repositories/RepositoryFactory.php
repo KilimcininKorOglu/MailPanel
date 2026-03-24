@@ -21,6 +21,14 @@ use App\Repositories\Mysql\MysqlDomainRepository;
 use App\Repositories\Mysql\MysqlForwardingRepository;
 use App\Repositories\Mysql\MysqlQuotaRepository;
 use App\Repositories\Mysql\MysqlUserRepository;
+use App\Repositories\Pgsql\PgsqlDashboardRepository;
+use App\Repositories\Pgsql\PgsqlDomainAliasRepository;
+use App\Repositories\Pgsql\PgsqlAdminRepository;
+use App\Repositories\Pgsql\PgsqlAuthRepository;
+use App\Repositories\Pgsql\PgsqlDomainRepository;
+use App\Repositories\Pgsql\PgsqlForwardingRepository;
+use App\Repositories\Pgsql\PgsqlQuotaRepository;
+use App\Repositories\Pgsql\PgsqlUserRepository;
 
 /**
  * Returns the correct repository implementation based on MAILPANEL_BACKEND setting.
@@ -41,6 +49,7 @@ class RepositoryFactory
         if (self::$authRepo === null) {
             self::$authRepo = match (Settings::getInstance()->backend) {
                 'mysql' => new MysqlAuthRepository(),
+                'pgsql' => new PgsqlAuthRepository(),
                 default => new LdapAuthRepository(),
             };
         }
@@ -52,6 +61,7 @@ class RepositoryFactory
         if (self::$domainRepo === null) {
             self::$domainRepo = match (Settings::getInstance()->backend) {
                 'mysql' => new MysqlDomainRepository(),
+                'pgsql' => new PgsqlDomainRepository(),
                 default => new LdapDomainRepository(),
             };
         }
@@ -63,6 +73,7 @@ class RepositoryFactory
         if (self::$userRepo === null) {
             self::$userRepo = match (Settings::getInstance()->backend) {
                 'mysql' => new MysqlUserRepository(),
+                'pgsql' => new PgsqlUserRepository(),
                 default => new LdapUserRepository(),
             };
         }
@@ -74,6 +85,7 @@ class RepositoryFactory
         if (self::$adminRepo === null) {
             self::$adminRepo = match (Settings::getInstance()->backend) {
                 'mysql' => new MysqlAdminRepository(),
+                'pgsql' => new PgsqlAdminRepository(),
                 default => new LdapAdminRepository(),
             };
         }
@@ -85,6 +97,7 @@ class RepositoryFactory
         if (self::$forwardingRepo === null) {
             self::$forwardingRepo = match (Settings::getInstance()->backend) {
                 'mysql' => new MysqlForwardingRepository(),
+                'pgsql' => new PgsqlForwardingRepository(),
                 default => new LdapForwardingRepository(),
             };
         }
@@ -96,6 +109,7 @@ class RepositoryFactory
         if (self::$quotaRepo === null) {
             self::$quotaRepo = match (Settings::getInstance()->backend) {
                 'mysql' => new MysqlQuotaRepository(),
+                'pgsql' => new PgsqlQuotaRepository(),
                 default => new LdapQuotaRepository(),
             };
         }
@@ -107,6 +121,7 @@ class RepositoryFactory
         if (self::$dashboardRepo === null) {
             self::$dashboardRepo = match (Settings::getInstance()->backend) {
                 'mysql' => new MysqlDashboardRepository(),
+                'pgsql' => new PgsqlDashboardRepository(),
                 default => new LdapDashboardRepository(),
             };
         }
@@ -118,6 +133,7 @@ class RepositoryFactory
         if (self::$domainAliasRepo === null) {
             self::$domainAliasRepo = match (Settings::getInstance()->backend) {
                 'mysql' => new MysqlDomainAliasRepository(),
+                'pgsql' => new PgsqlDomainAliasRepository(),
                 default => new LdapDomainAliasRepository(),
             };
         }

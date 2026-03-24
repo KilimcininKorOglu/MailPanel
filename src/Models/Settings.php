@@ -82,6 +82,13 @@ class Settings
     public readonly string $storageNode;
     public readonly string $mysqlPassword;
 
+    // PostgreSQL settings (populated only when backend=pgsql)
+    public readonly string $pgsqlHost;
+    public readonly int $pgsqlPort;
+    public readonly string $pgsqlDatabase;
+    public readonly string $pgsqlUser;
+    public readonly string $pgsqlPassword;
+
     private const ALLOWED_SCHEMES = [
         'PLAIN', 'CRYPT', 'MD5', 'PLAIN-MD5', 'SHA', 'SSHA',
         'SHA512', 'SSHA512', 'SHA512-CRYPT', 'BCRYPT', 'CRAM-MD5', 'NTLM',
@@ -91,8 +98,8 @@ class Settings
     {
         // Backend selection
         $this->backend = strtolower($this->env('MAILPANEL_BACKEND', 'ldap'));
-        if (!in_array($this->backend, ['ldap', 'mysql'], true)) {
-            throw new \RuntimeException("Unsupported backend: {$this->backend}. Must be 'ldap' or 'mysql'");
+        if (!in_array($this->backend, ['ldap', 'mysql', 'pgsql'], true)) {
+            throw new \RuntimeException("Unsupported backend: {$this->backend}. Must be 'ldap', 'mysql', or 'pgsql'");
         }
 
         // General settings
@@ -170,8 +177,32 @@ class Settings
             $this->mysqlDatabase = '';
             $this->mysqlUser = '';
             $this->mysqlPassword = '';
+            $this->pgsqlHost = '';
+            $this->pgsqlPort = 5432;
+            $this->pgsqlDatabase = '';
+            $this->pgsqlUser = '';
+            $this->pgsqlPassword = '';
             $this->vmailPath = '/var/vmail';
             $this->storageNode = 'vmail1';
+        } elseif ($this->backend === 'pgsql') {
+            $this->pgsqlHost = $this->envRequired('MAILPANEL_PGSQL_HOST');
+            $this->pgsqlPort = $this->envInt('MAILPANEL_PGSQL_PORT', 5432);
+            $this->pgsqlDatabase = $this->envRequired('MAILPANEL_PGSQL_DATABASE');
+            $this->pgsqlUser = $this->envRequired('MAILPANEL_PGSQL_USER');
+            $this->pgsqlPassword = $this->envRequired('MAILPANEL_PGSQL_PASSWORD');
+            $this->vmailPath = $this->env('MAILPANEL_VMAIL_PATH', '/var/vmail');
+            $this->storageNode = $this->env('MAILPANEL_STORAGE_NODE', 'vmail1');
+
+            $this->mysqlHost = '';
+            $this->mysqlPort = 3306;
+            $this->mysqlDatabase = '';
+            $this->mysqlUser = '';
+            $this->mysqlPassword = '';
+            $this->ldapUri = '';
+            $this->ldapRootDn = '';
+            $this->ldapUser = '';
+            $this->ldapPassword = '';
+            $this->ldapTlsVerify = false;
         } else {
             $this->mysqlHost = $this->envRequired('MAILPANEL_MYSQL_HOST');
             $this->mysqlPort = $this->envInt('MAILPANEL_MYSQL_PORT', 3306);
@@ -181,6 +212,11 @@ class Settings
             $this->vmailPath = $this->env('MAILPANEL_VMAIL_PATH', '/var/vmail');
             $this->storageNode = $this->env('MAILPANEL_STORAGE_NODE', 'vmail1');
 
+            $this->pgsqlHost = '';
+            $this->pgsqlPort = 5432;
+            $this->pgsqlDatabase = '';
+            $this->pgsqlUser = '';
+            $this->pgsqlPassword = '';
             $this->ldapUri = '';
             $this->ldapRootDn = '';
             $this->ldapUser = '';
