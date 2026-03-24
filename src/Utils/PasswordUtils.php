@@ -80,12 +80,28 @@ class PasswordUtils
         $scheme = strtoupper($scheme);
         $password = trim($password);
 
-        $escapedPassword = escapeshellarg($password);
         $escapedScheme = escapeshellarg($scheme);
 
-        $output = @shell_exec("doveadm pw -s {$escapedScheme} -p {$escapedPassword} 2>/dev/null");
+        $proc = @proc_open(
+            "doveadm pw -s {$escapedScheme} 2>/dev/null",
+            [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes
+        );
 
-        if ($output === null || $output === '') {
+        if (!is_resource($proc)) {
+            error_log("doveadm not available for scheme {$scheme}, falling back to SSHA");
+            return self::generateSshaPassword($password);
+        }
+
+        fwrite($pipes[0], $password . "\n" . $password . "\n");
+        fclose($pipes[0]);
+        $output = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($proc);
+
+        if ($output === false || trim($output) === '') {
+            error_log("doveadm returned empty output for scheme {$scheme}, falling back to SSHA");
             return self::generateSshaPassword($password);
         }
 
