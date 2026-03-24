@@ -11,6 +11,17 @@ use App\Controllers\AuthController;
 use App\Controllers\BaseController;
 use App\Controllers\DashboardController;
 use App\Controllers\DeletedMailboxController;
+use App\Api\AdminApiController;
+use App\Api\AliasApiController;
+use App\Api\ApiMiddleware;
+use App\Api\DomainAliasApiController;
+use App\Api\DomainApiController;
+use App\Api\GreylistApiController;
+use App\Api\MailingListApiController;
+use App\Api\SpamPolicyApiController;
+use App\Api\ThrottleApiController;
+use App\Api\UserApiController;
+use App\Api\WhiteBlacklistApiController;
 use App\Controllers\DomainAliasController;
 use App\Controllers\DomainController;
 use App\Controllers\ExportController;
@@ -296,6 +307,143 @@ $router->addRoute(['GET', 'POST'], '/iredapd/greylist/{account}', function (stri
 
 $router->addRoute('GET', '/iredapd/greylist-tracking', function () use ($tpl) {
     IredapdController::greylistTracking($tpl);
+});
+
+// ============================================================
+// REST API v1
+// ============================================================
+
+$apiAuth = function () { ApiMiddleware::authenticate(); };
+
+// Domains API
+$router->addRoute('GET', '/api/v1/domains', function () use ($apiAuth) {
+    $apiAuth(); DomainApiController::list();
+});
+$router->addRoute('POST', '/api/v1/domains', function () use ($apiAuth) {
+    $apiAuth(); DomainApiController::create();
+});
+$router->addRoute('GET', '/api/v1/domains/{domain}', function (string $domain) use ($apiAuth) {
+    $apiAuth(); DomainApiController::get($domain);
+});
+$router->addRoute('PUT', '/api/v1/domains/{domain}', function (string $domain) use ($apiAuth) {
+    $apiAuth(); DomainApiController::update($domain);
+});
+$router->addRoute('DELETE', '/api/v1/domains/{domain}', function (string $domain) use ($apiAuth) {
+    $apiAuth(); DomainApiController::delete($domain);
+});
+
+// Users API
+$router->addRoute('GET', '/api/v1/domains/{domain}/users', function (string $domain) use ($apiAuth) {
+    $apiAuth(); UserApiController::list($domain);
+});
+$router->addRoute('POST', '/api/v1/domains/{domain}/users', function (string $domain) use ($apiAuth) {
+    $apiAuth(); UserApiController::create($domain);
+});
+$router->addRoute('GET', '/api/v1/users/{email}', function (string $email) use ($apiAuth) {
+    $apiAuth(); UserApiController::get($email);
+});
+$router->addRoute('PUT', '/api/v1/users/{email}', function (string $email) use ($apiAuth) {
+    $apiAuth(); UserApiController::update($email);
+});
+$router->addRoute('DELETE', '/api/v1/users/{email}', function (string $email) use ($apiAuth) {
+    $apiAuth(); UserApiController::delete($email);
+});
+
+// Aliases API
+$router->addRoute('GET', '/api/v1/aliases', function () use ($apiAuth) {
+    $apiAuth(); AliasApiController::list();
+});
+$router->addRoute('POST', '/api/v1/aliases', function () use ($apiAuth) {
+    $apiAuth(); AliasApiController::create();
+});
+$router->addRoute('GET', '/api/v1/aliases/{address}', function (string $address) use ($apiAuth) {
+    $apiAuth(); AliasApiController::get($address);
+});
+$router->addRoute('PUT', '/api/v1/aliases/{address}', function (string $address) use ($apiAuth) {
+    $apiAuth(); AliasApiController::update($address);
+});
+$router->addRoute('DELETE', '/api/v1/aliases/{address}', function (string $address) use ($apiAuth) {
+    $apiAuth(); AliasApiController::delete($address);
+});
+
+// Mailing Lists API
+$router->addRoute('GET', '/api/v1/mailing-lists', function () use ($apiAuth) {
+    $apiAuth(); MailingListApiController::list();
+});
+$router->addRoute('POST', '/api/v1/mailing-lists', function () use ($apiAuth) {
+    $apiAuth(); MailingListApiController::create();
+});
+$router->addRoute('GET', '/api/v1/mailing-lists/{address}', function (string $address) use ($apiAuth) {
+    $apiAuth(); MailingListApiController::get($address);
+});
+$router->addRoute('PUT', '/api/v1/mailing-lists/{address}', function (string $address) use ($apiAuth) {
+    $apiAuth(); MailingListApiController::update($address);
+});
+$router->addRoute('DELETE', '/api/v1/mailing-lists/{address}', function (string $address) use ($apiAuth) {
+    $apiAuth(); MailingListApiController::delete($address);
+});
+
+// Admins API
+$router->addRoute('GET', '/api/v1/admins', function () use ($apiAuth) {
+    $apiAuth(); AdminApiController::list();
+});
+$router->addRoute('POST', '/api/v1/admins', function () use ($apiAuth) {
+    $apiAuth(); AdminApiController::create();
+});
+$router->addRoute('GET', '/api/v1/admins/{email}', function (string $email) use ($apiAuth) {
+    $apiAuth(); AdminApiController::get($email);
+});
+$router->addRoute('PUT', '/api/v1/admins/{email}', function (string $email) use ($apiAuth) {
+    $apiAuth(); AdminApiController::update($email);
+});
+$router->addRoute('DELETE', '/api/v1/admins/{email}', function (string $email) use ($apiAuth) {
+    $apiAuth(); AdminApiController::delete($email);
+});
+
+// Domain Aliases API
+$router->addRoute('GET', '/api/v1/domain-aliases', function () use ($apiAuth) {
+    $apiAuth(); DomainAliasApiController::list();
+});
+$router->addRoute('POST', '/api/v1/domain-aliases', function () use ($apiAuth) {
+    $apiAuth(); DomainAliasApiController::create();
+});
+$router->addRoute('DELETE', '/api/v1/domain-aliases/{aliasDomain}', function (string $aliasDomain) use ($apiAuth) {
+    $apiAuth(); DomainAliasApiController::delete($aliasDomain);
+});
+
+// Spam Policy API
+$router->addRoute('GET', '/api/v1/spam-policy/{account}', function (string $account) use ($apiAuth) {
+    $apiAuth(); SpamPolicyApiController::get($account);
+});
+$router->addRoute('PUT', '/api/v1/spam-policy/{account}', function (string $account) use ($apiAuth) {
+    $apiAuth(); SpamPolicyApiController::update($account);
+});
+
+// White/Blacklist API
+$router->addRoute('GET', '/api/v1/wblist/{account}', function (string $account) use ($apiAuth) {
+    $apiAuth(); WhiteBlacklistApiController::get($account);
+});
+$router->addRoute('POST', '/api/v1/wblist/{account}', function (string $account) use ($apiAuth) {
+    $apiAuth(); WhiteBlacklistApiController::update($account);
+});
+$router->addRoute('DELETE', '/api/v1/wblist/{account}', function (string $account) use ($apiAuth) {
+    $apiAuth(); WhiteBlacklistApiController::delete($account);
+});
+
+// Throttle API
+$router->addRoute('GET', '/api/v1/throttle/{account}', function (string $account) use ($apiAuth) {
+    $apiAuth(); ThrottleApiController::get($account);
+});
+$router->addRoute('PUT', '/api/v1/throttle/{account}', function (string $account) use ($apiAuth) {
+    $apiAuth(); ThrottleApiController::update($account);
+});
+
+// Greylist API
+$router->addRoute('GET', '/api/v1/greylist/{account}', function (string $account) use ($apiAuth) {
+    $apiAuth(); GreylistApiController::get($account);
+});
+$router->addRoute('PUT', '/api/v1/greylist/{account}', function (string $account) use ($apiAuth) {
+    $apiAuth(); GreylistApiController::update($account);
 });
 
 $router->setNotFoundHandler(function () use ($tpl) {

@@ -29,6 +29,9 @@ class Settings
     public readonly bool $sessionValidateIp;
     public readonly bool $checkUpdates;
     public readonly string $geoIpDbPath;
+    public readonly bool $apiEnabled;
+    public readonly string $apiKey;
+    public readonly string $apiAllowedIps;
 
     // Branding
     public readonly string $brandName;
@@ -124,6 +127,9 @@ class Settings
         $this->sessionValidateIp = $this->envBool('MAILPANEL_SESSION_VALIDATE_IP', false);
         $this->checkUpdates = $this->envBool('MAILPANEL_CHECK_UPDATES', true);
         $this->geoIpDbPath = $this->env('MAILPANEL_GEOIP_DB_PATH', '');
+        $this->apiEnabled = $this->envBool('MAILPANEL_API_ENABLED', false);
+        $this->apiKey = $this->env('MAILPANEL_API_KEY', '');
+        $this->apiAllowedIps = $this->env('MAILPANEL_API_ALLOWED_IPS', '');
 
         // Branding
         $this->brandName = $this->env('MAILPANEL_BRAND_NAME', 'MailPanel');
