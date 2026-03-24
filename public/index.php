@@ -8,8 +8,7 @@ use App\Controllers\AuthController;
 use App\Controllers\BaseController;
 use App\Controllers\DomainController;
 use App\Controllers\UserController;
-use App\Models\LdapConnectionException;
-use App\Repositories\Mysql\MysqlConnectionException;
+use App\Exceptions\BackendConnectionException;
 use App\Router;
 use App\TemplateEngine;
 
@@ -56,7 +55,7 @@ try {
         $_SERVER['REQUEST_URI'] ?? '/',
         $_SERVER['REQUEST_METHOD'] ?? 'GET'
     );
-} catch (LdapConnectionException | MysqlConnectionException $e) {
+} catch (BackendConnectionException $e) {
     header('Location: /logout');
     exit;
 }

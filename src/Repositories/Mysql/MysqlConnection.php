@@ -6,7 +6,7 @@ namespace App\Repositories\Mysql;
 
 use App\Models\Settings;
 
-class MysqlConnectionException extends \Exception {}
+class MysqlConnectionException extends \App\Exceptions\BackendConnectionException {}
 
 /**
  * MySQL/PDO connection singleton for iRedMail vmail database.

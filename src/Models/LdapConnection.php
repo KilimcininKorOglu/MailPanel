@@ -6,7 +6,7 @@ namespace App\Models;
 
 use App\Utils\LdapUtils;
 
-class LdapConnectionException extends \Exception {}
+class LdapConnectionException extends \App\Exceptions\BackendConnectionException {}
 
 /**
  * LDAP connection singleton. Handles TLS/STARTTLS and admin verification.
