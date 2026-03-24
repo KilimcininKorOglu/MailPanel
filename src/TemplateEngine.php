@@ -45,6 +45,13 @@ class TemplateEngine
             'fail2ban' => $settings->fail2banEnabled,
             'iredapd' => $settings->iredapdEnabled,
         ];
+        $passwordPolicy = json_encode([
+            'minLength' => $settings->passwordMinLength,
+            'uppercase' => $settings->passwordIncludesUppercase,
+            'lowercase' => $settings->passwordIncludesLowercase,
+            'numbers' => $settings->passwordIncludesNumbers,
+            'special' => $settings->passwordIncludesSpecialChars,
+        ]);
 
         // EXTR_SKIP prevents overwriting local scope variables ($e, $localize, etc.)
         // Controller-provided keys become template variables (e.g., $domain, $users)

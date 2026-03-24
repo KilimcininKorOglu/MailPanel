@@ -53,6 +53,9 @@
               <p class="text-error"><?= $e($validationErrors['password_repeat']) ?></p>
               <?php endif; ?>
             </p>
+            <p>
+              <button type="button" class="button outline" onclick="generatePassword()">Generate password</button>
+            </p>
 
             <p>
               <label for="mailQuota">Quota, MB</label>

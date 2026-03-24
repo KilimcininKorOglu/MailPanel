@@ -177,6 +177,9 @@
               <?php endif; ?>
             </p>
             <p>
+              <button type="button" class="button outline" onclick="generatePassword()">Generate password</button>
+            </p>
+            <p>
               <button type="submit" class="button primary">
                 Save
               </button>

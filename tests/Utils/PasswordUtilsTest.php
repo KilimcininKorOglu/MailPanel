@@ -59,4 +59,34 @@ class PasswordUtilsTest extends TestCase
         $hash2 = PasswordUtils::generateSshaPassword('same');
         $this->assertNotSame($hash1, $hash2);
     }
+
+    public function testGenerateRandomPasswordLength(): void
+    {
+        $password = PasswordUtils::generateRandomPassword(20);
+        $this->assertSame(20, strlen($password));
+    }
+
+    public function testGenerateRandomPasswordMinLength(): void
+    {
+        // Should respect Settings min length (default 8), but we request 16
+        $password = PasswordUtils::generateRandomPassword(16);
+        $this->assertGreaterThanOrEqual(16, strlen($password));
+    }
+
+    public function testGenerateRandomPasswordUniqueness(): void
+    {
+        $pw1 = PasswordUtils::generateRandomPassword();
+        $pw2 = PasswordUtils::generateRandomPassword();
+        $this->assertNotSame($pw1, $pw2);
+    }
+
+    public function testGenerateRandomPasswordContainsRequiredCategories(): void
+    {
+        // Default policy: lowercase, uppercase, numbers, special all required
+        $password = PasswordUtils::generateRandomPassword(20);
+        $this->assertMatchesRegularExpression('/[a-z]/', $password);
+        $this->assertMatchesRegularExpression('/[A-Z]/', $password);
+        $this->assertMatchesRegularExpression('/[0-9]/', $password);
+        $this->assertMatchesRegularExpression('/[$@#%!^&*()\-_+={}[\]]/', $password);
+    }
 }

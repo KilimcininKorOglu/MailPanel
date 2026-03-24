@@ -8,6 +8,59 @@ use App\Models\Settings;
 
 class PasswordUtils
 {
+    private const LOWERCASE_CHARS = 'abcdefghjkmnpqrstuvwxyz';
+    private const UPPERCASE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    private const DIGIT_CHARS = '23456789';
+    private const SPECIAL_CHARS = '$@#%!^&*()-_+={}[]';
+
+    /**
+     * Generates a random password that complies with the current password policy.
+     * Excludes visually confusing characters: 0, O, 1, l, I.
+     */
+    public static function generateRandomPassword(int $length = 16): string
+    {
+        $settings = Settings::getInstance();
+        $length = max($length, $settings->passwordMinLength);
+
+        $required = [];
+        $pool = '';
+
+        if ($settings->passwordIncludesLowercase) {
+            $required[] = self::LOWERCASE_CHARS[random_int(0, strlen(self::LOWERCASE_CHARS) - 1)];
+            $pool .= self::LOWERCASE_CHARS;
+        }
+        if ($settings->passwordIncludesUppercase) {
+            $required[] = self::UPPERCASE_CHARS[random_int(0, strlen(self::UPPERCASE_CHARS) - 1)];
+            $pool .= self::UPPERCASE_CHARS;
+        }
+        if ($settings->passwordIncludesNumbers) {
+            $required[] = self::DIGIT_CHARS[random_int(0, strlen(self::DIGIT_CHARS) - 1)];
+            $pool .= self::DIGIT_CHARS;
+        }
+        if ($settings->passwordIncludesSpecialChars) {
+            $required[] = self::SPECIAL_CHARS[random_int(0, strlen(self::SPECIAL_CHARS) - 1)];
+            $pool .= self::SPECIAL_CHARS;
+        }
+
+        if ($pool === '') {
+            $pool = self::LOWERCASE_CHARS . self::UPPERCASE_CHARS . self::DIGIT_CHARS;
+        }
+
+        $chars = $required;
+        $poolLen = strlen($pool);
+        for ($i = count($chars); $i < $length; $i++) {
+            $chars[] = $pool[random_int(0, $poolLen - 1)];
+        }
+
+        // Fisher-Yates shuffle with cryptographic randomness
+        for ($i = count($chars) - 1; $i > 0; $i--) {
+            $j = random_int(0, $i);
+            [$chars[$i], $chars[$j]] = [$chars[$j], $chars[$i]];
+        }
+
+        return implode('', $chars);
+    }
+
     /**
      * Main entry point for password hashing. Dispatches to the correct scheme.
      */

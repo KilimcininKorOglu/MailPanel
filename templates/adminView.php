@@ -90,6 +90,9 @@
           <span class="text-error"><?= $e($validationErrors['password_repeat']) ?></span>
           <?php endif; ?>
         </p>
+        <p>
+          <button type="button" class="button outline" onclick="generatePassword()">Generate password</button>
+        </p>
 
         <button type="submit" class="button primary">Change password</button>
       </form>

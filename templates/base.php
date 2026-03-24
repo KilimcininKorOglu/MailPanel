@@ -50,5 +50,24 @@
         <a href="https://github.com/KilimcininKorOglu/MailPanel" class="text-light" target="_blank"><?= $e($brand['name'] ?? 'MailPanel') ?> v<?= defined('APP_VERSION') ? APP_VERSION : '0.0.0' ?></a>
       </div>
     </footer>
+    <script>
+    function generatePassword(){
+      var p=<?= $passwordPolicy ?? '{}' ?>;
+      var lc='abcdefghjkmnpqrstuvwxyz',uc='ABCDEFGHJKLMNPQRSTUVWXYZ',dg='23456789',sp='$@#%!^&*()-_+={}[]';
+      var req=[],pool='';
+      if(p.lowercase){req.push(lc[Math.floor(Math.random()*lc.length)]);pool+=lc;}
+      if(p.uppercase){req.push(uc[Math.floor(Math.random()*uc.length)]);pool+=uc;}
+      if(p.numbers){req.push(dg[Math.floor(Math.random()*dg.length)]);pool+=dg;}
+      if(p.special){req.push(sp[Math.floor(Math.random()*sp.length)]);pool+=sp;}
+      if(!pool)pool=lc+uc+dg;
+      var len=Math.max(p.minLength||8,16),pw=req.slice();
+      for(var i=pw.length;i<len;i++)pw.push(pool[Math.floor(Math.random()*pool.length)]);
+      for(var i=pw.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pw[i];pw[i]=pw[j];pw[j]=t;}
+      var result=pw.join('');
+      var f1=document.getElementById('password'),f2=document.getElementById('password_repeat');
+      if(f1){f1.value=result;f1.type='text';setTimeout(function(){f1.type='password';},3000);}
+      if(f2)f2.value=result;
+    }
+    </script>
   </body>
 </html>
