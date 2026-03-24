@@ -14,6 +14,8 @@ use App\Controllers\DeletedMailboxController;
 use App\Controllers\DomainAliasController;
 use App\Controllers\DomainController;
 use App\Controllers\Fail2banController;
+use App\Controllers\SpamPolicyController;
+use App\Controllers\WhiteBlacklistController;
 use App\Controllers\IredapdController;
 use App\Controllers\LogController;
 use App\Controllers\UserController;
@@ -200,6 +202,26 @@ $router->addRoute('GET', '/amavisd/maillog', function () use ($tpl) {
 
 $router->addRoute('POST', '/amavisd/cleanup', function () use ($tpl) {
     AmavisdController::cleanup($tpl);
+});
+
+// Spam policy management
+$router->addRoute(['GET', 'POST'], '/amavisd/spam-policy', function () use ($tpl) {
+    $account = $_GET['account'] ?? '@.';
+    SpamPolicyController::accountPolicy($tpl, $account);
+});
+
+$router->addRoute(['GET', 'POST'], '/amavisd/spam-policy/{account}', function (string $account) use ($tpl) {
+    SpamPolicyController::accountPolicy($tpl, $account);
+});
+
+// White/blacklist management
+$router->addRoute(['GET', 'POST'], '/amavisd/wblist', function () use ($tpl) {
+    $account = $_GET['account'] ?? '@.';
+    WhiteBlacklistController::accountList($tpl, $account);
+});
+
+$router->addRoute(['GET', 'POST'], '/amavisd/wblist/{account}', function (string $account) use ($tpl) {
+    WhiteBlacklistController::accountList($tpl, $account);
 });
 
 // Fail2ban integration

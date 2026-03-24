@@ -1,0 +1,26 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Repositories;
+
+interface WhiteBlacklistRepositoryInterface
+{
+    /** @return array<int, array{sender: string, wb: string}> */
+    public function getInboundList(string $account): array;
+
+    public function addInboundEntry(string $account, string $sender, string $wb): bool;
+
+    public function removeInboundEntry(string $account, string $sender): bool;
+
+    /** @return array<int, array{recipient: string, wb: string}> */
+    public function getOutboundList(string $account): array;
+
+    public function addOutboundEntry(string $account, string $recipient, string $wb): bool;
+
+    public function removeOutboundEntry(string $account, string $recipient): bool;
+
+    public function getOrCreateUserId(string $email): int;
+
+    public function getOrCreateMailaddrId(string $email): int;
+}

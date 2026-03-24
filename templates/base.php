@@ -26,6 +26,8 @@
         <a href="/logs">Logs</a>
         <?php if (!empty($features['amavisd'])): ?>
         <a href="/amavisd/quarantine">Quarantine</a>
+        <a href="/amavisd/spam-policy">Spam Policy</a>
+        <a href="/amavisd/wblist">W/B List</a>
         <?php endif; ?>
         <?php if (!empty($features['fail2ban'])): ?>
         <a href="/fail2ban">Fail2ban</a>

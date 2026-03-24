@@ -9,6 +9,8 @@ use App\Repositories\Mysql\MysqlAliasRepository;
 use App\Repositories\Mysql\MysqlAmavisdRepository;
 use App\Repositories\Mysql\MysqlBccRepository;
 use App\Repositories\Mysql\MysqlIredapdRepository;
+use App\Repositories\Mysql\MysqlSpamPolicyRepository;
+use App\Repositories\Mysql\MysqlWhiteBlacklistRepository;
 use App\Repositories\Mysql\MysqlRelayRepository;
 use App\Repositories\Ldap\LdapAliasRepository;
 use App\Repositories\Ldap\LdapBccRepository;
@@ -33,6 +35,8 @@ use App\Repositories\Pgsql\PgsqlDashboardRepository;
 use App\Repositories\Pgsql\PgsqlAliasRepository;
 use App\Repositories\Pgsql\PgsqlAmavisdRepository;
 use App\Repositories\Pgsql\PgsqlBccRepository;
+use App\Repositories\Pgsql\PgsqlSpamPolicyRepository;
+use App\Repositories\Pgsql\PgsqlWhiteBlacklistRepository;
 use App\Repositories\Pgsql\PgsqlDomainAliasRepository;
 use App\Repositories\Pgsql\PgsqlAdminRepository;
 use App\Repositories\Pgsql\PgsqlAuthRepository;
@@ -59,6 +63,8 @@ class RepositoryFactory
     private static ?AliasRepositoryInterface $aliasRepo = null;
     private static ?BccRepositoryInterface $bccRepo = null;
     private static ?RelayRepositoryInterface $relayRepo = null;
+    private static ?SpamPolicyRepositoryInterface $spamPolicyRepo = null;
+    private static ?WhiteBlacklistRepositoryInterface $wblistRepo = null;
     private static ?AmavisdRepositoryInterface $amavisdRepo = null;
     private static ?IredapdRepositoryInterface $iredapdRepo = null;
 
@@ -180,6 +186,28 @@ class RepositoryFactory
             };
         }
         return self::$relayRepo;
+    }
+
+    public static function getSpamPolicyRepository(): SpamPolicyRepositoryInterface
+    {
+        if (self::$spamPolicyRepo === null) {
+            self::$spamPolicyRepo = match (Settings::getInstance()->backend) {
+                'pgsql' => new PgsqlSpamPolicyRepository(),
+                default => new MysqlSpamPolicyRepository(),
+            };
+        }
+        return self::$spamPolicyRepo;
+    }
+
+    public static function getWhiteBlacklistRepository(): WhiteBlacklistRepositoryInterface
+    {
+        if (self::$wblistRepo === null) {
+            self::$wblistRepo = match (Settings::getInstance()->backend) {
+                'pgsql' => new PgsqlWhiteBlacklistRepository(),
+                default => new MysqlWhiteBlacklistRepository(),
+            };
+        }
+        return self::$wblistRepo;
     }
 
     public static function getAliasRepository(): AliasRepositoryInterface
