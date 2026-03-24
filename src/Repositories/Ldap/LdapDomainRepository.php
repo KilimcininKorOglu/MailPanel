@@ -39,15 +39,22 @@ class LdapDomainRepository implements DomainRepositoryInterface
         return $domainInfo;
     }
 
-    public function getDomainsPaginated(int $page, int $perPage): PaginatedResult
+    public function getDomainsPaginated(int $page, int $perPage, ?bool $activeOnly = null): PaginatedResult
     {
         $conn = LdapConnection::getInstance()->getConn();
         $settings = Settings::getInstance();
 
+        $filter = '(objectClass=mailDomain)';
+        if ($activeOnly === true) {
+            $filter = '(&(objectClass=mailDomain)(accountStatus=active))';
+        } elseif ($activeOnly === false) {
+            $filter = '(&(objectClass=mailDomain)(accountStatus=disabled))';
+        }
+
         $result = @ldap_search(
             $conn,
             $settings->ldapRootDn,
-            '(objectClass=mailDomain)',
+            $filter,
             self::DOMAIN_DETAIL_ATTRS
         );
 

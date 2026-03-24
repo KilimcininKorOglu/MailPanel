@@ -19,7 +19,7 @@ interface DomainRepositoryInterface
     /**
      * Returns paginated domain list as Domain model objects.
      */
-    public function getDomainsPaginated(int $page, int $perPage): PaginatedResult;
+    public function getDomainsPaginated(int $page, int $perPage, ?bool $activeOnly = null): PaginatedResult;
 
     /**
      * Returns a single domain by name, or null if not found.

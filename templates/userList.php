@@ -24,6 +24,11 @@
       $baseUrl = '/' . urlencode($domain) . '/users';
       ?>
       <div style="margin: 0.5rem 0;">
+        <a href="<?= $e($baseUrl) ?>" <?php if (empty($statusFilter)): ?>style="font-weight:bold"<?php endif; ?>>All</a> |
+        <a href="<?= $e($baseUrl) ?>?status=active" <?php if (($statusFilter ?? '') === 'active'): ?>style="font-weight:bold"<?php endif; ?>>Active</a> |
+        <a href="<?= $e($baseUrl) ?>?status=disabled" <?php if (($statusFilter ?? '') === 'disabled'): ?>style="font-weight:bold"<?php endif; ?>>Disabled</a>
+      </div>
+      <div style="margin: 0.5rem 0;">
         <a href="<?= $e($baseUrl) ?>" <?php if (empty($currentLetter)): ?>style="font-weight:bold"<?php endif; ?>>All</a>
         <?php foreach ($letters as $letter): ?>
           <a href="<?= $e($baseUrl) ?>?letter=<?= $e($letter) ?>"

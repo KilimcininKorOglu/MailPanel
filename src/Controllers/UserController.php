@@ -31,8 +31,14 @@ class UserController
         $startsWith = $_GET['letter'] ?? null;
         $sortBy = $_GET['sort'] ?? 'uid';
         $sortDir = $_GET['dir'] ?? 'asc';
+        $statusFilter = $_GET['status'] ?? null;
+        $activeOnly = match ($statusFilter) {
+            'active' => true,
+            'disabled' => false,
+            default => null,
+        };
 
-        $paginatedResult = $userRepo->getUsersPaginated($domain, $page, $perPage, $startsWith, null, $sortBy, $sortDir);
+        $paginatedResult = $userRepo->getUsersPaginated($domain, $page, $perPage, $startsWith, $activeOnly, $sortBy, $sortDir);
         $usedQuotas = RepositoryFactory::getQuotaRepository()->getDomainUsedQuotas($domain);
 
         $tpl->render('userList.php', [
@@ -44,6 +50,7 @@ class UserController
             'currentLetter' => $startsWith,
             'sortBy' => $sortBy,
             'sortDir' => $sortDir,
+            'statusFilter' => $statusFilter,
         ]);
     }
 

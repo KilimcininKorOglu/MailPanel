@@ -36,12 +36,19 @@ class MysqlDomainRepository implements DomainRepositoryInterface
         return $domains;
     }
 
-    public function getDomainsPaginated(int $page, int $perPage): PaginatedResult
+    public function getDomainsPaginated(int $page, int $perPage, ?bool $activeOnly = null): PaginatedResult
     {
         $pdo = MysqlConnection::getInstance()->getPdo();
         $offset = ($page - 1) * $perPage;
 
-        $countStmt = $pdo->query("SELECT COUNT(*) AS total FROM domain");
+        $where = '1=1';
+        if ($activeOnly === true) {
+            $where = 'd.active = 1';
+        } elseif ($activeOnly === false) {
+            $where = 'd.active = 0';
+        }
+
+        $countStmt = $pdo->query("SELECT COUNT(*) AS total FROM domain d WHERE {$where}");
         $totalCount = (int) $countStmt->fetch()['total'];
 
         $stmt = $pdo->prepare(
@@ -51,6 +58,7 @@ class MysqlDomainRepository implements DomainRepositoryInterface
                     COALESCE(SUM(m.quota), 0) AS quotaUsed
              FROM domain d
              LEFT JOIN mailbox m ON m.domain = d.domain
+             WHERE {$where}
              GROUP BY d.domain
              ORDER BY d.domain
              LIMIT :perPage OFFSET :offset"

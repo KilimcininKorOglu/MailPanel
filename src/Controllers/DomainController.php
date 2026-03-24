@@ -25,12 +25,19 @@ class DomainController
         $settings = Settings::getInstance();
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $perPage = $settings->paginationPerPage;
+        $statusFilter = $_GET['status'] ?? null;
+        $activeOnly = match ($statusFilter) {
+            'active' => true,
+            'disabled' => false,
+            default => null,
+        };
 
-        $paginatedResult = RepositoryFactory::getDomainRepository()->getDomainsPaginated($page, $perPage);
+        $paginatedResult = RepositoryFactory::getDomainRepository()->getDomainsPaginated($page, $perPage, $activeOnly);
 
         $tpl->render('domainList.php', [
             'paginatedResult' => $paginatedResult,
             'domains' => $paginatedResult->items,
+            'statusFilter' => $statusFilter,
         ]);
     }
 

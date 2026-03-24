@@ -10,6 +10,12 @@
         </div>
       </div>
 
+      <div style="margin: 0.5rem 0;">
+        <a href="/domains" <?php if (empty($statusFilter)): ?>style="font-weight:bold"<?php endif; ?>>All</a> |
+        <a href="/domains?status=active" <?php if (($statusFilter ?? '') === 'active'): ?>style="font-weight:bold"<?php endif; ?>>Active</a> |
+        <a href="/domains?status=disabled" <?php if (($statusFilter ?? '') === 'disabled'): ?>style="font-weight:bold"<?php endif; ?>>Disabled</a>
+      </div>
+
       <table class="striped">
         <thead>
           <tr>
