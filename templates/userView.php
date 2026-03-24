@@ -55,7 +55,7 @@
                     id="mailQuota"
                     name="mailQuota"
                     type="number"
-                    value="<?= $e($asMegabytes($user->mailQuota)) ?>"
+                    value="<?= $e($user->mailQuota) ?>"
                     required
                   />
                 </p>

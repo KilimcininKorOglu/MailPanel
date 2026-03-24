@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Models;
 
 /**
- * User data model. Maps to LDAP mailUser objectClass attributes.
+ * User data model. Maps to iRedMail user attributes.
+ * mailQuota is always stored in megabytes regardless of backend.
  */
 class User
 {
@@ -25,13 +26,17 @@ class User
 
     /**
      * Creates a User from a normalized LDAP entry array.
+     * Converts LDAP quota (bytes) to megabytes at the model boundary.
      */
     public static function fromLdapEntry(array $entry): self
     {
+        $quotaBytes = (int) ($entry['mailQuota'] ?? 0);
+        $quotaMb = $quotaBytes > 0 ? (int) ($quotaBytes / 1048576) : 100;
+
         return new self(
             uid: $entry['uid'] ?? '',
             accountStatus: ($entry['accountStatus'] ?? '') === 'active',
-            mailQuota: (int) ($entry['mailQuota'] ?? 100),
+            mailQuota: $quotaMb,
             cn: $entry['cn'] ?? '',
             givenName: $entry['givenName'] ?? '',
             sn: $entry['sn'] ?? '',

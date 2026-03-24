@@ -33,7 +33,7 @@
             <td>
               <a href="/<?= $e($domain) ?>/users/<?= $e($user->uid) ?>/general"><?= $e($user->uid) ?></a>
             </td>
-            <td><?= $asMegabytes($user->mailQuota) ?></td>
+            <td><?= $e($user->mailQuota) ?></td>
             <td><?= $localize($user->domainGlobalAdmin) ?></td>
             <td><?= $localize($user->accountStatus) ?></td>
           </tr>
