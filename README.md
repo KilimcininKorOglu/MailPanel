@@ -5,7 +5,7 @@ A lightweight PHP web application for managing [iRedMail](https://www.iredmail.o
 Built with vanilla PHP 8.1+ -- no framework, no ORM, no template engine dependency. Uses `vlucas/phpdotenv` for environment configuration.
 
 ```
-kilimcininkoroglu/mailpanel v0.2.0
+kilimcininkoroglu/mailpanel v0.3.0
 ```
 
 ### Supported Backends
@@ -203,7 +203,6 @@ Session cookies are configured with `httponly=true` and `samesite=Lax`.
 ### Limitations
 
 - **User creation (LDAP)**: Form validates input but does not write to LDAP. MySQL backend fully supports user creation.
-- **CSV import**: Button exists in the UI but has no backend implementation
 - **Domain management**: Create/edit/delete domains is not supported
 - **PostgreSQL**: Not supported
 
