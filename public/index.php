@@ -1,0 +1,62 @@
+<?php
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/../src/bootstrap.php';
+
+use App\Controllers\AuthController;
+use App\Controllers\BaseController;
+use App\Controllers\DomainController;
+use App\Controllers\UserController;
+use App\Models\LdapConnectionException;
+use App\Router;
+use App\TemplateEngine;
+
+$tpl = new TemplateEngine(__DIR__ . '/../templates');
+$router = new Router();
+
+// Register routes (mirrors routes.py)
+$router->addRoute('GET', '/', function () {
+    header('Location: /domains');
+    exit;
+});
+
+$router->addRoute('GET', '/domains', function () use ($tpl) {
+    DomainController::domainList($tpl);
+});
+
+$router->addRoute(['GET', 'POST'], '/login', function () use ($tpl) {
+    AuthController::loginPage($tpl);
+});
+
+$router->addRoute('GET', '/logout', function () {
+    AuthController::logout();
+});
+
+$router->addRoute('GET', '/{domain}/users', function (string $domain) use ($tpl) {
+    UserController::userList($tpl, $domain);
+});
+
+$router->addRoute(['GET', 'POST'], '/{domain}/users/create', function (string $domain) use ($tpl) {
+    UserController::userCreateView($tpl, $domain);
+});
+
+$router->addRoute(['GET', 'POST'], '/{domain}/users/{userUid}/{editMode}', function (string $domain, string $userUid, string $editMode) use ($tpl) {
+    UserController::userView($tpl, $domain, $userUid, $editMode);
+});
+
+$router->setNotFoundHandler(function () use ($tpl) {
+    BaseController::page404($tpl);
+});
+
+// Dispatch request — catch LDAP connection errors at top level
+try {
+    $router->dispatch(
+        $_SERVER['REQUEST_URI'] ?? '/',
+        $_SERVER['REQUEST_METHOD'] ?? 'GET'
+    );
+} catch (LdapConnectionException $e) {
+    // LDAP connection error handler: redirect to logout (mirrors base_controller.py)
+    header('Location: /logout');
+    exit;
+}
