@@ -27,7 +27,8 @@ class LdapConnection
         if (str_starts_with($uri, 'ldaps://')) {
             $startTls = true;
             $uri = str_replace('ldaps://', 'ldap://', $uri);
-            ldap_set_option(null, LDAP_OPT_X_TLS_REQUIRE_CERT, LDAP_OPT_X_TLS_NEVER);
+            $tlsVerify = $settings->ldapTlsVerify ? LDAP_OPT_X_TLS_DEMAND : LDAP_OPT_X_TLS_NEVER;
+            ldap_set_option(null, LDAP_OPT_X_TLS_REQUIRE_CERT, $tlsVerify);
         }
 
         $conn = @ldap_connect($uri);

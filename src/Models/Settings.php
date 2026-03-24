@@ -30,6 +30,7 @@ class Settings
     public readonly string $ldapRootDn;
     public readonly string $ldapUser;
     public readonly string $ldapPassword;
+    public readonly bool $ldapTlsVerify;
 
     // MySQL settings (populated only when backend=mysql)
     public readonly string $mysqlHost;
@@ -74,6 +75,7 @@ class Settings
             $this->ldapRootDn = $this->envRequired('MAILPANEL_LDAP_ROOT_DN');
             $this->ldapUser = $this->envRequired('MAILPANEL_LDAP_USER');
             $this->ldapPassword = $this->envRequired('MAILPANEL_LDAP_PASSWORD');
+            $this->ldapTlsVerify = $this->envBool('MAILPANEL_LDAP_TLS_VERIFY', false);
 
             if (!str_starts_with($this->ldapUri, 'ldap://') && !str_starts_with($this->ldapUri, 'ldaps://')) {
                 throw new \RuntimeException("LDAP URI must start with ldap:// or ldaps://");
@@ -95,6 +97,7 @@ class Settings
             $this->ldapRootDn = '';
             $this->ldapUser = '';
             $this->ldapPassword = '';
+            $this->ldapTlsVerify = false;
         }
     }
 
