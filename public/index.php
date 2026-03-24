@@ -15,7 +15,7 @@ use App\TemplateEngine;
 $tpl = new TemplateEngine(__DIR__ . '/../templates');
 $router = new Router();
 
-// Register routes (mirrors routes.py)
+// Register routes
 $router->addRoute('GET', '/', function () {
     header('Location: /domains');
     exit;
