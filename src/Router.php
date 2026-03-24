@@ -52,8 +52,12 @@ class Router
         $path = parse_url($uri, PHP_URL_PATH) ?: '/';
         $method = strtoupper($method);
 
+        $pathMatched = false;
+
         foreach ($this->routes as $route) {
             if (preg_match($route['regex'], $path, $matches)) {
+                $pathMatched = true;
+
                 if (!in_array($method, $route['methods'], true)) {
                     continue;
                 }
@@ -65,9 +69,9 @@ class Router
             }
         }
 
-        // No route matched
-        http_response_code(404);
-        if ($this->notFoundHandler !== null) {
+        // No handler matched
+        http_response_code($pathMatched ? 405 : 404);
+        if (!$pathMatched && $this->notFoundHandler !== null) {
             call_user_func($this->notFoundHandler);
         }
     }
