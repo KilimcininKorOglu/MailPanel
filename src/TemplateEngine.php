@@ -32,12 +32,17 @@ class TemplateEngine
         $csrfToken = CsrfProtection::generateToken();
         $csrfField = '<input type="hidden" name="_csrf_token" value="' . htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') . '" />';
 
-        // Branding
+        // Branding and feature flags
         $settings = \App\Models\Settings::getInstance();
         $brand = [
             'name' => $settings->brandName,
             'logoUrl' => $settings->brandLogoUrl,
             'footerText' => $settings->brandFooterText,
+        ];
+        $features = [
+            'amavisd' => $settings->amavisdEnabled,
+            'fail2ban' => $settings->fail2banEnabled,
+            'iredapd' => $settings->iredapdEnabled,
         ];
 
         // EXTR_SKIP prevents overwriting local scope variables ($e, $localize, etc.)

@@ -5,11 +5,14 @@ declare(strict_types=1);
 require_once __DIR__ . '/../src/bootstrap.php';
 
 use App\Controllers\AdminController;
+use App\Controllers\AmavisdController;
 use App\Controllers\AuthController;
 use App\Controllers\BaseController;
 use App\Controllers\DashboardController;
 use App\Controllers\DeletedMailboxController;
 use App\Controllers\DomainController;
+use App\Controllers\Fail2banController;
+use App\Controllers\IredapdController;
 use App\Controllers\LogController;
 use App\Controllers\UserController;
 use App\Exceptions\BackendConnectionException;
@@ -114,6 +117,45 @@ $router->addRoute('POST', '/{domain}/users/{userUid}/delete', function (string $
 
 $router->addRoute(['GET', 'POST'], '/{domain}/users/{userUid}/{editMode}', function (string $domain, string $userUid, string $editMode) use ($tpl) {
     UserController::userView($tpl, $domain, $userUid, $editMode);
+});
+
+// Amavisd integration
+$router->addRoute('GET', '/amavisd/quarantine', function () use ($tpl) {
+    AmavisdController::quarantineList($tpl);
+});
+
+$router->addRoute('POST', '/amavisd/quarantine/{mailId}/delete', function (string $mailId) use ($tpl) {
+    AmavisdController::deleteMessage($tpl, $mailId);
+});
+
+$router->addRoute('GET', '/amavisd/maillog', function () use ($tpl) {
+    AmavisdController::mailLog($tpl);
+});
+
+$router->addRoute('POST', '/amavisd/cleanup', function () use ($tpl) {
+    AmavisdController::cleanup($tpl);
+});
+
+// Fail2ban integration
+$router->addRoute('GET', '/fail2ban', function () use ($tpl) {
+    Fail2banController::status($tpl);
+});
+
+$router->addRoute('POST', '/fail2ban/ban', function () use ($tpl) {
+    Fail2banController::banIp($tpl);
+});
+
+$router->addRoute('POST', '/fail2ban/unban', function () use ($tpl) {
+    Fail2banController::unbanIp($tpl);
+});
+
+// iRedAPD integration
+$router->addRoute(['GET', 'POST'], '/iredapd/throttle/{account}', function (string $account) use ($tpl) {
+    IredapdController::throttleView($tpl, $account);
+});
+
+$router->addRoute(['GET', 'POST'], '/iredapd/greylist/{account}', function (string $account) use ($tpl) {
+    IredapdController::greylistView($tpl, $account);
 });
 
 $router->setNotFoundHandler(function () use ($tpl) {

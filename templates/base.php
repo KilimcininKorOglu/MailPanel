@@ -19,6 +19,12 @@
         <?php if (!empty($session['isGlobalAdmin'])): ?>
         <a href="/admins">Admins</a>
         <a href="/logs">Logs</a>
+        <?php if (!empty($features['amavisd'])): ?>
+        <a href="/amavisd/quarantine">Quarantine</a>
+        <?php endif; ?>
+        <?php if (!empty($features['fail2ban'])): ?>
+        <a href="/fail2ban">Fail2ban</a>
+        <?php endif; ?>
         <?php endif; ?>
         <?php endif; ?>
       </div>

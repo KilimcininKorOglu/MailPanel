@@ -38,6 +38,26 @@ class Settings
     public readonly string $iredadminDbUser;
     public readonly string $iredadminDbPassword;
 
+    // Amavisd integration
+    public readonly bool $amavisdEnabled;
+    public readonly string $amavisdDbHost;
+    public readonly int $amavisdDbPort;
+    public readonly string $amavisdDbName;
+    public readonly string $amavisdDbUser;
+    public readonly string $amavisdDbPassword;
+
+    // Fail2ban integration
+    public readonly bool $fail2banEnabled;
+    public readonly string $fail2banJails;
+
+    // iRedAPD integration
+    public readonly bool $iredapdEnabled;
+    public readonly string $iredapdDbHost;
+    public readonly int $iredapdDbPort;
+    public readonly string $iredapdDbName;
+    public readonly string $iredapdDbUser;
+    public readonly string $iredapdDbPassword;
+
     // LDAP settings (populated only when backend=ldap)
     public readonly string $ldapUri;
     public readonly string $ldapRootDn;
@@ -96,6 +116,26 @@ class Settings
         $this->iredadminDbName = $this->env('MAILPANEL_IREDADMIN_DB_NAME', 'iredadmin');
         $this->iredadminDbUser = $this->env('MAILPANEL_IREDADMIN_DB_USER', '');
         $this->iredadminDbPassword = $this->env('MAILPANEL_IREDADMIN_DB_PASSWORD', '');
+
+        // Amavisd integration
+        $this->amavisdEnabled = $this->envBool('MAILPANEL_AMAVISD_ENABLED', false);
+        $this->amavisdDbHost = $this->env('MAILPANEL_AMAVISD_DB_HOST', '');
+        $this->amavisdDbPort = $this->envInt('MAILPANEL_AMAVISD_DB_PORT', 3306);
+        $this->amavisdDbName = $this->env('MAILPANEL_AMAVISD_DB_NAME', 'amavisd');
+        $this->amavisdDbUser = $this->env('MAILPANEL_AMAVISD_DB_USER', '');
+        $this->amavisdDbPassword = $this->env('MAILPANEL_AMAVISD_DB_PASSWORD', '');
+
+        // Fail2ban integration
+        $this->fail2banEnabled = $this->envBool('MAILPANEL_FAIL2BAN_ENABLED', false);
+        $this->fail2banJails = $this->env('MAILPANEL_FAIL2BAN_JAILS', 'dovecot,postfix,postfix-sasl');
+
+        // iRedAPD integration
+        $this->iredapdEnabled = $this->envBool('MAILPANEL_IREDAPD_ENABLED', false);
+        $this->iredapdDbHost = $this->env('MAILPANEL_IREDAPD_DB_HOST', '');
+        $this->iredapdDbPort = $this->envInt('MAILPANEL_IREDAPD_DB_PORT', 3306);
+        $this->iredapdDbName = $this->env('MAILPANEL_IREDAPD_DB_NAME', 'iredapd');
+        $this->iredapdDbUser = $this->env('MAILPANEL_IREDAPD_DB_USER', '');
+        $this->iredapdDbPassword = $this->env('MAILPANEL_IREDAPD_DB_PASSWORD', '');
 
         // Conditional backend settings
         if ($this->backend === 'ldap') {
