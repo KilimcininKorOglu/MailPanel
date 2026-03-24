@@ -23,6 +23,15 @@ class Settings
     public readonly bool $passwordHashesUsePrefixedScheme;
     public readonly string $passwordDefaultScheme;
     public readonly int $paginationPerPage;
+    public readonly int $sessionTimeout;
+    public readonly string $allowedIpRanges;
+
+    // iRedAdmin database settings (for activity logging)
+    public readonly string $iredadminDbHost;
+    public readonly int $iredadminDbPort;
+    public readonly string $iredadminDbName;
+    public readonly string $iredadminDbUser;
+    public readonly string $iredadminDbPassword;
 
     // LDAP settings (populated only when backend=ldap)
     public readonly string $ldapUri;
@@ -68,6 +77,15 @@ class Settings
         }
         $this->passwordDefaultScheme = $scheme;
         $this->paginationPerPage = $this->envInt('MAILPANEL_PAGINATION_PER_PAGE', 50);
+        $this->sessionTimeout = $this->envInt('MAILPANEL_SESSION_TIMEOUT', 1800);
+        $this->allowedIpRanges = $this->env('MAILPANEL_ALLOWED_IP_RANGES', '');
+
+        // iRedAdmin database (optional, for activity logging)
+        $this->iredadminDbHost = $this->env('MAILPANEL_IREDADMIN_DB_HOST', '');
+        $this->iredadminDbPort = $this->envInt('MAILPANEL_IREDADMIN_DB_PORT', 3306);
+        $this->iredadminDbName = $this->env('MAILPANEL_IREDADMIN_DB_NAME', 'iredadmin');
+        $this->iredadminDbUser = $this->env('MAILPANEL_IREDADMIN_DB_USER', '');
+        $this->iredadminDbPassword = $this->env('MAILPANEL_IREDADMIN_DB_PASSWORD', '');
 
         // Conditional backend settings
         if ($this->backend === 'ldap') {

@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Models\Settings;
+use App\Repositories\Ldap\LdapDashboardRepository;
 use App\Repositories\Ldap\LdapAdminRepository;
 use App\Repositories\Ldap\LdapAuthRepository;
 use App\Repositories\Ldap\LdapDomainRepository;
 use App\Repositories\Ldap\LdapForwardingRepository;
 use App\Repositories\Ldap\LdapQuotaRepository;
 use App\Repositories\Ldap\LdapUserRepository;
+use App\Repositories\Mysql\MysqlDashboardRepository;
 use App\Repositories\Mysql\MysqlAdminRepository;
 use App\Repositories\Mysql\MysqlAuthRepository;
 use App\Repositories\Mysql\MysqlDomainRepository;
@@ -29,6 +31,7 @@ class RepositoryFactory
     private static ?AdminRepositoryInterface $adminRepo = null;
     private static ?ForwardingRepositoryInterface $forwardingRepo = null;
     private static ?QuotaRepositoryInterface $quotaRepo = null;
+    private static ?DashboardRepositoryInterface $dashboardRepo = null;
 
     public static function getAuthRepository(): AuthRepositoryInterface
     {
@@ -94,5 +97,16 @@ class RepositoryFactory
             };
         }
         return self::$quotaRepo;
+    }
+
+    public static function getDashboardRepository(): DashboardRepositoryInterface
+    {
+        if (self::$dashboardRepo === null) {
+            self::$dashboardRepo = match (Settings::getInstance()->backend) {
+                'mysql' => new MysqlDashboardRepository(),
+                default => new LdapDashboardRepository(),
+            };
+        }
+        return self::$dashboardRepo;
     }
 }

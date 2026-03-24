@@ -7,7 +7,9 @@ require_once __DIR__ . '/../src/bootstrap.php';
 use App\Controllers\AdminController;
 use App\Controllers\AuthController;
 use App\Controllers\BaseController;
+use App\Controllers\DashboardController;
 use App\Controllers\DomainController;
+use App\Controllers\LogController;
 use App\Controllers\UserController;
 use App\Exceptions\BackendConnectionException;
 use App\Router;
@@ -18,8 +20,13 @@ $router = new Router();
 
 // Register routes
 $router->addRoute('GET', '/', function () {
-    header('Location: /domains');
+    header('Location: /dashboard');
     exit;
+});
+
+// Dashboard
+$router->addRoute('GET', '/dashboard', function () use ($tpl) {
+    DashboardController::dashboard($tpl);
 });
 
 // Authentication
@@ -63,6 +70,11 @@ $router->addRoute(['GET', 'POST'], '/admins/{adminEmail}/{editMode}', function (
 
 $router->addRoute('POST', '/admins/{adminEmail}/delete', function (string $adminEmail) use ($tpl) {
     AdminController::adminDelete($tpl, $adminEmail);
+});
+
+// Activity log
+$router->addRoute('GET', '/logs', function () use ($tpl) {
+    LogController::logList($tpl);
 });
 
 // User management

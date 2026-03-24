@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\CsrfProtection;
 use App\Repositories\RepositoryFactory;
+use App\Services\ActivityLogger;
 use App\TemplateEngine;
 
 class AuthController
@@ -30,6 +31,14 @@ class AuthController
             if (self::authenticateUser($email, $password)) {
                 session_regenerate_id(true);
                 $_SESSION['email'] = $email;
+                $_SESSION['lastActivity'] = time();
+
+                // Store RBAC info in session
+                $authRepo = RepositoryFactory::getAuthRepository();
+                $_SESSION['isGlobalAdmin'] = $authRepo->isGlobalAdmin($email);
+                $_SESSION['managedDomains'] = $authRepo->getManagedDomains($email);
+
+                ActivityLogger::logLogin($email);
                 header("Location: $next");
                 exit;
             }

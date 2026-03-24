@@ -11,4 +11,16 @@ interface AuthRepositoryInterface
      * Throws \Exception on failure (invalid credentials, not admin, etc.).
      */
     public function authenticate(string $email, string $password): bool;
+
+    /**
+     * Whether the given email is a global admin.
+     */
+    public function isGlobalAdmin(string $email): bool;
+
+    /**
+     * Returns domains managed by the given admin email.
+     *
+     * @return string[]
+     */
+    public function getManagedDomains(string $email): array;
 }

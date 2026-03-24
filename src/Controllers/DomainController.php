@@ -9,6 +9,7 @@ use App\Middleware;
 use App\Models\Domain;
 use App\Models\Settings;
 use App\Repositories\RepositoryFactory;
+use App\Services\ActivityLogger;
 use App\TemplateEngine;
 
 class DomainController
@@ -37,7 +38,7 @@ class DomainController
      */
     public static function domainCreate(TemplateEngine $tpl): void
     {
-        Middleware::loginRequired();
+        Middleware::globalAdminRequired();
 
         $error = null;
         $validationErrors = [];
@@ -61,6 +62,7 @@ class DomainController
                         $validationErrors['domainName'] = "Domain '{$domain->domainName}' already exists";
                     } else {
                         $repo->createDomain($domain);
+                        ActivityLogger::logCreate($domain->domainName, '', "Domain created: {$domain->domainName}");
                         header("Location: /domains");
                         exit;
                     }
@@ -103,6 +105,7 @@ class DomainController
                     settings: $domain->settings,
                 );
                 $repo->updateDomain($domain);
+                ActivityLogger::logUpdate($domainName, '', "Domain updated: {$domainName}");
                 $success = 'Domain updated successfully!';
             } catch (\Exception $e) {
                 $error = $e->getMessage();
@@ -128,12 +131,13 @@ class DomainController
      */
     public static function domainDelete(TemplateEngine $tpl, string $domainName): void
     {
-        Middleware::loginRequired();
+        Middleware::globalAdminRequired();
         CsrfProtection::validateToken();
 
         try {
             $adminEmail = $_SESSION['email'] ?? '';
             RepositoryFactory::getDomainRepository()->deleteDomain($domainName, $adminEmail);
+            ActivityLogger::logDelete($domainName, '', "Domain deleted: {$domainName}");
             header("Location: /domains");
             exit;
         } catch (\Exception $e) {

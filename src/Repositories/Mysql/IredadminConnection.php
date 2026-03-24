@@ -1,0 +1,56 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Repositories\Mysql;
+
+use App\Models\Settings;
+
+/**
+ * PDO connection singleton for the iRedAdmin database (activity logging).
+ * This is separate from MysqlConnection which connects to the vmail database.
+ */
+class IredadminConnection
+{
+    private static ?self $instance = null;
+    private ?\PDO $pdo = null;
+
+    private function __construct()
+    {
+        $settings = Settings::getInstance();
+
+        if (empty($settings->iredadminDbHost)) {
+            return; // Logging not configured
+        }
+
+        $dsn = "mysql:host={$settings->iredadminDbHost};port={$settings->iredadminDbPort};dbname={$settings->iredadminDbName};charset=utf8mb4";
+
+        try {
+            $this->pdo = new \PDO($dsn, $settings->iredadminDbUser, $settings->iredadminDbPassword, [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+                \PDO::ATTR_EMULATE_PREPARES => false,
+            ]);
+        } catch (\PDOException $e) {
+            error_log("IredAdmin DB connection failed: " . $e->getMessage());
+        }
+    }
+
+    public static function getInstance(): self
+    {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+    public function getPdo(): ?\PDO
+    {
+        return $this->pdo;
+    }
+
+    public function isAvailable(): bool
+    {
+        return $this->pdo !== null;
+    }
+}

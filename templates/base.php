@@ -14,8 +14,12 @@
       <div class="nav-left">
         <a class="brand" href="/"><img src="/static/logo-iredmail.png" alt="iredmail logo" /> MailPanel</a>
         <?php if (!empty($session['email'])): ?>
+        <a href="/dashboard">Dashboard</a>
         <a href="/domains">Domains</a>
+        <?php if (!empty($session['isGlobalAdmin'])): ?>
         <a href="/admins">Admins</a>
+        <a href="/logs">Logs</a>
+        <?php endif; ?>
         <?php endif; ?>
       </div>
       <div class="nav-right">

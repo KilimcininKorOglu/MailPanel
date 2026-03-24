@@ -12,7 +12,30 @@ class MysqlAuthRepository implements AuthRepositoryInterface
     {
         $pdo = MysqlConnection::getInstance()->getPdo();
 
+        // Try standalone admin table first
         $stmt = $pdo->prepare('SELECT password FROM admin WHERE username = :username AND active = 1');
+        $stmt->execute(['username' => $email]);
+        $row = $stmt->fetch();
+
+        if ($row !== false) {
+            if (!self::verifyPassword($password, $row['password'])) {
+                throw new \Exception("Invalid password for {$email}");
+            }
+
+            // Check if admin has any domain assignments
+            $stmt = $pdo->prepare("SELECT 1 FROM domain_admins WHERE username = :username LIMIT 1");
+            $stmt->execute(['username' => $email]);
+            if ($stmt->fetch() === false) {
+                throw new \Exception("User {$email} has no admin privileges");
+            }
+
+            return true;
+        }
+
+        // Try mailbox-based admin
+        $stmt = $pdo->prepare(
+            'SELECT password FROM mailbox WHERE username = :username AND active = 1 AND (isadmin = 1 OR isglobaladmin = 1)'
+        );
         $stmt->execute(['username' => $email]);
         $row = $stmt->fetch();
 
@@ -24,16 +47,41 @@ class MysqlAuthRepository implements AuthRepositoryInterface
             throw new \Exception("Invalid password for {$email}");
         }
 
+        return true;
+    }
+
+    public function isGlobalAdmin(string $email): bool
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+
+        // Check domain_admins table for 'ALL'
+        $stmt = $pdo->prepare("SELECT 1 FROM domain_admins WHERE username = :username AND domain = 'ALL' LIMIT 1");
+        $stmt->execute(['username' => $email]);
+        if ($stmt->fetch() !== false) {
+            return true;
+        }
+
+        // Check mailbox table for isglobaladmin flag
+        $stmt = $pdo->prepare("SELECT 1 FROM mailbox WHERE username = :username AND isglobaladmin = 1 LIMIT 1");
+        $stmt->execute(['username' => $email]);
+        return $stmt->fetch() !== false;
+    }
+
+    public function getManagedDomains(string $email): array
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+
         $stmt = $pdo->prepare(
-            "SELECT 1 FROM domain_admins WHERE username = :username AND domain = 'ALL' LIMIT 1"
+            "SELECT domain FROM domain_admins WHERE username = :username AND domain != 'ALL' ORDER BY domain"
         );
         $stmt->execute(['username' => $email]);
 
-        if ($stmt->fetch() === false) {
-            throw new \Exception("User {$email} is not a global administrator");
+        $domains = [];
+        while ($row = $stmt->fetch()) {
+            $domains[] = $row['domain'];
         }
 
-        return true;
+        return $domains;
     }
 
     /**

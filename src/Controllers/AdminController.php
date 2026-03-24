@@ -19,7 +19,7 @@ class AdminController
      */
     public static function adminList(TemplateEngine $tpl): void
     {
-        Middleware::loginRequired();
+        Middleware::globalAdminRequired();
 
         $admins = RepositoryFactory::getAdminRepository()->getAdmins();
 
@@ -33,7 +33,7 @@ class AdminController
      */
     public static function adminCreate(TemplateEngine $tpl): void
     {
-        Middleware::loginRequired();
+        Middleware::globalAdminRequired();
 
         $error = null;
         $validationErrors = [];
@@ -83,7 +83,7 @@ class AdminController
      */
     public static function adminView(TemplateEngine $tpl, string $adminEmail, string $editMode): void
     {
-        Middleware::loginRequired();
+        Middleware::globalAdminRequired();
 
         if (!in_array($editMode, ['general', 'password', 'domains'], true)) {
             http_response_code(404);
@@ -163,7 +163,7 @@ class AdminController
      */
     public static function adminDelete(TemplateEngine $tpl, string $adminEmail): void
     {
-        Middleware::loginRequired();
+        Middleware::globalAdminRequired();
         CsrfProtection::validateToken();
 
         try {
