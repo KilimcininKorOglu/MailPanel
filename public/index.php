@@ -31,6 +31,7 @@ use App\Controllers\WhiteBlacklistController;
 use App\Controllers\IredapdController;
 use App\Controllers\LogController;
 use App\Controllers\MailingListController;
+use App\Controllers\SearchController;
 use App\Controllers\SystemSettingsController;
 use App\Controllers\UserController;
 use App\Exceptions\BackendConnectionException;
@@ -58,6 +59,11 @@ $router->addRoute(['GET', 'POST'], '/login', function () use ($tpl) {
 
 $router->addRoute('GET', '/logout', function () {
     AuthController::logout();
+});
+
+// Search
+$router->addRoute('GET', '/search', function () use ($tpl) {
+    SearchController::search($tpl);
 });
 
 // Domain management

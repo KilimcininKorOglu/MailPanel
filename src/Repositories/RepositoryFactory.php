@@ -10,6 +10,7 @@ use App\Repositories\Mysql\MysqlAmavisdRepository;
 use App\Repositories\Mysql\MysqlBccRepository;
 use App\Repositories\Mysql\MysqlIredapdRepository;
 use App\Repositories\Mysql\MysqlLastLoginRepository;
+use App\Repositories\Mysql\MysqlSearchRepository;
 use App\Repositories\Mysql\MysqlMailingListRepository;
 use App\Repositories\Mysql\MysqlSpamPolicyRepository;
 use App\Repositories\Mysql\MysqlWhiteBlacklistRepository;
@@ -17,6 +18,7 @@ use App\Repositories\Mysql\MysqlRelayRepository;
 use App\Repositories\Ldap\LdapAliasRepository;
 use App\Repositories\Ldap\LdapBccRepository;
 use App\Repositories\Ldap\LdapDashboardRepository;
+use App\Repositories\Ldap\LdapSearchRepository;
 use App\Repositories\Ldap\LdapMailingListRepository;
 use App\Repositories\Ldap\LdapDomainAliasRepository;
 use App\Repositories\Ldap\LdapAdminRepository;
@@ -39,6 +41,7 @@ use App\Repositories\Pgsql\PgsqlAliasRepository;
 use App\Repositories\Pgsql\PgsqlAmavisdRepository;
 use App\Repositories\Pgsql\PgsqlBccRepository;
 use App\Repositories\Pgsql\PgsqlLastLoginRepository;
+use App\Repositories\Pgsql\PgsqlSearchRepository;
 use App\Repositories\Pgsql\PgsqlMailingListRepository;
 use App\Repositories\Pgsql\PgsqlSpamPolicyRepository;
 use App\Repositories\Pgsql\PgsqlWhiteBlacklistRepository;
@@ -68,6 +71,7 @@ class RepositoryFactory
     private static ?AliasRepositoryInterface $aliasRepo = null;
     private static ?BccRepositoryInterface $bccRepo = null;
     private static ?RelayRepositoryInterface $relayRepo = null;
+    private static ?SearchRepositoryInterface $searchRepo = null;
     private static ?LastLoginRepositoryInterface $lastLoginRepo = null;
     private static ?MailingListRepositoryInterface $mailingListRepo = null;
     private static ?SpamPolicyRepositoryInterface $spamPolicyRepo = null;
@@ -193,6 +197,18 @@ class RepositoryFactory
             };
         }
         return self::$relayRepo;
+    }
+
+    public static function getSearchRepository(): SearchRepositoryInterface
+    {
+        if (self::$searchRepo === null) {
+            self::$searchRepo = match (Settings::getInstance()->backend) {
+                'mysql' => new MysqlSearchRepository(),
+                'pgsql' => new PgsqlSearchRepository(),
+                default => new LdapSearchRepository(),
+            };
+        }
+        return self::$searchRepo;
     }
 
     public static function getLastLoginRepository(): LastLoginRepositoryInterface

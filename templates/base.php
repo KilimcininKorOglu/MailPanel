@@ -19,6 +19,7 @@
         <?php if (!empty($session['email'])): ?>
         <a href="/dashboard">Dashboard</a>
         <a href="/domains">Domains</a>
+        <a href="/search">Search</a>
         <?php if (!empty($session['isGlobalAdmin'])): ?>
         <a href="/aliases">Mail Aliases</a>
         <a href="/mailing-lists">Mailing Lists</a>
