@@ -9,6 +9,9 @@
       <?php if (!empty($error)): ?>
       <p class="text-error"><?= $e($error) ?></p>
       <?php endif; ?>
+      <?php if (($failedAttempts ?? 0) > 0): ?>
+      <p class="text-error">Failed login attempts: <?= $e($failedAttempts) ?></p>
+      <?php endif; ?>
 
       <input type="hidden" name="next" value="<?= $e($next) ?>" />
 

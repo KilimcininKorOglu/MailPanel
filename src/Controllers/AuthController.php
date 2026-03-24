@@ -32,6 +32,8 @@ class AuthController
                 session_regenerate_id(true);
                 $_SESSION['email'] = $email;
                 $_SESSION['lastActivity'] = time();
+                $_SESSION['loginIp'] = $_SERVER['REMOTE_ADDR'] ?? '';
+                $_SESSION['failedLoginAttempts'] = 0;
 
                 // Store RBAC info in session
                 $authRepo = RepositoryFactory::getAuthRepository();
@@ -42,6 +44,16 @@ class AuthController
                 header("Location: $next");
                 exit;
             }
+
+            if (!isset($_SESSION['failedLoginAttempts'])) {
+                $_SESSION['failedLoginAttempts'] = 0;
+            }
+            $_SESSION['failedLoginAttempts']++;
+
+            $clientIp = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+            error_log("WARNING: Failed login attempt for '{$email}' from IP {$clientIp} (attempt #{$_SESSION['failedLoginAttempts']})");
+            ActivityLogger::log('login', '', $email ?? '', "Login failed from {$clientIp}", 'error');
+
             $error = 'Invalid credentials!';
         }
 
@@ -49,6 +61,7 @@ class AuthController
             'next' => $next,
             'error' => $error,
             'email' => $email,
+            'failedAttempts' => $_SESSION['failedLoginAttempts'] ?? 0,
         ]);
     }
 

@@ -31,6 +31,18 @@ class Middleware
         }
         $_SESSION['lastActivity'] = time();
 
+        // Session IP change detection
+        if ($settings->sessionValidateIp) {
+            $currentIp = $_SERVER['REMOTE_ADDR'] ?? '';
+            $loginIp = $_SESSION['loginIp'] ?? '';
+            if ($loginIp !== '' && $currentIp !== $loginIp) {
+                $_SESSION = [];
+                session_destroy();
+                header('Location: /login?ip_changed=1');
+                exit;
+            }
+        }
+
         // IP restriction check
         if (!empty($settings->allowedIpRanges)) {
             $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';

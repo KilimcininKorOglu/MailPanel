@@ -26,6 +26,7 @@ class Settings
     public readonly bool $requireOldPasswordOnChange;
     public readonly int $sessionTimeout;
     public readonly string $allowedIpRanges;
+    public readonly bool $sessionValidateIp;
 
     // Branding
     public readonly string $brandName;
@@ -111,6 +112,7 @@ class Settings
         $this->requireOldPasswordOnChange = $this->envBool('MAILPANEL_REQUIRE_OLD_PASSWORD_ON_CHANGE', false);
         $this->sessionTimeout = $this->envInt('MAILPANEL_SESSION_TIMEOUT', 1800);
         $this->allowedIpRanges = $this->env('MAILPANEL_ALLOWED_IP_RANGES', '');
+        $this->sessionValidateIp = $this->envBool('MAILPANEL_SESSION_VALIDATE_IP', false);
 
         // Branding
         $this->brandName = $this->env('MAILPANEL_BRAND_NAME', 'MailPanel');

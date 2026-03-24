@@ -28,9 +28,14 @@
     </div>
   </form>
 
+  <form method="post" action="/logs/delete">
+    <?= $csrfField ?>
   <table class="striped">
     <thead>
       <tr>
+        <?php if (!empty($session['isGlobalAdmin'])): ?>
+        <th><input type="checkbox" id="selectAllLogs" onclick="document.querySelectorAll('input[name=\\'ids[]\\']').forEach(c=>c.checked=this.checked)" /></th>
+        <?php endif; ?>
         <th>Timestamp</th>
         <th>Admin</th>
         <th>IP</th>
@@ -43,6 +48,9 @@
     <tbody>
       <?php foreach ($logs as $log): ?>
       <tr>
+        <?php if (!empty($session['isGlobalAdmin'])): ?>
+        <td><input type="checkbox" name="ids[]" value="<?= $e($log['id'] ?? '') ?>" /></td>
+        <?php endif; ?>
         <td><?= $e($log['timestamp'] ?? '') ?></td>
         <td><?= $e($log['admin'] ?? '') ?></td>
         <td><?= $e($log['ip'] ?? '') ?></td>
@@ -53,10 +61,18 @@
       </tr>
       <?php endforeach; ?>
       <?php if (empty($logs)): ?>
-      <tr><td colspan="7" class="text-light">No log entries found.</td></tr>
+      <tr><td colspan="<?= !empty($session['isGlobalAdmin']) ? 8 : 7 ?>" class="text-light">No log entries found.</td></tr>
       <?php endif; ?>
     </tbody>
   </table>
+
+  <?php if (!empty($session['isGlobalAdmin']) && !empty($logs)): ?>
+  <div style="margin-top: 0.5rem;">
+    <button type="submit" class="button error outline" onclick="return confirm('Delete selected log entries?')">Delete selected</button>
+    <button type="submit" name="deleteAll" value="1" class="button error" onclick="return confirm('Delete ALL log entries? This cannot be undone.')">Delete all</button>
+  </div>
+  <?php endif; ?>
+  </form>
 
   <?php if (isset($paginatedResult)): ?>
     <?php include __DIR__ . '/pagination.php'; ?>

@@ -85,6 +85,10 @@ $router->addRoute('GET', '/logs', function () use ($tpl) {
     LogController::logList($tpl);
 });
 
+$router->addRoute('POST', '/logs/delete', function () use ($tpl) {
+    LogController::deleteLogs($tpl);
+});
+
 // Deleted mailboxes
 $router->addRoute('GET', '/deleted-mailboxes', function () use ($tpl) {
     DeletedMailboxController::list($tpl);
