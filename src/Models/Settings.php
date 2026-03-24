@@ -14,9 +14,7 @@ class Settings
     private static ?self $instance = null;
 
     public readonly string $backend;
-    public readonly string $name;
     public readonly string $secretKey;
-    public readonly bool $templatesAutoReload;
     public readonly int $passwordMinLength;
     public readonly bool $passwordIncludesSpecialChars;
     public readonly bool $passwordIncludesNumbers;
@@ -53,9 +51,7 @@ class Settings
         }
 
         // General settings
-        $this->name = $this->env('MAILPANEL_NAME', 'local');
         $this->secretKey = $this->envRequired('MAILPANEL_SECRET_KEY');
-        $this->templatesAutoReload = $this->envBool('MAILPANEL_TEMPLATES_AUTO_RELOAD', true);
         $this->passwordMinLength = $this->envInt('MAILPANEL_PASSWORD_MIN_LENGTH', 8);
         $this->passwordIncludesSpecialChars = $this->envBool('MAILPANEL_PASSWORD_INCLUDES_SPECIAL_CHARS', true);
         $this->passwordIncludesNumbers = $this->envBool('MAILPANEL_PASSWORD_INCLUDES_NUMBERS', true);
