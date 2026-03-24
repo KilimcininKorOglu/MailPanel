@@ -55,36 +55,37 @@ MAILPANEL_BACKEND=ldap    # or "mysql"
 
 ### LDAP Settings (required when `BACKEND=ldap`)
 
-| Variable        | Description                               | Example                    |
-| --------------- | ----------------------------------------- | -------------------------- |
-| `LDAP_URI`      | LDAP server URI (`ldap://` or `ldaps://`) | `ldaps://ldap.example.com` |
-| `LDAP_ROOT_DN`  | LDAP root DN                              | `dc=example,dc=com`        |
-| `LDAP_USER`     | Admin email or CN for LDAP bind           | `postmaster@example.com`   |
-| `LDAP_PASSWORD` | Admin password for LDAP bind              | `secret`                   |
+| Variable         | Default | Description                               | Example                    |
+| ---------------- | ------- | ----------------------------------------- | -------------------------- |
+| `LDAP_URI`       | -       | LDAP server URI (`ldap://` or `ldaps://`) | `ldaps://ldap.example.com` |
+| `LDAP_ROOT_DN`   | -       | LDAP root DN                              | `dc=example,dc=com`        |
+| `LDAP_USER`      | -       | Admin email or CN for LDAP bind           | `postmaster@example.com`   |
+| `LDAP_PASSWORD`  | -       | Admin password for LDAP bind              | `secret`                   |
+| `LDAP_TLS_VERIFY`| `false` | Verify TLS certificate on LDAP connection | `true`                     |
 
 ### MySQL Settings (required when `BACKEND=mysql`)
 
-| Variable         | Default | Description                |
-| ---------------- | ------- | -------------------------- |
-| `MYSQL_HOST`     | -       | MySQL server hostname      |
-| `MYSQL_PORT`     | `3306`  | MySQL server port          |
-| `MYSQL_DATABASE` | -       | Database name (e.g. `vmail`) |
-| `MYSQL_USER`     | -       | Database user              |
-| `MYSQL_PASSWORD` | -       | Database password          |
+| Variable         | Default      | Description                          |
+| ---------------- | ------------ | ------------------------------------ |
+| `MYSQL_HOST`     | -            | MySQL server hostname                |
+| `MYSQL_PORT`     | `3306`       | MySQL server port                    |
+| `MYSQL_DATABASE` | -            | Database name (e.g. `vmail`)         |
+| `MYSQL_USER`     | -            | Database user                        |
+| `MYSQL_PASSWORD` | -            | Database password                    |
+| `VMAIL_PATH`     | `/var/vmail` | Mail storage base path               |
+| `STORAGE_NODE`   | `vmail1`     | Storage node name for new mailboxes  |
 
 ### Optional Settings
 
-| Variable                              | Default    | Description                              |
-| ------------------------------------- | ---------- | ---------------------------------------- |
-| `NAME`                                | `local`    | Application instance name                |
-| `TEMPLATES_AUTO_RELOAD`               | `true`     | Auto-reload templates on change          |
-| `PASSWORD_MIN_LENGTH`                 | `8`        | Minimum password length                  |
-| `PASSWORD_INCLUDES_SPECIAL_CHARS`     | `true`     | Require special characters in passwords  |
-| `PASSWORD_INCLUDES_NUMBERS`           | `true`     | Require digits in passwords              |
-| `PASSWORD_INCLUDES_LOWERCASE`         | `true`     | Require lowercase letters in passwords   |
-| `PASSWORD_INCLUDES_UPPERCASE`         | `true`     | Require uppercase letters in passwords   |
-| `PASSWORD_HASHES_USE_PREFIXED_SCHEME` | `true`     | Use `{SCHEME}` prefix in password hashes |
-| `PASSWORD_DEFAULT_SCHEME`             | `SSHA512`  | Default password hashing scheme          |
+| Variable                              | Default      | Description                              |
+| ------------------------------------- | ------------ | ---------------------------------------- |
+| `PASSWORD_MIN_LENGTH`                 | `8`          | Minimum password length                  |
+| `PASSWORD_INCLUDES_SPECIAL_CHARS`     | `true`       | Require special characters in passwords  |
+| `PASSWORD_INCLUDES_NUMBERS`           | `true`       | Require digits in passwords              |
+| `PASSWORD_INCLUDES_LOWERCASE`         | `true`       | Require lowercase letters in passwords   |
+| `PASSWORD_INCLUDES_UPPERCASE`         | `true`       | Require uppercase letters in passwords   |
+| `PASSWORD_HASHES_USE_PREFIXED_SCHEME` | `true`       | Use `{SCHEME}` prefix in password hashes |
+| `PASSWORD_DEFAULT_SCHEME`             | `SSHA512`    | Default password hashing scheme          |
 
 ### Password Schemes
 
@@ -187,7 +188,7 @@ In both cases:
 
 Only global administrators can access the application. Regular mail users cannot log in.
 
-Session cookies are configured with `httponly=true` and `samesite=Lax`.
+Session cookies are configured with `httponly=true`, `samesite=Lax`, and `secure=true` (when served over HTTPS). Session IDs are regenerated after successful login to prevent session fixation.
 
 ## Features
 
@@ -196,9 +197,20 @@ Session cookies are configured with `httponly=true` and `samesite=Lax`.
 - Domain listing with user counts and active status
 - User listing sorted by identifier with quota and admin status
 - User profile editing: full name, first/last name, employee number, position, phone numbers, quota, admin flag, account status
+- User creation (MySQL backend)
 - Password change with configurable policy enforcement
 - TLS/STARTTLS support for secure LDAP connections
 - 10+ password hashing schemes (SSHA512, BCRYPT, SHA512, etc.)
+
+### Security
+
+- CSRF token validation on all POST forms
+- Session ID regeneration after login (session fixation prevention)
+- Open redirect prevention on login redirects
+- Secure cookie flag (conditional on HTTPS)
+- Configurable LDAP TLS certificate verification
+- Route parameter enforcement over form body values
+- Password piped via stdin to external commands (not CLI arguments)
 
 ### Limitations
 
@@ -235,6 +247,7 @@ Controller → RepositoryInterface → LdapRepository (when BACKEND=ldap)
 
 ```
 composer.json                        Dependencies and PSR-4 autoloading
+phpunit.xml.dist                     PHPUnit configuration
 .env.example                         Environment variable template
 public/
   index.php                          Front controller and route registration
@@ -244,8 +257,11 @@ src/
   bootstrap.php                      Autoloading, dotenv, session, extension check
   Router.php                         Regex-based URL router with named parameters
   Middleware.php                      Session-based authentication guard
-  TemplateEngine.php                  Layout inheritance via output buffering
-  TemplateFilters.php                 localize() and asMegabytes() helpers
+  CsrfProtection.php                 CSRF token generation and validation
+  TemplateEngine.php                 Layout inheritance via output buffering
+  TemplateFilters.php                localize() and asMegabytes() helpers
+  Exceptions/
+    BackendConnectionException.php   Shared base for backend connection errors
   Models/
     Settings.php                     Singleton config with backend selection
     LdapConnection.php               LDAP connection singleton (TLS/STARTTLS)
@@ -274,7 +290,22 @@ src/
     LdapUtils.php                    DN construction, LDAP modify helpers
     PasswordUtils.php                Password hashing (10+ schemes)
 templates/                           Native PHP templates
+tests/
+  bootstrap.php                      Test environment setup
+  Utils/
+    PasswordUtilsTest.php            Password hashing scheme tests
+  Models/
+    UserPasswordTest.php             Password validation rule tests
 ```
+
+## Testing
+
+```bash
+php composer.phar install
+vendor/bin/phpunit
+```
+
+Tests cover password hashing schemes (PasswordUtils) and password validation rules (UserPassword). PHPUnit 13 is used as the test framework.
 
 ## License
 
