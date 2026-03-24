@@ -153,7 +153,7 @@ class MysqlUserRepository implements UserRepositoryInterface
         return new User(
             uid: $uid,
             accountStatus: (bool) ($row['active'] ?? 0),
-            mailQuota: (int) ($row['quota'] ?? 100),
+            mailQuota: (int) ($row['quota'] ?? 0),
             cn: $row['name'] ?? '',
             givenName: $row['first_name'] ?? '',
             sn: $row['last_name'] ?? '',
