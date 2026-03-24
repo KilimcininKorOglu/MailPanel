@@ -32,6 +32,13 @@ interface UserRepositoryInterface
 
     /**
      * Creates a new user.
+     *
+     * @throws \RuntimeException if the backend does not support user creation
      */
     public function createUser(string $domain, User $user, string $passwordHash): void;
+
+    /**
+     * Whether this backend supports user creation.
+     */
+    public function supportsCreateUser(): bool;
 }

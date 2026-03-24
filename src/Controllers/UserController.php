@@ -27,6 +27,7 @@ class UserController
         $tpl->render('userList.php', [
             'domain' => $domain,
             'users' => $users,
+            'supportsCreate' => $userRepo->supportsCreateUser(),
         ]);
     }
 

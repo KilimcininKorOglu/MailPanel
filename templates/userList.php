@@ -11,11 +11,13 @@
         </div>
       </div>
 
+      <?php if (!empty($supportsCreate)): ?>
       <div class="row">
         <div class="col">
           <a href="/<?= $e($domain) ?>/users/create" class="button primary outline">Create</a>
         </div>
       </div>
+      <?php endif; ?>
 
       <table class="striped">
         <thead>

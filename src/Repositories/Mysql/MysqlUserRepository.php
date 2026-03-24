@@ -143,6 +143,11 @@ class MysqlUserRepository implements UserRepositoryInterface
         ]);
     }
 
+    public function supportsCreateUser(): bool
+    {
+        return true;
+    }
+
     /**
      * Converts a MySQL row to a User model.
      * Maps: name→cn, first_name→givenName, last_name→sn,

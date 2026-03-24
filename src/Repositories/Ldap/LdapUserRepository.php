@@ -103,4 +103,9 @@ class LdapUserRepository implements UserRepositoryInterface
     {
         throw new \RuntimeException("User creation is not supported for the LDAP backend");
     }
+
+    public function supportsCreateUser(): bool
+    {
+        return false;
+    }
 }
