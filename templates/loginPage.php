@@ -9,7 +9,7 @@
       <p class="text-error"><?= $e($error) ?></p>
       <?php endif; ?>
 
-      <input type="hidden" value="<?= $e($next) ?>" />
+      <input type="hidden" name="next" value="<?= $e($next) ?>" />
 
       <p>
         <label for="input__text">Email</label>
