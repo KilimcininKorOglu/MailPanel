@@ -37,6 +37,12 @@ class UserController
     {
         Middleware::loginRequired();
 
+        if (!in_array($editMode, ['general', 'password'], true)) {
+            http_response_code(404);
+            $tpl->render('page404.php');
+            return;
+        }
+
         $userRepo = RepositoryFactory::getUserRepository();
         $error = null;
         $validationErrors = [];
