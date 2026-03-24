@@ -190,6 +190,40 @@ $router->addRoute('POST', '/logs/delete', function () use ($tpl) {
     LogController::deleteLogs($tpl);
 });
 
+// Domain ownership verification
+$router->addRoute(['GET', 'POST'], '/verify/domain-ownership', function () use ($tpl) {
+    \App\Middleware::loginRequired();
+
+    $repo = \App\Repositories\RepositoryFactory::getDomainOwnershipRepository();
+    $success = null;
+    $error = null;
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        \App\CsrfProtection::validateToken();
+        $action = $_POST['action'] ?? '';
+        $domain = $_POST['domain'] ?? '';
+
+        if ($action === 'verify' && $domain !== '') {
+            $code = $repo->getVerifyCode($domain);
+            if ($code !== null && $repo->verifyDnsTxt($domain, $code)) {
+                $repo->markVerified($domain);
+                $success = "Domain '{$domain}' verified successfully!";
+            } else {
+                $error = "DNS TXT record not found for domain '{$domain}'.";
+            }
+        } elseif ($action === 'force_verify' && $domain !== '' && !empty($_SESSION['isGlobalAdmin'])) {
+            $repo->markVerified($domain);
+            $success = "Domain '{$domain}' force-verified!";
+        }
+    }
+
+    $tpl->render('domainOwnership.php', [
+        'pendingDomains' => $repo->getPendingDomains(),
+        'success' => $success,
+        'error' => $error,
+    ]);
+});
+
 // System settings
 $router->addRoute('GET', '/system-settings', function () use ($tpl) {
     SystemSettingsController::view($tpl);

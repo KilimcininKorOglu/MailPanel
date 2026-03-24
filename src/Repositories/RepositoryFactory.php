@@ -9,6 +9,7 @@ use App\Repositories\Mysql\MysqlAliasRepository;
 use App\Repositories\Mysql\MysqlAmavisdRepository;
 use App\Repositories\Mysql\MysqlBccRepository;
 use App\Repositories\Mysql\MysqlIredapdRepository;
+use App\Repositories\Mysql\MysqlDomainOwnershipRepository;
 use App\Repositories\Mysql\MysqlLastLoginRepository;
 use App\Repositories\Mysql\MysqlSearchRepository;
 use App\Repositories\Mysql\MysqlMailingListRepository;
@@ -40,6 +41,7 @@ use App\Repositories\Pgsql\PgsqlDashboardRepository;
 use App\Repositories\Pgsql\PgsqlAliasRepository;
 use App\Repositories\Pgsql\PgsqlAmavisdRepository;
 use App\Repositories\Pgsql\PgsqlBccRepository;
+use App\Repositories\Pgsql\PgsqlDomainOwnershipRepository;
 use App\Repositories\Pgsql\PgsqlLastLoginRepository;
 use App\Repositories\Pgsql\PgsqlSearchRepository;
 use App\Repositories\Pgsql\PgsqlMailingListRepository;
@@ -71,6 +73,7 @@ class RepositoryFactory
     private static ?AliasRepositoryInterface $aliasRepo = null;
     private static ?BccRepositoryInterface $bccRepo = null;
     private static ?RelayRepositoryInterface $relayRepo = null;
+    private static ?DomainOwnershipRepositoryInterface $domainOwnershipRepo = null;
     private static ?SearchRepositoryInterface $searchRepo = null;
     private static ?LastLoginRepositoryInterface $lastLoginRepo = null;
     private static ?MailingListRepositoryInterface $mailingListRepo = null;
@@ -197,6 +200,17 @@ class RepositoryFactory
             };
         }
         return self::$relayRepo;
+    }
+
+    public static function getDomainOwnershipRepository(): DomainOwnershipRepositoryInterface
+    {
+        if (self::$domainOwnershipRepo === null) {
+            self::$domainOwnershipRepo = match (Settings::getInstance()->backend) {
+                'pgsql' => new PgsqlDomainOwnershipRepository(),
+                default => new MysqlDomainOwnershipRepository(),
+            };
+        }
+        return self::$domainOwnershipRepo;
     }
 
     public static function getSearchRepository(): SearchRepositoryInterface

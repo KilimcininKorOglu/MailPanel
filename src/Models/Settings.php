@@ -32,6 +32,7 @@ class Settings
     public readonly bool $apiEnabled;
     public readonly string $apiKey;
     public readonly string $apiAllowedIps;
+    public readonly bool $requireDomainOwnershipVerification;
 
     // Branding
     public readonly string $brandName;
@@ -130,6 +131,7 @@ class Settings
         $this->apiEnabled = $this->envBool('MAILPANEL_API_ENABLED', false);
         $this->apiKey = $this->env('MAILPANEL_API_KEY', '');
         $this->apiAllowedIps = $this->env('MAILPANEL_API_ALLOWED_IPS', '');
+        $this->requireDomainOwnershipVerification = $this->envBool('MAILPANEL_REQUIRE_DOMAIN_OWNERSHIP_VERIFICATION', false);
 
         // Branding
         $this->brandName = $this->env('MAILPANEL_BRAND_NAME', 'MailPanel');
