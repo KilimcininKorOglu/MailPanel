@@ -315,6 +315,14 @@ $router->addRoute('GET', '/iredapd/greylist-tracking', function () use ($tpl) {
     IredapdController::greylistTracking($tpl);
 });
 
+$router->addRoute(['GET', 'POST'], '/iredapd/wblist-rdns', function () use ($tpl) {
+    IredapdController::wblistRdns($tpl);
+});
+
+$router->addRoute(['GET', 'POST'], '/iredapd/wblist-senderscore', function () use ($tpl) {
+    IredapdController::wblistSenderScore($tpl);
+});
+
 // ============================================================
 // REST API v1
 // ============================================================

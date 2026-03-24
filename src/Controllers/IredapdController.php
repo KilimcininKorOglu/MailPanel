@@ -114,6 +114,66 @@ class IredapdController
         ]);
     }
 
+    public static function wblistRdns(TemplateEngine $tpl): void
+    {
+        Middleware::globalAdminRequired();
+        self::requireEnabled();
+
+        $repo = RepositoryFactory::getIredapdRepository();
+        $success = null;
+        $error = null;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                $whitelists = array_filter(array_map('trim', explode("\n", $_POST['whitelists'] ?? '')));
+                $blacklists = array_filter(array_map('trim', explode("\n", $_POST['blacklists'] ?? '')));
+                $repo->setWblistRdns($whitelists, $blacklists);
+                ActivityLogger::log('update', '', '', 'Updated rDNS white/blacklist');
+                $success = 'rDNS white/blacklist updated!';
+            } catch (\Exception $e) {
+                $error = $e->getMessage();
+            }
+        }
+
+        $data = $repo->getWblistRdns();
+
+        $tpl->render('wblistRdns.php', [
+            'whitelists' => $data['whitelists'],
+            'blacklists' => $data['blacklists'],
+            'success' => $success,
+            'error' => $error,
+        ]);
+    }
+
+    public static function wblistSenderScore(TemplateEngine $tpl): void
+    {
+        Middleware::globalAdminRequired();
+        self::requireEnabled();
+
+        $repo = RepositoryFactory::getIredapdRepository();
+        $success = null;
+        $error = null;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                $ips = array_filter(array_map('trim', explode("\n", $_POST['ips'] ?? '')));
+                $repo->setSenderScoreWhitelist($ips);
+                ActivityLogger::log('update', '', '', 'Updated SenderScore whitelist');
+                $success = 'SenderScore whitelist updated!';
+            } catch (\Exception $e) {
+                $error = $e->getMessage();
+            }
+        }
+
+        $ips = $repo->getSenderScoreWhitelist();
+
+        $tpl->render('wblistSenderScore.php', [
+            'ips' => $ips,
+            'success' => $success,
+            'error' => $error,
+        ]);
+    }
+
     private static function requireEnabled(): void
     {
         if (!Settings::getInstance()->iredapdEnabled) {

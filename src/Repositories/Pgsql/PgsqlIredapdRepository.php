@@ -203,4 +203,99 @@ class PgsqlIredapdRepository implements IredapdRepositoryInterface
             return new \App\Models\PaginatedResult([], 0, $page, $perPage);
         }
     }
+
+    public function getWblistRdns(): array
+    {
+        $conn = IredapdPgsqlConnection::getInstance();
+        if (!$conn->isAvailable()) {
+            return ['whitelists' => [], 'blacklists' => []];
+        }
+
+        $pdo = $conn->getPdo();
+        $whitelists = [];
+        $blacklists = [];
+
+        try {
+            $stmt = $pdo->query("SELECT rdns, wb FROM wblist_rdns ORDER BY rdns");
+            while ($row = $stmt->fetch()) {
+                if ($row['wb'] === 'W') {
+                    $whitelists[] = $row['rdns'];
+                } else {
+                    $blacklists[] = $row['rdns'];
+                }
+            }
+        } catch (\PDOException $e) {
+            // Table may not exist
+        }
+
+        return ['whitelists' => $whitelists, 'blacklists' => $blacklists];
+    }
+
+    public function setWblistRdns(array $whitelists, array $blacklists): void
+    {
+        $conn = IredapdPgsqlConnection::getInstance();
+        if (!$conn->isAvailable()) {
+            return;
+        }
+
+        $pdo = $conn->getPdo();
+        $pdo->exec("DELETE FROM wblist_rdns");
+
+        $stmt = $pdo->prepare("INSERT INTO wblist_rdns (rdns, wb) VALUES (:rdns, :wb)");
+        foreach ($whitelists as $rdns) {
+            $rdns = trim($rdns);
+            if ($rdns !== '') {
+                $stmt->execute(['rdns' => strtolower($rdns), 'wb' => 'W']);
+            }
+        }
+        foreach ($blacklists as $rdns) {
+            $rdns = trim($rdns);
+            if ($rdns !== '') {
+                $stmt->execute(['rdns' => strtolower($rdns), 'wb' => 'B']);
+            }
+        }
+    }
+
+    public function getSenderScoreWhitelist(): array
+    {
+        $conn = IredapdPgsqlConnection::getInstance();
+        if (!$conn->isAvailable()) {
+            return [];
+        }
+
+        $pdo = $conn->getPdo();
+        $ips = [];
+
+        try {
+            $stmt = $pdo->query("SELECT client_address FROM senderscore_cache WHERE time = 4102444799 ORDER BY client_address");
+            while ($row = $stmt->fetch()) {
+                $ips[] = $row['client_address'];
+            }
+        } catch (\PDOException $e) {
+            // Table may not exist
+        }
+
+        return $ips;
+    }
+
+    public function setSenderScoreWhitelist(array $ips): void
+    {
+        $conn = IredapdPgsqlConnection::getInstance();
+        if (!$conn->isAvailable()) {
+            return;
+        }
+
+        $pdo = $conn->getPdo();
+        $pdo->exec("DELETE FROM senderscore_cache WHERE time = 4102444799");
+
+        $stmt = $pdo->prepare(
+            "INSERT INTO senderscore_cache (client_address, score, time) VALUES (:ip, 100, 4102444799)"
+        );
+        foreach ($ips as $ip) {
+            $ip = trim($ip);
+            if ($ip !== '' && filter_var($ip, FILTER_VALIDATE_IP)) {
+                $stmt->execute(['ip' => $ip]);
+            }
+        }
+    }
 }

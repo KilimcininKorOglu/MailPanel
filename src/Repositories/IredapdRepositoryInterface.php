@@ -16,4 +16,16 @@ interface IredapdRepositoryInterface
     public function setWhitelistedSenders(string $account, array $senders): void;
 
     public function getGreylistTrackingPaginated(int $page, int $perPage): \App\Models\PaginatedResult;
+
+    /** @return array{whitelists: string[], blacklists: string[]} */
+    public function getWblistRdns(): array;
+
+    /** @param string[] $whitelists @param string[] $blacklists */
+    public function setWblistRdns(array $whitelists, array $blacklists): void;
+
+    /** @return string[] Whitelisted IP addresses */
+    public function getSenderScoreWhitelist(): array;
+
+    /** @param string[] $ips */
+    public function setSenderScoreWhitelist(array $ips): void;
 }
