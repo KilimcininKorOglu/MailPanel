@@ -17,7 +17,10 @@ class MysqlUserRepository implements UserRepositoryInterface
         $stmt = $pdo->prepare(
             "SELECT username, name, first_name, last_name,
                     quota, employeeid, mobile, phone, active,
-                    isglobaladmin, rank, domain
+                    isglobaladmin, rank, domain,
+                    enablesmtp, enablesmtpsecured, enablepop3, enablepop3secured,
+                    enableimap, enableimapsecured, enablemanagesieve,
+                    enablemanagesievesecured, enablesogo
              FROM mailbox
              WHERE username = :username AND domain = :domain
              LIMIT 1"
@@ -42,7 +45,10 @@ class MysqlUserRepository implements UserRepositoryInterface
         $stmt = $pdo->prepare(
             "SELECT username, name, first_name, last_name,
                     quota, employeeid, mobile, phone, active,
-                    isglobaladmin, rank, domain
+                    isglobaladmin, rank, domain,
+                    enablesmtp, enablesmtpsecured, enablepop3, enablepop3secured,
+                    enableimap, enableimapsecured, enablemanagesieve,
+                    enablemanagesievesecured, enablesogo
              FROM mailbox
              WHERE domain = :domain AND username NOT LIKE CONCAT('@', :domainFilter)
              ORDER BY username"
@@ -72,7 +78,16 @@ class MysqlUserRepository implements UserRepositoryInterface
                 mobile = :mobile,
                 phone = :telephoneNumber,
                 active = :active,
-                isglobaladmin = :isGlobalAdmin
+                isglobaladmin = :isGlobalAdmin,
+                enablesmtp = :enableSmtp,
+                enablesmtpsecured = :enableSmtpSecured,
+                enablepop3 = :enablePop3,
+                enablepop3secured = :enablePop3Secured,
+                enableimap = :enableImap,
+                enableimapsecured = :enableImapSecured,
+                enablemanagesieve = :enableManagesieve,
+                enablemanagesievesecured = :enableManagesieveSecured,
+                enablesogo = :enableSogo
              WHERE username = :username AND domain = :domain"
         );
         $stmt->execute([
@@ -86,6 +101,15 @@ class MysqlUserRepository implements UserRepositoryInterface
             'telephoneNumber' => $user->telephoneNumber,
             'active' => $user->accountStatus ? 1 : 0,
             'isGlobalAdmin' => $user->domainGlobalAdmin ? 1 : 0,
+            'enableSmtp' => $user->enableSmtp ? 1 : 0,
+            'enableSmtpSecured' => $user->enableSmtpSecured ? 1 : 0,
+            'enablePop3' => $user->enablePop3 ? 1 : 0,
+            'enablePop3Secured' => $user->enablePop3Secured ? 1 : 0,
+            'enableImap' => $user->enableImap ? 1 : 0,
+            'enableImapSecured' => $user->enableImapSecured ? 1 : 0,
+            'enableManagesieve' => $user->enableManagesieve ? 1 : 0,
+            'enableManagesieveSecured' => $user->enableManagesieveSecured ? 1 : 0,
+            'enableSogo' => $user->enableSogo ? 1 : 0,
             'username' => "{$user->uid}@{$domain}",
             'domain' => $domain,
         ]);
@@ -181,7 +205,10 @@ class MysqlUserRepository implements UserRepositoryInterface
         $stmt = $pdo->prepare(
             "SELECT username, name, first_name, last_name,
                     quota, employeeid, mobile, phone, active,
-                    isglobaladmin, rank, domain
+                    isglobaladmin, rank, domain,
+                    enablesmtp, enablesmtpsecured, enablepop3, enablepop3secured,
+                    enableimap, enableimapsecured, enablemanagesieve,
+                    enablemanagesievesecured, enablesogo
              FROM mailbox
              WHERE {$where}
              ORDER BY {$orderColumn} {$orderDir}
@@ -262,6 +289,15 @@ class MysqlUserRepository implements UserRepositoryInterface
             mobile: $row['mobile'] ?? '',
             telephoneNumber: $row['phone'] ?? '',
             domainGlobalAdmin: (bool) ($row['isglobaladmin'] ?? 0),
+            enableSmtp: (bool) ($row['enablesmtp'] ?? 1),
+            enableSmtpSecured: (bool) ($row['enablesmtpsecured'] ?? 1),
+            enablePop3: (bool) ($row['enablepop3'] ?? 1),
+            enablePop3Secured: (bool) ($row['enablepop3secured'] ?? 1),
+            enableImap: (bool) ($row['enableimap'] ?? 1),
+            enableImapSecured: (bool) ($row['enableimapsecured'] ?? 1),
+            enableManagesieve: (bool) ($row['enablemanagesieve'] ?? 1),
+            enableManagesieveSecured: (bool) ($row['enablemanagesievesecured'] ?? 1),
+            enableSogo: (bool) ($row['enablesogo'] ?? 1),
         );
     }
 }

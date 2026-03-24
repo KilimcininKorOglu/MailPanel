@@ -32,12 +32,14 @@ class UserController
         $sortDir = $_GET['dir'] ?? 'asc';
 
         $paginatedResult = $userRepo->getUsersPaginated($domain, $page, $perPage, $startsWith, null, $sortBy, $sortDir);
+        $usedQuotas = RepositoryFactory::getQuotaRepository()->getDomainUsedQuotas($domain);
 
         $tpl->render('userList.php', [
             'domain' => $domain,
             'users' => $paginatedResult->items,
             'paginatedResult' => $paginatedResult,
             'supportsCreate' => $userRepo->supportsCreateUser(),
+            'usedQuotas' => $usedQuotas,
             'currentLetter' => $startsWith,
             'sortBy' => $sortBy,
             'sortDir' => $sortDir,
@@ -51,7 +53,7 @@ class UserController
     {
         Middleware::loginRequired();
 
-        if (!in_array($editMode, ['general', 'password'], true)) {
+        if (!in_array($editMode, ['general', 'password', 'services', 'forwarding'], true)) {
             http_response_code(404);
             $tpl->render('page404.php');
             return;
@@ -79,6 +81,31 @@ class UserController
                         $userRepo->updateUserPassword($domain, $userUid, $passwordHash);
                         $success = 'Password updated successfully!';
                     }
+                } elseif ($editMode === 'services') {
+                    $currentUser = $userRepo->getUser($domain, $userUid);
+                    if ($currentUser !== null) {
+                        $currentUser->enableSmtp = isset($_POST['enableSmtp']);
+                        $currentUser->enableSmtpSecured = isset($_POST['enableSmtpSecured']);
+                        $currentUser->enablePop3 = isset($_POST['enablePop3']);
+                        $currentUser->enablePop3Secured = isset($_POST['enablePop3Secured']);
+                        $currentUser->enableImap = isset($_POST['enableImap']);
+                        $currentUser->enableImapSecured = isset($_POST['enableImapSecured']);
+                        $currentUser->enableManagesieve = isset($_POST['enableManagesieve']);
+                        $currentUser->enableManagesieveSecured = isset($_POST['enableManagesieveSecured']);
+                        $currentUser->enableSogo = isset($_POST['enableSogo']);
+                        $userRepo->updateUser($domain, $currentUser);
+                        $success = 'Mail services updated successfully!';
+                    }
+                } elseif ($editMode === 'forwarding') {
+                    $email = "{$userUid}@{$domain}";
+                    $forwardingRepo = RepositoryFactory::getForwardingRepository();
+                    $addressesRaw = $_POST['forwardingAddresses'] ?? '';
+                    $addresses = array_filter(array_map('trim', explode("\n", $addressesRaw)));
+                    $keepCopy = isset($_POST['keepCopy']);
+
+                    $forwardingRepo->setForwardings($email, $domain, $addresses);
+                    $forwardingRepo->setKeepCopy($email, $domain, $keepCopy);
+                    $success = 'Forwarding settings updated successfully!';
                 }
             } catch (\Exception $e) {
                 $error = $e->getMessage();
@@ -92,6 +119,16 @@ class UserController
             return;
         }
 
+        // Fetch forwarding data if on forwarding tab
+        $forwardings = [];
+        $keepCopy = true;
+        if ($editMode === 'forwarding') {
+            $email = "{$userUid}@{$domain}";
+            $forwardingRepo = RepositoryFactory::getForwardingRepository();
+            $forwardings = $forwardingRepo->getForwardings($email);
+            $keepCopy = $forwardingRepo->getKeepCopy($email);
+        }
+
         $tpl->render('userView.php', [
             'domain' => $domain,
             'user' => $user,
@@ -99,7 +136,48 @@ class UserController
             'validationErrors' => $validationErrors,
             'success' => $success,
             'editMode' => $editMode,
+            'forwardings' => $forwardings,
+            'keepCopy' => $keepCopy,
         ]);
+    }
+
+    /**
+     * Handles bulk operations on selected users (POST only).
+     */
+    public static function bulkAction(TemplateEngine $tpl, string $domain): void
+    {
+        Middleware::loginRequired();
+        CsrfProtection::validateToken();
+
+        $selectedUsers = $_POST['selectedUsers'] ?? [];
+        $action = $_POST['action'] ?? '';
+        $adminEmail = $_SESSION['email'] ?? '';
+
+        if (empty($selectedUsers) || !is_array($selectedUsers)) {
+            header("Location: /{$domain}/users");
+            exit;
+        }
+
+        $userRepo = RepositoryFactory::getUserRepository();
+
+        foreach ($selectedUsers as $uid) {
+            try {
+                if ($action === 'enable' || $action === 'disable') {
+                    $user = $userRepo->getUser($domain, $uid);
+                    if ($user !== null) {
+                        $user->accountStatus = ($action === 'enable');
+                        $userRepo->updateUser($domain, $user);
+                    }
+                } elseif ($action === 'delete') {
+                    $userRepo->deleteUser($domain, $uid, $adminEmail);
+                }
+            } catch (\Exception $e) {
+                error_log("Bulk action '{$action}' failed for user '{$uid}@{$domain}': " . $e->getMessage());
+            }
+        }
+
+        header("Location: /{$domain}/users");
+        exit;
     }
 
     /**

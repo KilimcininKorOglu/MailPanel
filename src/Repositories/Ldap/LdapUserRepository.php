@@ -15,6 +15,7 @@ class LdapUserRepository implements UserRepositoryInterface
     private const USER_DETAIL_ATTRS = [
         'mail', 'accountStatus', 'domainGlobalAdmin', 'mailQuota', 'uid',
         'cn', 'givenName', 'sn', 'title', 'telephoneNumber', 'mobile', 'employeeNumber',
+        'enabledService',
     ];
 
     private const USER_LIST_ATTRS = [
@@ -40,6 +41,16 @@ class LdapUserRepository implements UserRepositoryInterface
 
         $entries = ldap_get_entries($conn, $result);
         $normalized = LdapUtils::normalizeEntry($entries[0], self::USER_DETAIL_ATTRS);
+
+        // enabledService is multi-valued — extract all values
+        if (isset($entries[0]['enabledservice'])) {
+            $services = [];
+            for ($j = 0; $j < ($entries[0]['enabledservice']['count'] ?? 0); $j++) {
+                $services[] = $entries[0]['enabledservice'][$j];
+            }
+            $normalized['enabledService'] = $services;
+        }
+
         return User::fromLdapEntry($normalized);
     }
 
@@ -89,6 +100,12 @@ class LdapUserRepository implements UserRepositoryInterface
         if (!ldap_modify_batch($conn, $dn, $mods)) {
             throw new \RuntimeException('LDAP update failed: ' . ldap_error($conn));
         }
+
+        // Update enabledService as a separate mod_replace (multi-valued attribute)
+        $serviceList = $user->toLdapServiceList();
+        if (!@ldap_mod_replace($conn, $dn, ['enabledService' => $serviceList])) {
+            throw new \RuntimeException('LDAP update failed: ' . ldap_error($conn));
+        }
     }
 
     public function updateUserPassword(string $domain, string $userUid, string $passwordHash): void
@@ -102,12 +119,54 @@ class LdapUserRepository implements UserRepositoryInterface
 
     public function createUser(string $domain, User $user, string $passwordHash): void
     {
-        throw new \RuntimeException("User creation is not supported for the LDAP backend");
+        $conn = LdapConnection::getInstance()->getConn();
+        $settings = \App\Models\Settings::getInstance();
+        $email = "{$user->uid}@{$domain}";
+        $dn = LdapUtils::getEmailDn($email);
+
+        $entry = [
+            'objectClass' => ['inetOrgPerson', 'mailUser', 'shadowAccount', 'amavisAccount'],
+            'mail' => $email,
+            'uid' => $user->uid,
+            'cn' => $user->cn ?: $user->uid,
+            'sn' => $user->sn ?: $user->uid,
+            'userPassword' => $passwordHash,
+            'accountStatus' => $user->accountStatus ? 'active' : 'disabled',
+            'homeDirectory' => "{$settings->vmailPath}/{$domain}/{$user->uid}/",
+            'amavisLocal' => 'TRUE',
+            'enabledService' => $user->toLdapServiceList(),
+            'storageBaseDirectory' => $settings->vmailPath,
+            'mailMessageStore' => "{$domain}/{$user->uid}/",
+        ];
+
+        if ($user->mailQuota > 0) {
+            $entry['mailQuota'] = (string) ($user->mailQuota * 1048576);
+        }
+
+        if ($user->givenName !== '') {
+            $entry['givenName'] = $user->givenName;
+        }
+        if ($user->employeeNumber !== '') {
+            $entry['employeeNumber'] = $user->employeeNumber;
+        }
+        if ($user->title !== '') {
+            $entry['title'] = $user->title;
+        }
+        if ($user->mobile !== '') {
+            $entry['mobile'] = $user->mobile;
+        }
+        if ($user->telephoneNumber !== '') {
+            $entry['telephoneNumber'] = $user->telephoneNumber;
+        }
+
+        if (!@ldap_add($conn, $dn, $entry)) {
+            throw new \RuntimeException('LDAP user creation failed: ' . ldap_error($conn));
+        }
     }
 
     public function supportsCreateUser(): bool
     {
-        return false;
+        return true;
     }
 
     public function getUsersPaginated(string $domain, int $page, int $perPage, ?string $startsWith = null, ?bool $activeOnly = null, string $sortBy = 'uid', string $sortDir = 'asc'): PaginatedResult

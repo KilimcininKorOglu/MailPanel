@@ -8,10 +8,14 @@ use App\Models\Settings;
 use App\Repositories\Ldap\LdapAdminRepository;
 use App\Repositories\Ldap\LdapAuthRepository;
 use App\Repositories\Ldap\LdapDomainRepository;
+use App\Repositories\Ldap\LdapForwardingRepository;
+use App\Repositories\Ldap\LdapQuotaRepository;
 use App\Repositories\Ldap\LdapUserRepository;
 use App\Repositories\Mysql\MysqlAdminRepository;
 use App\Repositories\Mysql\MysqlAuthRepository;
 use App\Repositories\Mysql\MysqlDomainRepository;
+use App\Repositories\Mysql\MysqlForwardingRepository;
+use App\Repositories\Mysql\MysqlQuotaRepository;
 use App\Repositories\Mysql\MysqlUserRepository;
 
 /**
@@ -23,6 +27,8 @@ class RepositoryFactory
     private static ?DomainRepositoryInterface $domainRepo = null;
     private static ?UserRepositoryInterface $userRepo = null;
     private static ?AdminRepositoryInterface $adminRepo = null;
+    private static ?ForwardingRepositoryInterface $forwardingRepo = null;
+    private static ?QuotaRepositoryInterface $quotaRepo = null;
 
     public static function getAuthRepository(): AuthRepositoryInterface
     {
@@ -66,5 +72,27 @@ class RepositoryFactory
             };
         }
         return self::$adminRepo;
+    }
+
+    public static function getForwardingRepository(): ForwardingRepositoryInterface
+    {
+        if (self::$forwardingRepo === null) {
+            self::$forwardingRepo = match (Settings::getInstance()->backend) {
+                'mysql' => new MysqlForwardingRepository(),
+                default => new LdapForwardingRepository(),
+            };
+        }
+        return self::$forwardingRepo;
+    }
+
+    public static function getQuotaRepository(): QuotaRepositoryInterface
+    {
+        if (self::$quotaRepo === null) {
+            self::$quotaRepo = match (Settings::getInstance()->backend) {
+                'mysql' => new MysqlQuotaRepository(),
+                default => new LdapQuotaRepository(),
+            };
+        }
+        return self::$quotaRepo;
     }
 }

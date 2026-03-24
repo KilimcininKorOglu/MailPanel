@@ -22,6 +22,16 @@ class User
         public string $mobile = '',
         public string $telephoneNumber = '',
         public bool $domainGlobalAdmin = false,
+        // Mail service toggles
+        public bool $enableSmtp = true,
+        public bool $enableSmtpSecured = true,
+        public bool $enablePop3 = true,
+        public bool $enablePop3Secured = true,
+        public bool $enableImap = true,
+        public bool $enableImapSecured = true,
+        public bool $enableManagesieve = true,
+        public bool $enableManagesieveSecured = true,
+        public bool $enableSogo = true,
     ) {}
 
     /**
@@ -32,6 +42,12 @@ class User
     {
         $quotaBytes = (int) ($entry['mailQuota'] ?? 0);
         $quotaMb = $quotaBytes > 0 ? (int) ($quotaBytes / 1048576) : 0;
+
+        // Parse enabledService multi-valued attribute
+        $services = [];
+        if (isset($entry['enabledService'])) {
+            $services = is_array($entry['enabledService']) ? $entry['enabledService'] : [$entry['enabledService']];
+        }
 
         return new self(
             uid: $entry['uid'] ?? '',
@@ -45,6 +61,15 @@ class User
             mobile: $entry['mobile'] ?? '',
             telephoneNumber: $entry['telephoneNumber'] ?? '',
             domainGlobalAdmin: ($entry['domainGlobalAdmin'] ?? '') === 'yes',
+            enableSmtp: in_array('smtp', $services, true) || empty($services),
+            enableSmtpSecured: in_array('smtpsecured', $services, true) || empty($services),
+            enablePop3: in_array('pop3', $services, true) || empty($services),
+            enablePop3Secured: in_array('pop3secured', $services, true) || empty($services),
+            enableImap: in_array('imap', $services, true) || empty($services),
+            enableImapSecured: in_array('imapsecured', $services, true) || empty($services),
+            enableManagesieve: in_array('managesieve', $services, true) || empty($services),
+            enableManagesieveSecured: in_array('managesievesecured', $services, true) || empty($services),
+            enableSogo: in_array('sogo', $services, true) || empty($services),
         );
     }
 
@@ -65,6 +90,39 @@ class User
             mobile: trim($post['mobile'] ?? ''),
             telephoneNumber: trim($post['telephoneNumber'] ?? ''),
             domainGlobalAdmin: isset($post['domainGlobalAdmin']),
+            enableSmtp: isset($post['enableSmtp']),
+            enableSmtpSecured: isset($post['enableSmtpSecured']),
+            enablePop3: isset($post['enablePop3']),
+            enablePop3Secured: isset($post['enablePop3Secured']),
+            enableImap: isset($post['enableImap']),
+            enableImapSecured: isset($post['enableImapSecured']),
+            enableManagesieve: isset($post['enableManagesieve']),
+            enableManagesieveSecured: isset($post['enableManagesieveSecured']),
+            enableSogo: isset($post['enableSogo']),
         );
+    }
+
+    /**
+     * Returns the list of enabled LDAP service names for this user.
+     *
+     * @return string[]
+     */
+    public function toLdapServiceList(): array
+    {
+        $services = ['deliver', 'lda', 'lmtp', 'forward', 'senderbcc', 'recipientbcc',
+                     'internal', 'doveadm', 'lib-storage', 'indexer-worker', 'dsync',
+                     'sieve', 'sievesecured', 'displayedInGlobalAddressBook'];
+
+        if ($this->enableSmtp) $services[] = 'smtp';
+        if ($this->enableSmtpSecured) $services[] = 'smtpsecured';
+        if ($this->enablePop3) $services[] = 'pop3';
+        if ($this->enablePop3Secured) $services[] = 'pop3secured';
+        if ($this->enableImap) $services[] = 'imap';
+        if ($this->enableImapSecured) $services[] = 'imapsecured';
+        if ($this->enableManagesieve) $services[] = 'managesieve';
+        if ($this->enableManagesieveSecured) $services[] = 'managesievesecured';
+        if ($this->enableSogo) $services[] = 'sogo';
+
+        return $services;
     }
 }

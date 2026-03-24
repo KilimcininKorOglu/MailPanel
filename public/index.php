@@ -74,6 +74,10 @@ $router->addRoute(['GET', 'POST'], '/{domain}/users/create', function (string $d
     UserController::userCreateView($tpl, $domain);
 });
 
+$router->addRoute('POST', '/{domain}/users/bulk', function (string $domain) use ($tpl) {
+    UserController::bulkAction($tpl, $domain);
+});
+
 $router->addRoute('POST', '/{domain}/users/{userUid}/delete', function (string $domain, string $userUid) use ($tpl) {
     UserController::userDelete($tpl, $domain, $userUid);
 });

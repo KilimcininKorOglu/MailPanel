@@ -22,6 +22,14 @@
               <?php if ($editMode === 'password'): ?>class="active"<?php endif; ?>
               href="/<?= $e($domain) ?>/users/<?= $e($user->uid) ?>/password"
             >Password</a>
+            <a
+              <?php if ($editMode === 'services'): ?>class="active"<?php endif; ?>
+              href="/<?= $e($domain) ?>/users/<?= $e($user->uid) ?>/services"
+            >Services</a>
+            <a
+              <?php if ($editMode === 'forwarding'): ?>class="active"<?php endif; ?>
+              href="/<?= $e($domain) ?>/users/<?= $e($user->uid) ?>/forwarding"
+            >Forwarding</a>
           </nav>
         </div>
       </div>
@@ -138,7 +146,7 @@
               </div>
             </div>
 
-            <?php else: ?>
+            <?php elseif ($editMode === 'password'): ?>
             <p>
               <label for="password">Password</label>
               <input name="password" type="password" id="password" required autocomplete="new-password"
@@ -161,6 +169,55 @@
               <button type="submit" class="button primary">
                 Save
               </button>
+            </p>
+
+            <?php elseif ($editMode === 'services'): ?>
+            <h3>Mail services</h3>
+            <p>
+              <label><input type="checkbox" name="enableSmtp" <?php if ($user->enableSmtp): ?>checked<?php endif; ?> /> SMTP</label>
+            </p>
+            <p>
+              <label><input type="checkbox" name="enableSmtpSecured" <?php if ($user->enableSmtpSecured): ?>checked<?php endif; ?> /> SMTP (TLS)</label>
+            </p>
+            <p>
+              <label><input type="checkbox" name="enablePop3" <?php if ($user->enablePop3): ?>checked<?php endif; ?> /> POP3</label>
+            </p>
+            <p>
+              <label><input type="checkbox" name="enablePop3Secured" <?php if ($user->enablePop3Secured): ?>checked<?php endif; ?> /> POP3 (TLS)</label>
+            </p>
+            <p>
+              <label><input type="checkbox" name="enableImap" <?php if ($user->enableImap): ?>checked<?php endif; ?> /> IMAP</label>
+            </p>
+            <p>
+              <label><input type="checkbox" name="enableImapSecured" <?php if ($user->enableImapSecured): ?>checked<?php endif; ?> /> IMAP (TLS)</label>
+            </p>
+            <p>
+              <label><input type="checkbox" name="enableManagesieve" <?php if ($user->enableManagesieve): ?>checked<?php endif; ?> /> ManageSieve</label>
+            </p>
+            <p>
+              <label><input type="checkbox" name="enableManagesieveSecured" <?php if ($user->enableManagesieveSecured): ?>checked<?php endif; ?> /> ManageSieve (TLS)</label>
+            </p>
+            <p>
+              <label><input type="checkbox" name="enableSogo" <?php if ($user->enableSogo): ?>checked<?php endif; ?> /> SOGo Webmail</label>
+            </p>
+            <p>
+              <button type="submit" class="button primary">Save services</button>
+            </p>
+
+            <?php elseif ($editMode === 'forwarding'): ?>
+            <h3>Email forwarding</h3>
+            <p>
+              <label for="forwardingAddresses">Forwarding addresses (one per line)</label>
+              <textarea id="forwardingAddresses" name="forwardingAddresses" rows="5" placeholder="user@example.com"><?= $e(implode("\n", $forwardings ?? [])) ?></textarea>
+            </p>
+            <p>
+              <label>
+                <input type="checkbox" name="keepCopy" <?php if ($keepCopy ?? true): ?>checked<?php endif; ?> />
+                Keep a local copy of forwarded messages
+              </label>
+            </p>
+            <p>
+              <button type="submit" class="button primary">Save forwarding</button>
             </p>
             <?php endif; ?>
           </form>
