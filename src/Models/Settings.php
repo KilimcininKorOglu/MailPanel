@@ -109,24 +109,30 @@ class Settings
         return self::$instance;
     }
 
+    private function rawEnv(string $key): string|false
+    {
+        return $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key) ?? false;
+    }
+
     private function env(string $key, string $default = ''): string
     {
-        return $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key) ?: $default;
+        $value = $this->rawEnv($key);
+        return $value !== false ? (string) $value : $default;
     }
 
     private function envRequired(string $key): string
     {
-        $value = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key) ?: '';
-        if ($value === '') {
+        $value = $this->rawEnv($key);
+        if ($value === false || $value === '') {
             throw new \RuntimeException("Required environment variable $key is not set");
         }
-        return $value;
+        return (string) $value;
     }
 
     private function envBool(string $key, bool $default): bool
     {
-        $value = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key) ?: '';
-        if ($value === '') {
+        $value = $this->rawEnv($key);
+        if ($value === false || $value === '') {
             return $default;
         }
         return filter_var($value, FILTER_VALIDATE_BOOLEAN);
@@ -134,8 +140,8 @@ class Settings
 
     private function envInt(string $key, int $default): int
     {
-        $value = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key) ?: '';
-        if ($value === '') {
+        $value = $this->rawEnv($key);
+        if ($value === false || $value === '') {
             return $default;
         }
         return (int) $value;
