@@ -44,7 +44,7 @@ class MysqlAuthRepository implements AuthRepositoryInterface
     {
         if (str_starts_with($storedHash, '{CRYPT}')) {
             $hash = substr($storedHash, 7);
-            return password_verify($password, $hash);
+            return hash_equals(crypt($password, $hash), $hash);
         }
 
         if (str_starts_with($storedHash, '{SSHA512}')) {
@@ -79,6 +79,11 @@ class MysqlAuthRepository implements AuthRepositoryInterface
 
         if (str_starts_with($storedHash, '$2')) {
             return password_verify($password, $storedHash);
+        }
+
+        // Bare MD5 hex (no prefix, 32 hex chars) — PLAIN-MD5 without prefix
+        if (preg_match('/^[a-f0-9]{32}$/i', $storedHash)) {
+            return hash_equals($storedHash, md5($password));
         }
 
         return hash_equals($storedHash, $password);

@@ -90,6 +90,7 @@ class UserController
 
         $userRepo = RepositoryFactory::getUserRepository();
         $validationErrors = [];
+        $error = null;
         $user = null;
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -104,8 +105,15 @@ class UserController
                     $password = $_POST['password'] ?? '';
                     $passwordRepeat = $_POST['password_repeat'] ?? '';
                     $validationErrors = UserPassword::validate($password, $passwordRepeat);
+
+                    if (empty($validationErrors)) {
+                        $passwordHash = PasswordUtils::generatePasswordHash($password);
+                        $userRepo->createUser($domain, $user, $passwordHash);
+                        header("Location: /{$domain}/users");
+                        exit;
+                    }
                 } catch (\Exception $e) {
-                    $validationErrors['uid'] = $e->getMessage();
+                    $error = $e->getMessage();
                 }
             }
         }
@@ -113,6 +121,7 @@ class UserController
         $tpl->render('userCreate.php', [
             'domain' => $domain,
             'validationErrors' => $validationErrors,
+            'error' => $error,
             'user' => $user,
         ]);
     }

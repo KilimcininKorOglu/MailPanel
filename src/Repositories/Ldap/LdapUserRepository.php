@@ -97,6 +97,6 @@ class LdapUserRepository implements UserRepositoryInterface
 
     public function createUser(string $domain, User $user, string $passwordHash): void
     {
-        // Not implemented — matches original LDAP stub
+        throw new \RuntimeException("User creation is not supported for the LDAP backend");
     }
 }

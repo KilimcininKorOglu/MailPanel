@@ -43,10 +43,10 @@ class MysqlUserRepository implements UserRepositoryInterface
                     quota, employeeid, mobile, phone, active,
                     isglobaladmin, rank, domain
              FROM mailbox
-             WHERE domain = :domain
+             WHERE domain = :domain AND username NOT LIKE CONCAT('@', :domainFilter)
              ORDER BY username"
         );
-        $stmt->execute(['domain' => $domain]);
+        $stmt->execute(['domain' => $domain, 'domainFilter' => $domain]);
 
         $users = [];
         while ($row = $stmt->fetch()) {
