@@ -27,7 +27,7 @@
               <label for="uid">Identifier</label>
               <input id="uid" type="text" name="uid" required
                 <?php if (!empty($validationErrors['uid'])): ?>class="error"<?php endif; ?>
-                value="<?= $e($user->uid ?? '') ?>"
+                value="<?= $e($user?->uid ?? '') ?>"
               />
               <?php if (!empty($validationErrors['uid'])): ?>
               <p class="text-error"><?= $e($validationErrors['uid']) ?></p>
@@ -59,7 +59,7 @@
                 id="mailQuota"
                 name="mailQuota"
                 type="number"
-                value="<?= $e($user->mailQuota ?? 100) ?>"
+                value="<?= $e($user?->mailQuota ?? 100) ?>"
                 required
               />
             </p>
