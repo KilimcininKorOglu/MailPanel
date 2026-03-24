@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\CsrfProtection;
 use App\Middleware;
+use App\Models\Settings;
 use App\Models\User;
 use App\Models\UserPassword;
 use App\Repositories\RepositoryFactory;
@@ -20,14 +22,25 @@ class UserController
     {
         Middleware::loginRequired();
 
+        $settings = Settings::getInstance();
         $userRepo = RepositoryFactory::getUserRepository();
-        $users = $userRepo->getUsers($domain);
-        usort($users, fn(User $a, User $b) => strcmp($a->uid, $b->uid));
+
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $perPage = $settings->paginationPerPage;
+        $startsWith = $_GET['letter'] ?? null;
+        $sortBy = $_GET['sort'] ?? 'uid';
+        $sortDir = $_GET['dir'] ?? 'asc';
+
+        $paginatedResult = $userRepo->getUsersPaginated($domain, $page, $perPage, $startsWith, null, $sortBy, $sortDir);
 
         $tpl->render('userList.php', [
             'domain' => $domain,
-            'users' => $users,
+            'users' => $paginatedResult->items,
+            'paginatedResult' => $paginatedResult,
             'supportsCreate' => $userRepo->supportsCreateUser(),
+            'currentLetter' => $startsWith,
+            'sortBy' => $sortBy,
+            'sortDir' => $sortDir,
         ]);
     }
 
@@ -87,6 +100,25 @@ class UserController
             'success' => $success,
             'editMode' => $editMode,
         ]);
+    }
+
+    /**
+     * Handles user deletion (POST only).
+     */
+    public static function userDelete(TemplateEngine $tpl, string $domain, string $userUid): void
+    {
+        Middleware::loginRequired();
+        CsrfProtection::validateToken();
+
+        try {
+            $adminEmail = $_SESSION['email'] ?? '';
+            RepositoryFactory::getUserRepository()->deleteUser($domain, $userUid, $adminEmail);
+            header("Location: /{$domain}/users");
+            exit;
+        } catch (\Exception $e) {
+            http_response_code(500);
+            $tpl->render('page404.php');
+        }
     }
 
     /**

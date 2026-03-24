@@ -1,0 +1,259 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Repositories\Mysql;
+
+use App\Models\Admin;
+use App\Repositories\AdminRepositoryInterface;
+
+class MysqlAdminRepository implements AdminRepositoryInterface
+{
+    public function getAdmins(): array
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+        $admins = [];
+
+        // Standalone admins
+        $stmt = $pdo->query(
+            "SELECT a.username, a.name, a.active, a.created, a.passwordlastchange,
+                    CASE WHEN da.domain = 'ALL' THEN 1 ELSE 0 END AS isGlobalAdmin
+             FROM admin a
+             LEFT JOIN domain_admins da ON da.username = a.username AND da.domain = 'ALL'
+             ORDER BY a.username"
+        );
+        while ($row = $stmt->fetch()) {
+            $admins[] = Admin::fromMysqlRow($row, false);
+        }
+
+        // Mailbox-based admins
+        $stmt = $pdo->query(
+            "SELECT m.username, m.name, m.active, m.created, m.passwordlastchange,
+                    m.isglobaladmin AS isGlobalAdmin
+             FROM mailbox m
+             WHERE m.isadmin = 1 OR m.isglobaladmin = 1
+             ORDER BY m.username"
+        );
+        while ($row = $stmt->fetch()) {
+            // Skip if already listed as standalone admin
+            $exists = false;
+            foreach ($admins as $existing) {
+                if ($existing->username === $row['username']) {
+                    $exists = true;
+                    break;
+                }
+            }
+            if (!$exists) {
+                $admins[] = Admin::fromMysqlRow($row, true);
+            }
+        }
+
+        usort($admins, fn(Admin $a, Admin $b) => strcmp($a->username, $b->username));
+
+        return $admins;
+    }
+
+    public function getAdmin(string $username): ?Admin
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->prepare(
+            "SELECT a.username, a.name, a.active, a.created, a.passwordlastchange
+             FROM admin a
+             WHERE a.username = :username
+             LIMIT 1"
+        );
+        $stmt->execute(['username' => $username]);
+        $row = $stmt->fetch();
+
+        if ($row === false) {
+            // Check mailbox-based admins
+            $stmt = $pdo->prepare(
+                "SELECT m.username, m.name, m.active, m.created, m.passwordlastchange,
+                        m.isglobaladmin AS isGlobalAdmin
+                 FROM mailbox m
+                 WHERE m.username = :username AND (m.isadmin = 1 OR m.isglobaladmin = 1)
+                 LIMIT 1"
+            );
+            $stmt->execute(['username' => $username]);
+            $row = $stmt->fetch();
+
+            if ($row === false) {
+                return null;
+            }
+
+            return Admin::fromMysqlRow($row, true);
+        }
+
+        // Check if global admin
+        $daStmt = $pdo->prepare(
+            "SELECT 1 FROM domain_admins WHERE username = :username AND domain = 'ALL' LIMIT 1"
+        );
+        $daStmt->execute(['username' => $username]);
+        $row['isGlobalAdmin'] = $daStmt->fetch() !== false ? 1 : 0;
+
+        return Admin::fromMysqlRow($row, false);
+    }
+
+    public function createAdmin(Admin $admin, string $passwordHash): void
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+
+        $pdo->beginTransaction();
+        try {
+            $stmt = $pdo->prepare(
+                "INSERT INTO admin (username, password, name, active, created)
+                 VALUES (:username, :password, :name, :active, NOW())"
+            );
+            $stmt->execute([
+                'username' => $admin->username,
+                'password' => $passwordHash,
+                'name' => $admin->name,
+                'active' => $admin->active ? 1 : 0,
+            ]);
+
+            if ($admin->isGlobalAdmin) {
+                $stmt = $pdo->prepare(
+                    "INSERT INTO domain_admins (username, domain, created, active)
+                     VALUES (:username, 'ALL', NOW(), 1)"
+                );
+                $stmt->execute(['username' => $admin->username]);
+            }
+
+            $pdo->commit();
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            throw new \RuntimeException("Failed to create admin '{$admin->username}': " . $e->getMessage());
+        }
+    }
+
+    public function updateAdmin(Admin $admin): void
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+
+        if ($admin->isMailboxAdmin) {
+            $stmt = $pdo->prepare(
+                "UPDATE mailbox SET name = :name, active = :active, isglobaladmin = :isGlobalAdmin
+                 WHERE username = :username"
+            );
+            $stmt->execute([
+                'name' => $admin->name,
+                'active' => $admin->active ? 1 : 0,
+                'isGlobalAdmin' => $admin->isGlobalAdmin ? 1 : 0,
+                'username' => $admin->username,
+            ]);
+        } else {
+            $stmt = $pdo->prepare(
+                "UPDATE admin SET name = :name, active = :active WHERE username = :username"
+            );
+            $stmt->execute([
+                'name' => $admin->name,
+                'active' => $admin->active ? 1 : 0,
+                'username' => $admin->username,
+            ]);
+
+            // Update global admin status
+            if ($admin->isGlobalAdmin) {
+                $stmt = $pdo->prepare(
+                    "INSERT IGNORE INTO domain_admins (username, domain, created, active)
+                     VALUES (:username, 'ALL', NOW(), 1)"
+                );
+                $stmt->execute(['username' => $admin->username]);
+            } else {
+                $stmt = $pdo->prepare(
+                    "DELETE FROM domain_admins WHERE username = :username AND domain = 'ALL'"
+                );
+                $stmt->execute(['username' => $admin->username]);
+            }
+        }
+    }
+
+    public function updateAdminPassword(string $username, string $passwordHash): void
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+
+        // Try admin table first
+        $stmt = $pdo->prepare(
+            "UPDATE admin SET password = :password, passwordlastchange = NOW() WHERE username = :username"
+        );
+        $stmt->execute(['password' => $passwordHash, 'username' => $username]);
+
+        if ($stmt->rowCount() === 0) {
+            // Try mailbox table
+            $stmt = $pdo->prepare(
+                "UPDATE mailbox SET password = :password, passwordlastchange = NOW() WHERE username = :username"
+            );
+            $stmt->execute(['password' => $passwordHash, 'username' => $username]);
+
+            if ($stmt->rowCount() === 0) {
+                throw new \RuntimeException("Admin '{$username}' not found");
+            }
+        }
+    }
+
+    public function deleteAdmin(string $username): void
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+
+        $pdo->beginTransaction();
+        try {
+            // Delete from admin table
+            $stmt = $pdo->prepare("DELETE FROM admin WHERE username = :username");
+            $stmt->execute(['username' => $username]);
+
+            // Delete from domain_admins
+            $stmt = $pdo->prepare("DELETE FROM domain_admins WHERE username = :username");
+            $stmt->execute(['username' => $username]);
+
+            // Revoke admin from mailbox if applicable
+            $stmt = $pdo->prepare(
+                "UPDATE mailbox SET isadmin = 0, isglobaladmin = 0
+                 WHERE username = :username AND (isadmin = 1 OR isglobaladmin = 1)"
+            );
+            $stmt->execute(['username' => $username]);
+
+            $pdo->commit();
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            throw new \RuntimeException("Failed to delete admin '{$username}': " . $e->getMessage());
+        }
+    }
+
+    public function getManagedDomains(string $adminUsername): array
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->prepare(
+            "SELECT domain FROM domain_admins WHERE username = :username AND domain != 'ALL' ORDER BY domain"
+        );
+        $stmt->execute(['username' => $adminUsername]);
+
+        $domains = [];
+        while ($row = $stmt->fetch()) {
+            $domains[] = $row['domain'];
+        }
+
+        return $domains;
+    }
+
+    public function assignDomainToAdmin(string $adminUsername, string $domain): void
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->prepare(
+            "INSERT IGNORE INTO domain_admins (username, domain, created, active)
+             VALUES (:username, :domain, NOW(), 1)"
+        );
+        $stmt->execute(['username' => $adminUsername, 'domain' => $domain]);
+    }
+
+    public function revokeDomainFromAdmin(string $adminUsername, string $domain): void
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->prepare(
+            "DELETE FROM domain_admins WHERE username = :username AND domain = :domain"
+        );
+        $stmt->execute(['username' => $adminUsername, 'domain' => $domain]);
+    }
+}

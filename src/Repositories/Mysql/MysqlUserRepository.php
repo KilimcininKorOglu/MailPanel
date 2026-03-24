@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories\Mysql;
 
+use App\Models\PaginatedResult;
 use App\Models\User;
 use App\Repositories\UserRepositoryInterface;
 
@@ -146,6 +147,97 @@ class MysqlUserRepository implements UserRepositoryInterface
     public function supportsCreateUser(): bool
     {
         return true;
+    }
+
+    public function getUsersPaginated(string $domain, int $page, int $perPage, ?string $startsWith = null, ?bool $activeOnly = null, string $sortBy = 'uid', string $sortDir = 'asc'): PaginatedResult
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+        $offset = ($page - 1) * $perPage;
+
+        $where = "domain = :domain";
+        $params = ['domain' => $domain];
+
+        if ($startsWith !== null && $startsWith !== '') {
+            $where .= " AND username LIKE :startsWith";
+            $params['startsWith'] = strtolower($startsWith) . "%@{$domain}";
+        }
+
+        if ($activeOnly === true) {
+            $where .= " AND active = 1";
+        } elseif ($activeOnly === false) {
+            $where .= " AND active = 0";
+        }
+
+        // Count
+        $countStmt = $pdo->prepare("SELECT COUNT(*) AS total FROM mailbox WHERE {$where}");
+        $countStmt->execute($params);
+        $totalCount = (int) $countStmt->fetch()['total'];
+
+        // Validate sort column
+        $allowedSorts = ['uid' => 'username', 'mailQuota' => 'quota', 'accountStatus' => 'active', 'cn' => 'name'];
+        $orderColumn = $allowedSorts[$sortBy] ?? 'username';
+        $orderDir = strtoupper($sortDir) === 'DESC' ? 'DESC' : 'ASC';
+
+        $stmt = $pdo->prepare(
+            "SELECT username, name, first_name, last_name,
+                    quota, employeeid, mobile, phone, active,
+                    isglobaladmin, rank, domain
+             FROM mailbox
+             WHERE {$where}
+             ORDER BY {$orderColumn} {$orderDir}
+             LIMIT :perPage OFFSET :offset"
+        );
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        $stmt->bindValue('perPage', $perPage, \PDO::PARAM_INT);
+        $stmt->bindValue('offset', $offset, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        $items = [];
+        while ($row = $stmt->fetch()) {
+            $items[] = self::rowToUser($row);
+        }
+
+        return new PaginatedResult($items, $totalCount, $page, $perPage);
+    }
+
+    public function deleteUser(string $domain, string $userUid, string $adminEmail): void
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+        $username = "{$userUid}@{$domain}";
+
+        $pdo->beginTransaction();
+        try {
+            // Record mailbox for deferred deletion
+            $stmt = $pdo->prepare(
+                "INSERT INTO deleted_mailboxes (username, maildir, domain, admin)
+                 SELECT username,
+                        CONCAT(storagebasedirectory, '/', storagenode, '/', maildir),
+                        domain, :admin
+                 FROM mailbox
+                 WHERE username = :username AND domain = :domain"
+            );
+            $stmt->execute(['admin' => $adminEmail, 'username' => $username, 'domain' => $domain]);
+
+            // Delete from related tables
+            $stmt = $pdo->prepare("DELETE FROM forwardings WHERE address = :u OR forwarding = :u2");
+            $stmt->execute(['u' => $username, 'u2' => $username]);
+
+            $stmt = $pdo->prepare("DELETE FROM used_quota WHERE username = :username");
+            $stmt->execute(['username' => $username]);
+
+            $stmt = $pdo->prepare("DELETE FROM domain_admins WHERE username = :username");
+            $stmt->execute(['username' => $username]);
+
+            $stmt = $pdo->prepare("DELETE FROM mailbox WHERE username = :username AND domain = :domain");
+            $stmt->execute(['username' => $username, 'domain' => $domain]);
+
+            $pdo->commit();
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            throw new \RuntimeException("Failed to delete user '{$username}': " . $e->getMessage());
+        }
     }
 
     /**

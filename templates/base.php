@@ -13,6 +13,10 @@
     <nav class="nav">
       <div class="nav-left">
         <a class="brand" href="/"><img src="/static/logo-iredmail.png" alt="iredmail logo" /> MailPanel</a>
+        <?php if (!empty($session['email'])): ?>
+        <a href="/domains">Domains</a>
+        <a href="/admins">Admins</a>
+        <?php endif; ?>
       </div>
       <div class="nav-right">
         <?php if (!empty($session['email'])): ?>

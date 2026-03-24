@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Models\PaginatedResult;
 use App\Models\User;
 
 interface UserRepositoryInterface
@@ -41,4 +42,14 @@ interface UserRepositoryInterface
      * Whether this backend supports user creation.
      */
     public function supportsCreateUser(): bool;
+
+    /**
+     * Returns paginated user list for a domain.
+     */
+    public function getUsersPaginated(string $domain, int $page, int $perPage, ?string $startsWith = null, ?bool $activeOnly = null, string $sortBy = 'uid', string $sortDir = 'asc'): PaginatedResult;
+
+    /**
+     * Deletes a user and records the mailbox for deferred deletion.
+     */
+    public function deleteUser(string $domain, string $userUid, string $adminEmail): void;
 }

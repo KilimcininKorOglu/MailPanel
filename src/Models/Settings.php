@@ -22,6 +22,7 @@ class Settings
     public readonly bool $passwordIncludesUppercase;
     public readonly bool $passwordHashesUsePrefixedScheme;
     public readonly string $passwordDefaultScheme;
+    public readonly int $paginationPerPage;
 
     // LDAP settings (populated only when backend=ldap)
     public readonly string $ldapUri;
@@ -66,6 +67,7 @@ class Settings
             throw new \RuntimeException("Unsupported password scheme: $scheme");
         }
         $this->passwordDefaultScheme = $scheme;
+        $this->paginationPerPage = $this->envInt('MAILPANEL_PAGINATION_PER_PAGE', 50);
 
         // Conditional backend settings
         if ($this->backend === 'ldap') {
