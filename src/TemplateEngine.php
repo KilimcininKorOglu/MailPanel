@@ -29,6 +29,8 @@ class TemplateEngine
         };
         $localize = [TemplateFilters::class, 'localize'];
         $asMegabytes = [TemplateFilters::class, 'asMegabytes'];
+        $csrfToken = CsrfProtection::generateToken();
+        $csrfField = '<input type="hidden" name="_csrf_token" value="' . htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') . '" />';
 
         extract($vars, EXTR_SKIP);
 

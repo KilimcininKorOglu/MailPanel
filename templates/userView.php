@@ -37,6 +37,7 @@
           <?php endif; ?>
 
           <form method="post">
+            <?= $csrfField ?>
 
             <?php if ($editMode === 'general'): ?>
             <input type="hidden" value="<?= $e($user->uid) ?>" name="uid" />

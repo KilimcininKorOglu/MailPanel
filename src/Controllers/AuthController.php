@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\CsrfProtection;
 use App\Repositories\RepositoryFactory;
 use App\TemplateEngine;
 
@@ -22,6 +23,7 @@ class AuthController
         $email = null;
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            CsrfProtection::validateToken();
             $email = $_POST['email'] ?? '';
             $password = $_POST['password'] ?? '';
 

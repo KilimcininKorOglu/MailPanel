@@ -5,6 +5,7 @@
       <h4>Authentication</h4>
     </header>
     <form method="post">
+      <?= $csrfField ?>
       <?php if (!empty($error)): ?>
       <p class="text-error"><?= $e($error) ?></p>
       <?php endif; ?>

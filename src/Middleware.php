@@ -17,5 +17,7 @@ class Middleware
             header("Location: /login?next={$next}");
             exit;
         }
+
+        CsrfProtection::validateToken();
     }
 }

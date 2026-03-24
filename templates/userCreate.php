@@ -23,6 +23,7 @@
           <?php endif; ?>
 
           <form method="post" autocomplete="off">
+            <?= $csrfField ?>
             <p>
               <label for="uid">Identifier</label>
               <input id="uid" type="text" name="uid" required
