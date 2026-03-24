@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\LdapConnection;
+use App\Repositories\RepositoryFactory;
 use App\TemplateEngine;
 
 class AuthController
@@ -43,7 +43,7 @@ class AuthController
     private static function authenticateUser(string $email, string $password): bool
     {
         try {
-            LdapConnection::connect($email, $password);
+            RepositoryFactory::getAuthRepository()->authenticate($email, $password);
             error_log("User {$email} authenticated successfully");
             return true;
         } catch (\Exception $e) {
