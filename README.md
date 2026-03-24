@@ -1,29 +1,30 @@
 # MailPanel
 
-A lightweight PHP web application for managing [iRedMail](https://www.iredmail.org/) users and domains via LDAP. Provides a simple admin interface for domain listing, user management, and password operations.
+A lightweight PHP web application for managing [iRedMail](https://www.iredmail.org/) users and domains. Supports both OpenLDAP and MySQL/MariaDB backends. Provides a simple admin interface for domain listing, user management, and password operations.
 
-Built with vanilla PHP 8.1+ -- no framework, no ORM, no template engine dependency. Uses the native `php-ldap` extension for all directory operations and `vlucas/phpdotenv` for environment configuration.
+Built with vanilla PHP 8.1+ -- no framework, no ORM, no template engine dependency. Uses `vlucas/phpdotenv` for environment configuration.
 
 ```
-kilimcininkoroglu/mailpanel v0.1.0
+kilimcininkoroglu/mailpanel v0.2.0
 ```
 
-### Supported Backend
+### Supported Backends
 
 | iRedMail Backend | Supported |
 | ---------------- | --------- |
 | OpenLDAP         | Yes       |
-| MySQL/MariaDB    | No        |
+| MySQL/MariaDB    | Yes       |
 | PostgreSQL       | No        |
 
-This application is designed exclusively for iRedMail installations using the **OpenLDAP** backend.
+Select the backend via `MAILPANEL_BACKEND` environment variable (`ldap` or `mysql`).
 
 ## Requirements
 
 - PHP 8.1 or higher
-- PHP LDAP extension (`ext-ldap`)
+- PHP LDAP extension (`ext-ldap`) -- for LDAP backend
+- PHP PDO MySQL extension (`ext-pdo_mysql`) -- for MySQL backend
 - [Composer](https://getcomposer.org/) (included as `composer.phar`)
-- An iRedMail server with OpenLDAP backend
+- An iRedMail server with OpenLDAP or MySQL/MariaDB backend
 
 ## Installation
 
@@ -34,23 +35,44 @@ php composer.phar install
 cp .env.example .env
 ```
 
-Edit `.env` with your LDAP server details, then start the application (see [Running](#running)).
+Edit `.env` with your backend choice and connection details, then start the application (see [Running](#running)).
 
 ## Configuration
 
 All settings use the `MAILPANEL_` prefix and are loaded from `.env` or `.env.prod` via [vlucas/phpdotenv](https://github.com/vlucas/phpdotenv).
 
-### Required Variables
+### Backend Selection
+
+```env
+MAILPANEL_BACKEND=ldap    # or "mysql"
+```
+
+### General Settings
+
+| Variable        | Required | Description                 |
+| --------------- | -------- | --------------------------- |
+| `SECRET_KEY`    | Yes      | Application secret key      |
+
+### LDAP Settings (required when `BACKEND=ldap`)
 
 | Variable        | Description                               | Example                    |
 | --------------- | ----------------------------------------- | -------------------------- |
-| `SECRET_KEY`    | Application secret key for sessions       | `my-random-secret-key`     |
 | `LDAP_URI`      | LDAP server URI (`ldap://` or `ldaps://`) | `ldaps://ldap.example.com` |
 | `LDAP_ROOT_DN`  | LDAP root DN                              | `dc=example,dc=com`        |
 | `LDAP_USER`     | Admin email or CN for LDAP bind           | `postmaster@example.com`   |
 | `LDAP_PASSWORD` | Admin password for LDAP bind              | `secret`                   |
 
-### Optional Variables
+### MySQL Settings (required when `BACKEND=mysql`)
+
+| Variable         | Default | Description                |
+| ---------------- | ------- | -------------------------- |
+| `MYSQL_HOST`     | -       | MySQL server hostname      |
+| `MYSQL_PORT`     | `3306`  | MySQL server port          |
+| `MYSQL_DATABASE` | -       | Database name (e.g. `vmail`) |
+| `MYSQL_USER`     | -       | Database user              |
+| `MYSQL_PASSWORD` | -       | Database password          |
+
+### Optional Settings
 
 | Variable                              | Default    | Description                              |
 | ------------------------------------- | ---------- | ---------------------------------------- |
@@ -79,8 +101,6 @@ Schemes recognized for reading existing hashes but not available for generation:
 `SHA`, `CRYPT`, `SHA512-CRYPT`
 
 ### Password Validation Rules
-
-Passwords must comply with the following rules (each configurable via environment variables):
 
 - Only printable ASCII characters (codes 32-126)
 - Minimum length (default: 8 characters)
@@ -153,23 +173,26 @@ Protected routes redirect unauthenticated users to `/login?next={original_url}`.
 
 ## Authentication
 
-Authentication is performed via LDAP bind:
+Authentication depends on the selected backend:
 
+**LDAP backend**: Binds to the LDAP server with user credentials and verifies the `domainGlobalAdmin=yes` attribute.
+
+**MySQL backend**: Verifies credentials against the `admin` table and checks the `domain_admins` table for global admin status (`domain='ALL'`).
+
+In both cases:
 1. User submits email and password on the login page
-2. The application binds to the LDAP server using the provided credentials
-3. After successful bind, it verifies the user has `domainGlobalAdmin=yes` attribute
-4. If verified, the email is stored in `$_SESSION['email']`
-5. On failure, an "Invalid credentials!" error is displayed
+2. Backend verifies credentials and admin status
+3. If verified, the email is stored in `$_SESSION['email']`
+4. On failure, an "Invalid credentials!" error is displayed
 
 Only global administrators can access the application. Regular mail users cannot log in.
 
 Session cookies are configured with `httponly=true` and `samesite=Lax`.
 
-LDAP connection errors (e.g., expired session) automatically redirect to `/logout`.
-
 ## Features
 
-- Session-based authentication via LDAP bind with admin verification
+- Dual backend support: OpenLDAP and MySQL/MariaDB
+- Session-based authentication with admin verification
 - Domain listing with user counts and active status
 - User listing sorted by identifier with quota and admin status
 - User profile editing: full name, first/last name, employee number, position, phone numbers, quota, admin flag, account status
@@ -179,81 +202,79 @@ LDAP connection errors (e.g., expired session) automatically redirect to `/logou
 
 ### Limitations
 
-- **User creation** is not fully implemented -- the form validates input but does not write to LDAP
-- **CSV import** button exists in the UI but has no backend implementation
-- **Domain management** (create/edit/delete domains) is not supported
-- Only **OpenLDAP** backend is supported (no MySQL/PostgreSQL)
+- **User creation (LDAP)**: Form validates input but does not write to LDAP. MySQL backend fully supports user creation.
+- **CSV import**: Button exists in the UI but has no backend implementation
+- **Domain management**: Create/edit/delete domains is not supported
+- **PostgreSQL**: Not supported
 
-## LDAP Directory Structure
+## Architecture
 
-The application expects the standard iRedMail LDAP tree:
+The application uses a **Repository pattern** to abstract data access. Controllers interact with repository interfaces, and the `RepositoryFactory` returns the correct implementation based on `MAILPANEL_BACKEND`.
 
 ```
-<ROOT_DN>                                          (e.g., dc=example,dc=com)
-  o=domains
-    domainName=example.com                         (objectClass: mailDomain)
-      [domainName, accountStatus, domainCurrentUserNumber]
-      ou=Users
-        mail=user@example.com                      (objectClass: mailUser)
-          [uid, mail, accountStatus, mailQuota, cn, givenName, sn,
-           employeeNumber, title, telephoneNumber, mobile,
-           domainGlobalAdmin, userPassword]
+Controller → RepositoryInterface → LdapRepository (when BACKEND=ldap)
+                                 → MysqlRepository (when BACKEND=mysql)
 ```
 
-### User Attributes
+### Field Mapping (LDAP vs MySQL)
 
-| Attribute             | Type   | Description              | Editable |
-| --------------------- | ------ | ------------------------ | -------- |
-| `uid`                 | string | User identifier          | No       |
-| `mail`                | string | Email address            | No       |
-| `accountStatus`       | string | `active` or `disabled`   | Yes      |
-| `mailQuota`           | int    | Quota in bytes           | Yes (MB) |
-| `cn`                  | string | Full name                | Yes      |
-| `givenName`           | string | First name               | Yes      |
-| `sn`                  | string | Last name                | Yes      |
-| `employeeNumber`      | string | Employee ID              | Yes      |
-| `title`               | string | Job position             | Yes      |
-| `telephoneNumber`     | string | Work phone               | Yes      |
-| `mobile`              | string | Mobile phone             | Yes      |
-| `domainGlobalAdmin`   | string | `yes` if global admin    | Yes      |
-| `userPassword`        | string | Hashed password          | Yes      |
+| User Model Field  | LDAP Attribute       | MySQL Column     |
+| ----------------- | -------------------- | ---------------- |
+| `uid`             | `uid`                | `username` (before @) |
+| `accountStatus`   | `accountStatus`      | `active` (1/0)   |
+| `mailQuota`       | `mailQuota` (bytes)  | `quota` (MB)     |
+| `cn`              | `cn`                 | `name`           |
+| `givenName`       | `givenName`          | `first_name`     |
+| `sn`              | `sn`                 | `last_name`      |
+| `employeeNumber`  | `employeeNumber`     | `employeeid`     |
+| `title`           | `title`              | `rank`           |
+| `mobile`          | `mobile`             | `mobile`         |
+| `telephoneNumber` | `telephoneNumber`    | `phone`          |
+| `domainGlobalAdmin` | `domainGlobalAdmin` | `isglobaladmin` (1/0) |
 
 ## Project Structure
 
 ```
-composer.json               Dependencies and PSR-4 autoloading
-.env.example                Environment variable template
+composer.json                        Dependencies and PSR-4 autoloading
+.env.example                         Environment variable template
 public/
-  index.php                 Front controller and route registration
-  .htaccess                 Apache URL rewrite rules
-  static/                   Chota CSS framework, custom styles, logo
+  index.php                          Front controller and route registration
+  .htaccess                          Apache URL rewrite rules
+  static/                            Chota CSS framework, custom styles, logo
 src/
-  bootstrap.php             Autoloading, dotenv, session initialization
-  Router.php                Regex-based URL router with named parameters
-  Middleware.php             Session-based authentication guard
-  TemplateEngine.php         Layout inheritance via output buffering
-  TemplateFilters.php        localize() and asMegabytes() helpers
+  bootstrap.php                      Autoloading, dotenv, session, extension check
+  Router.php                         Regex-based URL router with named parameters
+  Middleware.php                      Session-based authentication guard
+  TemplateEngine.php                  Layout inheritance via output buffering
+  TemplateFilters.php                 localize() and asMegabytes() helpers
   Models/
-    Settings.php            Singleton, reads MAILPANEL_* env vars
-    LdapConnection.php      LDAP singleton with TLS/STARTTLS support
-    User.php                Mail user data model (11 fields)
-    UserPassword.php        Password validation (7 rules)
+    Settings.php                     Singleton config with backend selection
+    LdapConnection.php               LDAP connection singleton (TLS/STARTTLS)
+    User.php                         Mail user data model (11 fields, quota in MB)
+    UserPassword.php                 Password validation (7 rules)
+  Repositories/
+    AuthRepositoryInterface.php      Authentication contract
+    DomainRepositoryInterface.php    Domain listing contract
+    UserRepositoryInterface.php      User CRUD contract
+    RepositoryFactory.php            Returns backend-specific implementations
+    Ldap/
+      LdapAuthRepository.php         LDAP bind + admin check
+      LdapDomainRepository.php       LDAP domain search
+      LdapUserRepository.php         LDAP user operations
+    Mysql/
+      MysqlConnection.php            PDO singleton
+      MysqlAuthRepository.php        Admin table auth + password verify
+      MysqlDomainRepository.php      Domain query with user COUNT
+      MysqlUserRepository.php        Mailbox table CRUD
   Controllers/
-    AuthController.php      Login (LDAP bind + admin check) and logout
-    DomainController.php    Domain listing from LDAP
-    UserController.php      User list, view/edit, create, password change
-    BaseController.php      404 error page handler
+    AuthController.php               Login and logout (backend-agnostic)
+    DomainController.php             Domain listing (backend-agnostic)
+    UserController.php               User CRUD (backend-agnostic)
+    BaseController.php               404 error page handler
   Utils/
-    LdapUtils.php           DN construction, LDAP modify helpers
-    PasswordUtils.php       Password hashing (10+ schemes)
-templates/
-  base.php                  HTML layout with navigation bar
-  loginPage.php             Login form
-  domainList.php            Domain table
-  userList.php              User table with breadcrumbs
-  userView.php              User edit form (general + password tabs)
-  userCreate.php            User creation form
-  page404.php               404 error page
+    LdapUtils.php                    DN construction, LDAP modify helpers
+    PasswordUtils.php                Password hashing (10+ schemes)
+templates/                           Native PHP templates
 ```
 
 ## License
