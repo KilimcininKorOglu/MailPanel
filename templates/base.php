@@ -21,5 +21,10 @@
       </div>
     </nav>
     <?= $bodyContent ?>
+    <footer class="footer">
+      <div class="container">
+        <span class="text-light">MailPanel v<?= defined('APP_VERSION') ? APP_VERSION : '0.0.0' ?></span>
+      </div>
+    </footer>
   </body>
 </html>
