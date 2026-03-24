@@ -24,3 +24,7 @@ Thumbs.db
 *.log
 
 .phpunit.cache/
+docker-iredmail-mariadb/
+docker-iredmail-postgresql/
+docker-iredmail-ldap/
+iRedAdmin/
