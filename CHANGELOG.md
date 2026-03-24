@@ -2,6 +2,58 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2026-03-24
+
+### Added
+- Domain CRUD with create, edit, delete, and pagination
+- Admin account management with standalone and mailbox-based admin support
+- User deletion with deferred mailbox retention
+- Pagination across all list views (configurable via MAILPANEL_PAGINATION_PER_PAGE)
+- Mail service toggles (SMTP, POP3, IMAP, ManageSieve, SOGo + secured variants)
+- Email forwarding management with keep-copy toggle
+- Used quota display on user list and detail views
+- Bulk user operations (enable/disable/delete)
+- LDAP user creation (previously threw RuntimeException)
+- Dashboard with domain/user/admin/quota statistics
+- Activity logging to iRedAdmin database with admin/IP/event tracking
+- Role-based access control (global admin vs domain admin)
+- Domain admin login support
+- Session timeout and IP restriction (CIDR notation)
+- Activity log viewer with domain/event filters
+- Deferred mailbox deletion with cancel/reschedule
+- Domain settings (default quota, password policies, disclaimer)
+- Branding support (name, logo, footer text, primary color)
+- CLI tools: bulkPasswordUpdate, bulkQuotaUpdate, deleteExpiredMailboxes, exportUsers, promoteToGlobalAdmin
+- Amavisd integration: quarantine viewer, release, mail log, cleanup
+- Fail2ban integration: jail status, ban/unban management
+- iRedAPD integration: throttle settings, greylisting, sender whitelist
+- Feature flags for external integrations in navigation
+- Old password verification on password change (configurable)
+- Random password generator with policy compliance (server + client-side)
+- Status filter tabs (All/Active/Disabled) on domain and user lists
+- Log entry deletion (individual and bulk)
+- Session IP change detection (MAILPANEL_SESSION_VALIDATE_IP)
+- Failed login attempt tracking with activity logging
+- Bulk domain operations (enable/disable/delete)
+- Bulk admin operations (enable/disable/delete)
+- Dashboard system information (hostname, uptime, load, software versions)
+- GitHub version check with 24-hour cache (MAILPANEL_CHECK_UPDATES)
+- Domain alias management with full CRUD (alias_domain table / LDAP domainAliasName)
+- CLI: dumpDisclaimer (Postfix integration), dumpQuarantinedMails, invalidateSessions
+
+### Changed
+- Root redirect changed from /domains to /dashboard
+- README comprehensively rewritten to document all features
+
+### Fixed
+- RBAC enforcement in UserController (domain admins restricted to managed domains)
+- Activity logging added to all user operations
+- Amavisd quarantine release via amavisd-release CLI
+- Navigation links for Deleted Mailboxes and iRedAPD
+- Configurable Amavisd cleanup retention days
+- Domain deletion now cleans up alias_domain references
+- Repository interfaces added for Amavisd and iRedAPD
+
 ## [0.3.0] - 2026-03-24
 
 ### Added
