@@ -7,14 +7,18 @@ namespace App\Repositories;
 use App\Models\Settings;
 use App\Repositories\Mysql\MysqlAliasRepository;
 use App\Repositories\Mysql\MysqlAmavisdRepository;
+use App\Repositories\Mysql\MysqlBccRepository;
 use App\Repositories\Mysql\MysqlIredapdRepository;
+use App\Repositories\Mysql\MysqlRelayRepository;
 use App\Repositories\Ldap\LdapAliasRepository;
+use App\Repositories\Ldap\LdapBccRepository;
 use App\Repositories\Ldap\LdapDashboardRepository;
 use App\Repositories\Ldap\LdapDomainAliasRepository;
 use App\Repositories\Ldap\LdapAdminRepository;
 use App\Repositories\Ldap\LdapAuthRepository;
 use App\Repositories\Ldap\LdapDomainRepository;
 use App\Repositories\Ldap\LdapForwardingRepository;
+use App\Repositories\Ldap\LdapRelayRepository;
 use App\Repositories\Ldap\LdapQuotaRepository;
 use App\Repositories\Ldap\LdapUserRepository;
 use App\Repositories\Mysql\MysqlDashboardRepository;
@@ -28,12 +32,14 @@ use App\Repositories\Mysql\MysqlUserRepository;
 use App\Repositories\Pgsql\PgsqlDashboardRepository;
 use App\Repositories\Pgsql\PgsqlAliasRepository;
 use App\Repositories\Pgsql\PgsqlAmavisdRepository;
+use App\Repositories\Pgsql\PgsqlBccRepository;
 use App\Repositories\Pgsql\PgsqlDomainAliasRepository;
 use App\Repositories\Pgsql\PgsqlAdminRepository;
 use App\Repositories\Pgsql\PgsqlAuthRepository;
 use App\Repositories\Pgsql\PgsqlDomainRepository;
 use App\Repositories\Pgsql\PgsqlForwardingRepository;
 use App\Repositories\Pgsql\PgsqlIredapdRepository;
+use App\Repositories\Pgsql\PgsqlRelayRepository;
 use App\Repositories\Pgsql\PgsqlQuotaRepository;
 use App\Repositories\Pgsql\PgsqlUserRepository;
 
@@ -51,6 +57,8 @@ class RepositoryFactory
     private static ?DashboardRepositoryInterface $dashboardRepo = null;
     private static ?DomainAliasRepositoryInterface $domainAliasRepo = null;
     private static ?AliasRepositoryInterface $aliasRepo = null;
+    private static ?BccRepositoryInterface $bccRepo = null;
+    private static ?RelayRepositoryInterface $relayRepo = null;
     private static ?AmavisdRepositoryInterface $amavisdRepo = null;
     private static ?IredapdRepositoryInterface $iredapdRepo = null;
 
@@ -148,6 +156,30 @@ class RepositoryFactory
             };
         }
         return self::$domainAliasRepo;
+    }
+
+    public static function getBccRepository(): BccRepositoryInterface
+    {
+        if (self::$bccRepo === null) {
+            self::$bccRepo = match (Settings::getInstance()->backend) {
+                'mysql' => new MysqlBccRepository(),
+                'pgsql' => new PgsqlBccRepository(),
+                default => new LdapBccRepository(),
+            };
+        }
+        return self::$bccRepo;
+    }
+
+    public static function getRelayRepository(): RelayRepositoryInterface
+    {
+        if (self::$relayRepo === null) {
+            self::$relayRepo = match (Settings::getInstance()->backend) {
+                'mysql' => new MysqlRelayRepository(),
+                'pgsql' => new PgsqlRelayRepository(),
+                default => new LdapRelayRepository(),
+            };
+        }
+        return self::$relayRepo;
     }
 
     public static function getAliasRepository(): AliasRepositoryInterface

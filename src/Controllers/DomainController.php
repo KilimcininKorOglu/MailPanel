@@ -94,7 +94,7 @@ class DomainController
     {
         Middleware::loginRequired();
 
-        if (!in_array($editMode, ['general', 'settings', 'catchall'], true)) {
+        if (!in_array($editMode, ['general', 'settings', 'catchall', 'bcc', 'relay'], true)) {
             http_response_code(404);
             $tpl->render('page404.php');
             return;
@@ -137,6 +137,22 @@ class DomainController
                     $aliasRepo->setCatchall($domainName, $catchallTarget !== '' ? $catchallTarget : null);
                     ActivityLogger::logUpdate($domainName, '', "Catch-all updated: {$domainName}");
                     $success = 'Catch-all address updated successfully!';
+                } elseif ($editMode === 'bcc') {
+                    CsrfProtection::validateToken();
+                    $bccRepo = RepositoryFactory::getBccRepository();
+                    $senderBcc = trim($_POST['senderBcc'] ?? '');
+                    $recipientBcc = trim($_POST['recipientBcc'] ?? '');
+                    $bccRepo->setDomainSenderBcc($domainName, $senderBcc !== '' ? $senderBcc : null);
+                    $bccRepo->setDomainRecipientBcc($domainName, $recipientBcc !== '' ? $recipientBcc : null);
+                    ActivityLogger::logUpdate($domainName, '', "BCC settings updated: {$domainName}");
+                    $success = 'BCC settings updated successfully!';
+                } elseif ($editMode === 'relay') {
+                    CsrfProtection::validateToken();
+                    $relayRepo = RepositoryFactory::getRelayRepository();
+                    $relayhost = trim($_POST['relayhost'] ?? '');
+                    $relayRepo->setRelayhost('@' . $domainName, $relayhost !== '' ? $relayhost : null);
+                    ActivityLogger::logUpdate($domainName, '', "Relay settings updated: {$domainName}");
+                    $success = 'Relay settings updated successfully!';
                 }
             } catch (\Exception $e) {
                 $error = $e->getMessage();
@@ -157,11 +173,27 @@ class DomainController
             $catchallTarget = RepositoryFactory::getAliasRepository()->getCatchall($domainName);
         }
 
+        $senderBcc = null;
+        $recipientBcc = null;
+        if ($editMode === 'bcc') {
+            $bccRepo = RepositoryFactory::getBccRepository();
+            $senderBcc = $bccRepo->getDomainSenderBcc($domainName);
+            $recipientBcc = $bccRepo->getDomainRecipientBcc($domainName);
+        }
+
+        $domainRelayhost = null;
+        if ($editMode === 'relay') {
+            $domainRelayhost = RepositoryFactory::getRelayRepository()->getRelayhost('@' . $domainName);
+        }
+
         $tpl->render('domainView.php', [
             'domain' => $domain,
             'domainSettings' => $domainSettings,
             'editMode' => $editMode,
             'catchallTarget' => $catchallTarget,
+            'senderBcc' => $senderBcc,
+            'recipientBcc' => $recipientBcc,
+            'domainRelayhost' => $domainRelayhost,
             'error' => $error,
             'success' => $success,
         ]);

@@ -108,6 +108,15 @@ $router->addRoute(['GET', 'POST'], '/domains/{domain}/catchall', function (strin
     DomainController::domainView($tpl, $domain, 'catchall');
 });
 
+// Domain BCC and relay
+$router->addRoute(['GET', 'POST'], '/domains/{domain}/bcc', function (string $domain) use ($tpl) {
+    DomainController::domainView($tpl, $domain, 'bcc');
+});
+
+$router->addRoute(['GET', 'POST'], '/domains/{domain}/relay', function (string $domain) use ($tpl) {
+    DomainController::domainView($tpl, $domain, 'relay');
+});
+
 // Admin management
 $router->addRoute('GET', '/admins', function () use ($tpl) {
     AdminController::adminList($tpl);

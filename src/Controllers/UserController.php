@@ -61,7 +61,7 @@ class UserController
     {
         Middleware::domainAdminRequired($domain);
 
-        if (!in_array($editMode, ['general', 'password', 'services', 'forwarding', 'aliases'], true)) {
+        if (!in_array($editMode, ['general', 'password', 'services', 'forwarding', 'aliases', 'bcc', 'relay'], true)) {
             http_response_code(404);
             $tpl->render('page404.php');
             return;
@@ -149,6 +149,24 @@ class UserController
                         }
                     }
                     $success = 'Alias addresses updated successfully!';
+                } elseif ($editMode === 'bcc') {
+                    CsrfProtection::validateToken();
+                    $email = "{$userUid}@{$domain}";
+                    $bccRepo = RepositoryFactory::getBccRepository();
+                    $senderBcc = trim($_POST['senderBcc'] ?? '');
+                    $recipientBcc = trim($_POST['recipientBcc'] ?? '');
+                    $bccRepo->setUserSenderBcc($email, $senderBcc !== '' ? $senderBcc : null);
+                    $bccRepo->setUserRecipientBcc($email, $recipientBcc !== '' ? $recipientBcc : null);
+                    ActivityLogger::logUpdate($domain, $userUid, "BCC settings updated");
+                    $success = 'BCC settings updated successfully!';
+                } elseif ($editMode === 'relay') {
+                    CsrfProtection::validateToken();
+                    $email = "{$userUid}@{$domain}";
+                    $relayRepo = RepositoryFactory::getRelayRepository();
+                    $relayhost = trim($_POST['relayhost'] ?? '');
+                    $relayRepo->setRelayhost($email, $relayhost !== '' ? $relayhost : null);
+                    ActivityLogger::logUpdate($domain, $userUid, "Relay settings updated");
+                    $success = 'Relay settings updated successfully!';
                 }
             } catch (\Exception $e) {
                 $error = $e->getMessage();
@@ -179,6 +197,23 @@ class UserController
             $userAliases = RepositoryFactory::getAliasRepository()->getUserAliases($email);
         }
 
+        // Fetch BCC data if on bcc tab
+        $userSenderBcc = null;
+        $userRecipientBcc = null;
+        if ($editMode === 'bcc') {
+            $email = "{$userUid}@{$domain}";
+            $bccRepo = RepositoryFactory::getBccRepository();
+            $userSenderBcc = $bccRepo->getUserSenderBcc($email);
+            $userRecipientBcc = $bccRepo->getUserRecipientBcc($email);
+        }
+
+        // Fetch relay data if on relay tab
+        $userRelayhost = null;
+        if ($editMode === 'relay') {
+            $email = "{$userUid}@{$domain}";
+            $userRelayhost = RepositoryFactory::getRelayRepository()->getRelayhost($email);
+        }
+
         $tpl->render('userView.php', [
             'domain' => $domain,
             'user' => $user,
@@ -189,6 +224,9 @@ class UserController
             'forwardings' => $forwardings,
             'keepCopy' => $keepCopy,
             'userAliases' => $userAliases,
+            'userSenderBcc' => $userSenderBcc,
+            'userRecipientBcc' => $userRecipientBcc,
+            'userRelayhost' => $userRelayhost,
             'requireOldPassword' => Settings::getInstance()->requireOldPasswordOnChange,
         ]);
     }

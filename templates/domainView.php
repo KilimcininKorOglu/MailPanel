@@ -26,6 +26,10 @@
            href="/domains/<?= $e($domain->domainName) ?>/settings">Settings</a>
         <a <?php if (($editMode ?? '') === 'catchall'): ?>class="active"<?php endif; ?>
            href="/domains/<?= $e($domain->domainName) ?>/catchall">Catch-all</a>
+        <a <?php if (($editMode ?? '') === 'bcc'): ?>class="active"<?php endif; ?>
+           href="/domains/<?= $e($domain->domainName) ?>/bcc">BCC</a>
+        <a <?php if (($editMode ?? '') === 'relay'): ?>class="active"<?php endif; ?>
+           href="/domains/<?= $e($domain->domainName) ?>/relay">Relay</a>
       </nav>
 
       <p class="text-light">
@@ -156,6 +160,49 @@
         </fieldset>
 
         <button type="submit" class="button primary">Save catch-all</button>
+      </form>
+
+      <?php elseif (($editMode ?? '') === 'bcc'): ?>
+      <form method="post">
+        <?= $csrfField ?>
+
+        <fieldset>
+          <legend>BCC Settings</legend>
+          <p class="text-light">BCC copies of all sent or received emails to the specified addresses.</p>
+
+          <label for="senderBcc">Sender BCC (outbound mail copy)</label>
+          <input id="senderBcc" type="email" name="senderBcc"
+            value="<?= $e($senderBcc ?? '') ?>"
+            placeholder="Leave empty to disable sender BCC"
+          />
+
+          <label for="recipientBcc">Recipient BCC (inbound mail copy)</label>
+          <input id="recipientBcc" type="email" name="recipientBcc"
+            value="<?= $e($recipientBcc ?? '') ?>"
+            placeholder="Leave empty to disable recipient BCC"
+          />
+        </fieldset>
+
+        <button type="submit" class="button primary">Save BCC settings</button>
+      </form>
+
+      <?php elseif (($editMode ?? '') === 'relay'): ?>
+      <form method="post">
+        <?= $csrfField ?>
+
+        <fieldset>
+          <legend>Sender-Dependent Relay</legend>
+          <p class="text-light">Route outbound mail from this domain through a specific relay server.</p>
+
+          <label for="relayhost">Relay Host</label>
+          <input id="relayhost" type="text" name="relayhost"
+            value="<?= $e($domainRelayhost ?? '') ?>"
+            placeholder="[smtp.relay.com]:587"
+          />
+          <p class="text-light">Format: <code>[hostname]:port</code> — square brackets prevent MX lookup.</p>
+        </fieldset>
+
+        <button type="submit" class="button primary">Save relay settings</button>
       </form>
       <?php endif; ?>
     </div>
