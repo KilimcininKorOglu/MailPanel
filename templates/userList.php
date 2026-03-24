@@ -14,7 +14,6 @@
       <div class="row">
         <div class="col">
           <a href="/<?= $e($domain) ?>/users/create" class="button primary outline">Create</a>
-          <a href="" class="button secondary outline">Create from .csv</a>
         </div>
       </div>
 
