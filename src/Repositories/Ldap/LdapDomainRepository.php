@@ -152,6 +152,12 @@ class LdapDomainRepository implements DomainRepositoryInterface
         }
     }
 
+    public function getDomainQuotaUsage(string $domainName): int
+    {
+        // LDAP backend has no access to the Dovecot used_quota table
+        return 0;
+    }
+
     /**
      * Recursively deletes an LDAP entry and all its children (leaf-first).
      */

@@ -7,6 +7,7 @@ namespace App\Repositories\Mysql;
 use App\Models\PaginatedResult;
 use App\Models\User;
 use App\Repositories\UserRepositoryInterface;
+use App\Utils\PasswordVerifier;
 
 class MysqlUserRepository implements UserRepositoryInterface
 {
@@ -265,6 +266,22 @@ class MysqlUserRepository implements UserRepositoryInterface
             $pdo->rollBack();
             throw new \RuntimeException("Failed to delete user '{$username}': " . $e->getMessage());
         }
+    }
+
+    public function verifyUserPassword(string $domain, string $userUid, string $password): bool
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+        $username = "{$userUid}@{$domain}";
+
+        $stmt = $pdo->prepare("SELECT password FROM mailbox WHERE username = :username AND domain = :domain LIMIT 1");
+        $stmt->execute(['username' => $username, 'domain' => $domain]);
+        $row = $stmt->fetch();
+
+        if ($row === false) {
+            return false;
+        }
+
+        return PasswordVerifier::verify($password, $row['password']);
     }
 
     /**

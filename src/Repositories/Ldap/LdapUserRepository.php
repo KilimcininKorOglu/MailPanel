@@ -225,6 +225,25 @@ class LdapUserRepository implements UserRepositoryInterface
         return new PaginatedResult($items, $totalCount, $page, $perPage);
     }
 
+    public function verifyUserPassword(string $domain, string $userUid, string $password): bool
+    {
+        $settings = \App\Models\Settings::getInstance();
+        $email = "{$userUid}@{$domain}";
+        $dn = LdapUtils::getEmailDn($email);
+
+        // Attempt bind as the user to verify password
+        $testConn = @ldap_connect($settings->ldapUri);
+        if ($testConn === false) {
+            return false;
+        }
+
+        ldap_set_option($testConn, LDAP_OPT_PROTOCOL_VERSION, 3);
+        $result = @ldap_bind($testConn, $dn, $password);
+        @ldap_unbind($testConn);
+
+        return $result;
+    }
+
     public function deleteUser(string $domain, string $userUid, string $adminEmail): void
     {
         $conn = LdapConnection::getInstance()->getConn();

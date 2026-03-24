@@ -38,6 +38,10 @@
         <td><?= $e($msg['subject'] ?? '') ?></td>
         <td><?= $e($msg['spam_level'] ?? '') ?></td>
         <td>
+          <form method="post" action="/amavisd/quarantine/<?= $e($msg['mail_id'] ?? '') ?>/release" style="display:inline" onsubmit="return confirm('Release this message to the recipient?')">
+            <?= $csrfField ?>
+            <button type="submit" class="button primary outline">Release</button>
+          </form>
           <form method="post" action="/amavisd/quarantine/<?= $e($msg['mail_id'] ?? '') ?>/delete" style="display:inline" onsubmit="return confirm('Delete this quarantined message?')">
             <?= $csrfField ?>
             <button type="submit" class="button error outline">Delete</button>

@@ -33,6 +33,24 @@ class AmavisdController
         ]);
     }
 
+    public static function releaseMessage(TemplateEngine $tpl, string $mailId): void
+    {
+        Middleware::globalAdminRequired();
+        CsrfProtection::validateToken();
+        self::requireEnabled();
+
+        try {
+            $repo = new MysqlAmavisdRepository();
+            $repo->releaseMessage($mailId);
+            ActivityLogger::log('update', '', '', "Released quarantined message: {$mailId}");
+        } catch (\Exception $e) {
+            error_log("Amavisd release failed: " . $e->getMessage());
+        }
+
+        header("Location: /amavisd/quarantine");
+        exit;
+    }
+
     public static function deleteMessage(TemplateEngine $tpl, string $mailId): void
     {
         Middleware::globalAdminRequired();
@@ -77,9 +95,10 @@ class AmavisdController
         CsrfProtection::validateToken();
         self::requireEnabled();
 
+        $settings = Settings::getInstance();
         $repo = new MysqlAmavisdRepository();
-        $quarantineDeleted = $repo->cleanupQuarantined(7);
-        $logDeleted = $repo->cleanupMailLog(7);
+        $quarantineDeleted = $repo->cleanupQuarantined($settings->amavisdRemoveQuarantinedInDays);
+        $logDeleted = $repo->cleanupMailLog($settings->amavisdRemoveMaillogInDays);
 
         ActivityLogger::log('delete', '', '', "Amavisd cleanup: {$quarantineDeleted} quarantine + {$logDeleted} log records");
 

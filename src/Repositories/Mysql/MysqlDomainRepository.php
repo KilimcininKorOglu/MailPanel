@@ -196,4 +196,17 @@ class MysqlDomainRepository implements DomainRepositoryInterface
             throw new \RuntimeException("Domain '{$domainName}' not found");
         }
     }
+
+    public function getDomainQuotaUsage(string $domainName): int
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->prepare(
+            "SELECT COALESCE(SUM(bytes), 0) AS totalBytes FROM used_quota WHERE username LIKE :pattern"
+        );
+        $stmt->execute(['pattern' => "%@{$domainName}"]);
+        $row = $stmt->fetch();
+
+        return (int) (($row['totalBytes'] ?? 0) / 1048576);
+    }
 }

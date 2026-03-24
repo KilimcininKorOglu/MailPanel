@@ -10,6 +10,7 @@ use App\Models\Settings;
 use App\Models\User;
 use App\Models\UserPassword;
 use App\Repositories\RepositoryFactory;
+use App\Services\ActivityLogger;
 use App\TemplateEngine;
 use App\Utils\PasswordUtils;
 
@@ -20,7 +21,7 @@ class UserController
      */
     public static function userList(TemplateEngine $tpl, string $domain): void
     {
-        Middleware::loginRequired();
+        Middleware::domainAdminRequired($domain);
 
         $settings = Settings::getInstance();
         $userRepo = RepositoryFactory::getUserRepository();
@@ -51,7 +52,7 @@ class UserController
      */
     public static function userView(TemplateEngine $tpl, string $domain, string $userUid, string $editMode): void
     {
-        Middleware::loginRequired();
+        Middleware::domainAdminRequired($domain);
 
         if (!in_array($editMode, ['general', 'password', 'services', 'forwarding'], true)) {
             http_response_code(404);
@@ -70,16 +71,29 @@ class UserController
                     $user = User::fromFormData($_POST);
                     $user->uid = $userUid;
                     $userRepo->updateUser($domain, $user);
+                    ActivityLogger::logUpdate($domain, $userUid, "User profile updated");
                     $success = 'Information updated successfully!';
                 } elseif ($editMode === 'password') {
-                    $password = $_POST['password'] ?? '';
-                    $passwordRepeat = $_POST['password_repeat'] ?? '';
-                    $validationErrors = UserPassword::validate($password, $passwordRepeat);
+                    // Old password verification if enabled
+                    $settings = Settings::getInstance();
+                    if ($settings->requireOldPasswordOnChange) {
+                        $oldPassword = $_POST['old_password'] ?? '';
+                        if (!$userRepo->verifyUserPassword($domain, $userUid, $oldPassword)) {
+                            $validationErrors['old_password'] = 'Current password is incorrect';
+                        }
+                    }
 
                     if (empty($validationErrors)) {
-                        $passwordHash = PasswordUtils::generatePasswordHash($password);
-                        $userRepo->updateUserPassword($domain, $userUid, $passwordHash);
-                        $success = 'Password updated successfully!';
+                        $password = $_POST['password'] ?? '';
+                        $passwordRepeat = $_POST['password_repeat'] ?? '';
+                        $validationErrors = UserPassword::validate($password, $passwordRepeat);
+
+                        if (empty($validationErrors)) {
+                            $passwordHash = PasswordUtils::generatePasswordHash($password);
+                            $userRepo->updateUserPassword($domain, $userUid, $passwordHash);
+                            ActivityLogger::logUpdate($domain, $userUid, "Password changed");
+                            $success = 'Password updated successfully!';
+                        }
                     }
                 } elseif ($editMode === 'services') {
                     $currentUser = $userRepo->getUser($domain, $userUid);
@@ -94,6 +108,7 @@ class UserController
                         $currentUser->enableManagesieveSecured = isset($_POST['enableManagesieveSecured']);
                         $currentUser->enableSogo = isset($_POST['enableSogo']);
                         $userRepo->updateUser($domain, $currentUser);
+                        ActivityLogger::logUpdate($domain, $userUid, "Mail services updated");
                         $success = 'Mail services updated successfully!';
                     }
                 } elseif ($editMode === 'forwarding') {
@@ -105,6 +120,7 @@ class UserController
 
                     $forwardingRepo->setForwardings($email, $domain, $addresses);
                     $forwardingRepo->setKeepCopy($email, $domain, $keepCopy);
+                    ActivityLogger::logUpdate($domain, $userUid, "Forwarding settings updated");
                     $success = 'Forwarding settings updated successfully!';
                 }
             } catch (\Exception $e) {
@@ -138,6 +154,7 @@ class UserController
             'editMode' => $editMode,
             'forwardings' => $forwardings,
             'keepCopy' => $keepCopy,
+            'requireOldPassword' => Settings::getInstance()->requireOldPasswordOnChange,
         ]);
     }
 
@@ -146,7 +163,7 @@ class UserController
      */
     public static function bulkAction(TemplateEngine $tpl, string $domain): void
     {
-        Middleware::loginRequired();
+        Middleware::domainAdminRequired($domain);
         CsrfProtection::validateToken();
 
         $selectedUsers = $_POST['selectedUsers'] ?? [];
@@ -176,6 +193,7 @@ class UserController
             }
         }
 
+        ActivityLogger::log($action, $domain, '', "Bulk {$action} on " . count($selectedUsers) . " users");
         header("Location: /{$domain}/users");
         exit;
     }
@@ -185,12 +203,13 @@ class UserController
      */
     public static function userDelete(TemplateEngine $tpl, string $domain, string $userUid): void
     {
-        Middleware::loginRequired();
+        Middleware::domainAdminRequired($domain);
         CsrfProtection::validateToken();
 
         try {
             $adminEmail = $_SESSION['email'] ?? '';
             RepositoryFactory::getUserRepository()->deleteUser($domain, $userUid, $adminEmail);
+            ActivityLogger::logDelete($domain, $userUid, "User deleted");
             header("Location: /{$domain}/users");
             exit;
         } catch (\Exception $e) {
@@ -204,7 +223,7 @@ class UserController
      */
     public static function userCreateView(TemplateEngine $tpl, string $domain): void
     {
-        Middleware::loginRequired();
+        Middleware::domainAdminRequired($domain);
 
         $userRepo = RepositoryFactory::getUserRepository();
         $validationErrors = [];
@@ -227,6 +246,7 @@ class UserController
                     if (empty($validationErrors)) {
                         $passwordHash = PasswordUtils::generatePasswordHash($password);
                         $userRepo->createUser($domain, $user, $passwordHash);
+                        ActivityLogger::logCreate($domain, $user->uid, "User created");
                         header("Location: /{$domain}/users");
                         exit;
                     }

@@ -23,6 +23,7 @@ class Settings
     public readonly bool $passwordHashesUsePrefixedScheme;
     public readonly string $passwordDefaultScheme;
     public readonly int $paginationPerPage;
+    public readonly bool $requireOldPasswordOnChange;
     public readonly int $sessionTimeout;
     public readonly string $allowedIpRanges;
 
@@ -30,8 +31,10 @@ class Settings
     public readonly string $brandName;
     public readonly string $brandLogoUrl;
     public readonly string $brandFooterText;
+    public readonly string $brandPrimaryColor;
 
     // iRedAdmin database settings (for activity logging)
+    public readonly bool $activityLoggingEnabled;
     public readonly string $iredadminDbHost;
     public readonly int $iredadminDbPort;
     public readonly string $iredadminDbName;
@@ -40,6 +43,8 @@ class Settings
 
     // Amavisd integration
     public readonly bool $amavisdEnabled;
+    public readonly int $amavisdRemoveQuarantinedInDays;
+    public readonly int $amavisdRemoveMaillogInDays;
     public readonly string $amavisdDbHost;
     public readonly int $amavisdDbPort;
     public readonly string $amavisdDbName;
@@ -48,6 +53,7 @@ class Settings
 
     // Fail2ban integration
     public readonly bool $fail2banEnabled;
+    public readonly string $fail2banSocket;
     public readonly string $fail2banJails;
 
     // iRedAPD integration
@@ -102,6 +108,7 @@ class Settings
         }
         $this->passwordDefaultScheme = $scheme;
         $this->paginationPerPage = $this->envInt('MAILPANEL_PAGINATION_PER_PAGE', 50);
+        $this->requireOldPasswordOnChange = $this->envBool('MAILPANEL_REQUIRE_OLD_PASSWORD_ON_CHANGE', false);
         $this->sessionTimeout = $this->envInt('MAILPANEL_SESSION_TIMEOUT', 1800);
         $this->allowedIpRanges = $this->env('MAILPANEL_ALLOWED_IP_RANGES', '');
 
@@ -109,8 +116,10 @@ class Settings
         $this->brandName = $this->env('MAILPANEL_BRAND_NAME', 'MailPanel');
         $this->brandLogoUrl = $this->env('MAILPANEL_BRAND_LOGO_URL', '/static/logo-iredmail.png');
         $this->brandFooterText = $this->env('MAILPANEL_BRAND_FOOTER_TEXT', '');
+        $this->brandPrimaryColor = $this->env('MAILPANEL_BRAND_PRIMARY_COLOR', '');
 
         // iRedAdmin database (optional, for activity logging)
+        $this->activityLoggingEnabled = $this->envBool('MAILPANEL_ACTIVITY_LOGGING_ENABLED', true);
         $this->iredadminDbHost = $this->env('MAILPANEL_IREDADMIN_DB_HOST', '');
         $this->iredadminDbPort = $this->envInt('MAILPANEL_IREDADMIN_DB_PORT', 3306);
         $this->iredadminDbName = $this->env('MAILPANEL_IREDADMIN_DB_NAME', 'iredadmin');
@@ -119,6 +128,8 @@ class Settings
 
         // Amavisd integration
         $this->amavisdEnabled = $this->envBool('MAILPANEL_AMAVISD_ENABLED', false);
+        $this->amavisdRemoveQuarantinedInDays = $this->envInt('MAILPANEL_AMAVISD_REMOVE_QUARANTINED_IN_DAYS', 7);
+        $this->amavisdRemoveMaillogInDays = $this->envInt('MAILPANEL_AMAVISD_REMOVE_MAILLOG_IN_DAYS', 7);
         $this->amavisdDbHost = $this->env('MAILPANEL_AMAVISD_DB_HOST', '');
         $this->amavisdDbPort = $this->envInt('MAILPANEL_AMAVISD_DB_PORT', 3306);
         $this->amavisdDbName = $this->env('MAILPANEL_AMAVISD_DB_NAME', 'amavisd');
@@ -127,6 +138,7 @@ class Settings
 
         // Fail2ban integration
         $this->fail2banEnabled = $this->envBool('MAILPANEL_FAIL2BAN_ENABLED', false);
+        $this->fail2banSocket = $this->env('MAILPANEL_FAIL2BAN_SOCKET', '');
         $this->fail2banJails = $this->env('MAILPANEL_FAIL2BAN_JAILS', 'dovecot,postfix,postfix-sasl');
 
         // iRedAPD integration

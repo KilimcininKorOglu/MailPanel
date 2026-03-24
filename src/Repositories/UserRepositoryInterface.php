@@ -52,4 +52,9 @@ interface UserRepositoryInterface
      * Deletes a user and records the mailbox for deferred deletion.
      */
     public function deleteUser(string $domain, string $userUid, string $adminEmail): void;
+
+    /**
+     * Verifies a user's current password.
+     */
+    public function verifyUserPassword(string $domain, string $userUid, string $password): bool;
 }

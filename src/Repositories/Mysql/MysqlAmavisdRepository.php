@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\Repositories\Mysql;
 
 use App\Models\PaginatedResult;
+use App\Repositories\AmavisdRepositoryInterface;
 
-class MysqlAmavisdRepository
+class MysqlAmavisdRepository implements AmavisdRepositoryInterface
 {
     public function getQuarantinedMessages(int $page, int $perPage, ?string $domain = null): PaginatedResult
     {
@@ -57,6 +58,48 @@ class MysqlAmavisdRepository
         $items = $stmt->fetchAll();
 
         return new PaginatedResult($items, $totalCount, $page, $perPage);
+    }
+
+    public function releaseMessage(string $mailId): void
+    {
+        $conn = AmavisdConnection::getInstance();
+        if (!$conn->isAvailable()) {
+            throw new \RuntimeException('Amavisd database not available');
+        }
+
+        $pdo = $conn->getPdo();
+
+        // Get the secret_id for amavisd-release
+        $stmt = $pdo->prepare("SELECT secret_id FROM msgs WHERE mail_id = :mailId LIMIT 1");
+        $stmt->execute(['mailId' => $mailId]);
+        $row = $stmt->fetch();
+
+        if ($row === false) {
+            throw new \RuntimeException("Quarantined message not found: {$mailId}");
+        }
+
+        $secretId = $row['secret_id'];
+        $safeSecretId = escapeshellarg($secretId);
+
+        $proc = @proc_open(
+            "amavisd-release {$safeSecretId} 2>&1",
+            [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes
+        );
+
+        if (!is_resource($proc)) {
+            throw new \RuntimeException('Failed to execute amavisd-release command');
+        }
+
+        fclose($pipes[0]);
+        $output = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $exitCode = proc_close($proc);
+
+        if ($exitCode !== 0) {
+            throw new \RuntimeException("amavisd-release failed (exit {$exitCode}): " . trim($output ?: ''));
+        }
     }
 
     public function deleteQuarantinedMessage(string $mailId): void

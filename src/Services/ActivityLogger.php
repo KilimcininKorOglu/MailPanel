@@ -4,16 +4,21 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Settings;
 use App\Repositories\Mysql\IredadminConnection;
 
 /**
  * Logs admin activities to the iredadmin.log table.
- * Silently does nothing if the iredadmin database is not configured.
+ * Silently does nothing if logging is disabled or the iredadmin database is not configured.
  */
 class ActivityLogger
 {
     public static function log(string $event, string $domain, string $username, string $msg, string $logLevel = 'info'): void
     {
+        if (!Settings::getInstance()->activityLoggingEnabled) {
+            return;
+        }
+
         $conn = IredadminConnection::getInstance();
         if (!$conn->isAvailable()) {
             return;

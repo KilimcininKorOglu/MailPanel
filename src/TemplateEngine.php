@@ -38,6 +38,7 @@ class TemplateEngine
             'name' => $settings->brandName,
             'logoUrl' => $settings->brandLogoUrl,
             'footerText' => $settings->brandFooterText,
+            'primaryColor' => $settings->brandPrimaryColor,
         ];
         $features = [
             'amavisd' => $settings->amavisdEnabled,

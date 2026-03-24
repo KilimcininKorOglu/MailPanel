@@ -30,7 +30,7 @@ class Fail2banService
     public static function getBannedIps(string $jail): array
     {
         $safeJail = escapeshellarg($jail);
-        $output = self::executeCommand("fail2ban-client status {$safeJail}");
+        $output = self::executeCommand(self::buildCommand("status {$safeJail}"));
 
         if (preg_match('/Banned IP list:\s*(.+)$/m', $output, $matches)) {
             return array_filter(array_map('trim', explode(' ', $matches[1])));
@@ -62,14 +62,24 @@ class Fail2banService
     {
         $safeJail = escapeshellarg($jail);
         $safeIp = escapeshellarg($ip);
-        self::executeCommand("fail2ban-client set {$safeJail} banip {$safeIp}");
+        self::executeCommand(self::buildCommand("set {$safeJail} banip {$safeIp}"));
     }
 
     public static function unbanIp(string $jail, string $ip): void
     {
         $safeJail = escapeshellarg($jail);
         $safeIp = escapeshellarg($ip);
-        self::executeCommand("fail2ban-client set {$safeJail} unbanip {$safeIp}");
+        self::executeCommand(self::buildCommand("set {$safeJail} unbanip {$safeIp}"));
+    }
+
+    private static function buildCommand(string $args): string
+    {
+        $settings = Settings::getInstance();
+        $socketFlag = '';
+        if (!empty($settings->fail2banSocket)) {
+            $socketFlag = ' -s ' . escapeshellarg($settings->fail2banSocket);
+        }
+        return "fail2ban-client{$socketFlag} {$args}";
     }
 
     private static function executeCommand(string $command): string

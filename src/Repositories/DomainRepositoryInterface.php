@@ -45,4 +45,9 @@ interface DomainRepositoryInterface
      * Enables or disables a domain.
      */
     public function enableDisableDomain(string $domainName, bool $active): void;
+
+    /**
+     * Returns the total used quota for a domain in MB.
+     */
+    public function getDomainQuotaUsage(string $domainName): int;
 }

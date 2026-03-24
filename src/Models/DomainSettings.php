@@ -88,4 +88,43 @@ class DomainSettings
             disabledMailServices: $post['disabledMailServices'] ?? [],
         );
     }
+
+    /**
+     * Parse from LDAP multi-valued accountSetting attribute.
+     * Each value is a "key:value" string.
+     *
+     * @param string[] $values
+     */
+    public static function fromLdapAccountSetting(array $values): self
+    {
+        return self::fromSettingsString(implode(';', $values) . ';');
+    }
+
+    /**
+     * Serialize to LDAP multi-valued accountSetting attribute.
+     *
+     * @return string[]
+     */
+    public function toLdapAccountSetting(): array
+    {
+        $parts = [];
+
+        if ($this->defaultUserQuota > 0) {
+            $parts[] = "default_user_quota:{$this->defaultUserQuota}";
+        }
+        if ($this->minPasswordLength > 0) {
+            $parts[] = "min_passwd_length:{$this->minPasswordLength}";
+        }
+        if ($this->maxPasswordLength > 0) {
+            $parts[] = "max_passwd_length:{$this->maxPasswordLength}";
+        }
+        if ($this->disclaimer !== '') {
+            $parts[] = "disclaimer:{$this->disclaimer}";
+        }
+        if (!empty($this->disabledMailServices)) {
+            $parts[] = "disabled_mail_services:" . implode(',', $this->disabledMailServices);
+        }
+
+        return $parts;
+    }
 }

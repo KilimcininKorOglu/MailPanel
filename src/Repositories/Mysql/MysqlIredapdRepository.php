@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Repositories\Mysql;
 
-class MysqlIredapdRepository
+use App\Repositories\IredapdRepositoryInterface;
+
+class MysqlIredapdRepository implements IredapdRepositoryInterface
 {
     public function getThrottleSettings(string $account): array
     {

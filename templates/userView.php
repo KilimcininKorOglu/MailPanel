@@ -147,6 +147,17 @@
             </div>
 
             <?php elseif ($editMode === 'password'): ?>
+            <?php if (!empty($requireOldPassword)): ?>
+            <p>
+              <label for="old_password">Current password</label>
+              <input name="old_password" type="password" id="old_password" required
+                <?php if (!empty($validationErrors['old_password'])): ?>class="error"<?php endif; ?>
+              />
+              <?php if (!empty($validationErrors['old_password'])): ?>
+              <p class="text-error"><?= $e($validationErrors['old_password']) ?></p>
+              <?php endif; ?>
+            </p>
+            <?php endif; ?>
             <p>
               <label for="password">Password</label>
               <input name="password" type="password" id="password" required autocomplete="new-password"

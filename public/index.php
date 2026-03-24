@@ -124,6 +124,10 @@ $router->addRoute('GET', '/amavisd/quarantine', function () use ($tpl) {
     AmavisdController::quarantineList($tpl);
 });
 
+$router->addRoute('POST', '/amavisd/quarantine/{mailId}/release', function (string $mailId) use ($tpl) {
+    AmavisdController::releaseMessage($tpl, $mailId);
+});
+
 $router->addRoute('POST', '/amavisd/quarantine/{mailId}/delete', function (string $mailId) use ($tpl) {
     AmavisdController::deleteMessage($tpl, $mailId);
 });

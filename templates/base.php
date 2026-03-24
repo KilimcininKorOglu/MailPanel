@@ -8,6 +8,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="/static/chota.min.css" />
     <link rel="stylesheet" href="/static/styles.css" />
+    <?php if (!empty($brand['primaryColor'])): ?>
+    <style>:root { --color-primary: <?= $e($brand['primaryColor']) ?>; }</style>
+    <?php endif; ?>
   </head>
   <body>
     <nav class="nav">
@@ -25,6 +28,10 @@
         <?php if (!empty($features['fail2ban'])): ?>
         <a href="/fail2ban">Fail2ban</a>
         <?php endif; ?>
+        <?php if (!empty($features['iredapd'])): ?>
+        <a href="/iredapd/throttle/@.">iRedAPD</a>
+        <?php endif; ?>
+        <a href="/deleted-mailboxes">Deleted Mailboxes</a>
         <?php endif; ?>
         <?php endif; ?>
       </div>
