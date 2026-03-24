@@ -23,7 +23,7 @@
     <?= $bodyContent ?>
     <footer class="footer">
       <div class="container">
-        <span class="text-light">MailPanel v<?= defined('APP_VERSION') ? APP_VERSION : '0.0.0' ?></span>
+        <a href="https://github.com/KilimcininKorOglu/MailPanel" class="text-light" target="_blank">MailPanel v<?= defined('APP_VERSION') ? APP_VERSION : '0.0.0' ?></a>
       </div>
     </footer>
   </body>
