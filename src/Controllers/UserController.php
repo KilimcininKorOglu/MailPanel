@@ -46,6 +46,7 @@ class UserController
             try {
                 if ($editMode === 'general') {
                     $user = User::fromFormData($_POST);
+                    $user->uid = $userUid;
                     $userRepo->updateUser($domain, $user);
                     $success = 'Information updated successfully!';
                 } elseif ($editMode === 'password') {
