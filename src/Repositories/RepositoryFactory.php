@@ -9,12 +9,14 @@ use App\Repositories\Mysql\MysqlAliasRepository;
 use App\Repositories\Mysql\MysqlAmavisdRepository;
 use App\Repositories\Mysql\MysqlBccRepository;
 use App\Repositories\Mysql\MysqlIredapdRepository;
+use App\Repositories\Mysql\MysqlMailingListRepository;
 use App\Repositories\Mysql\MysqlSpamPolicyRepository;
 use App\Repositories\Mysql\MysqlWhiteBlacklistRepository;
 use App\Repositories\Mysql\MysqlRelayRepository;
 use App\Repositories\Ldap\LdapAliasRepository;
 use App\Repositories\Ldap\LdapBccRepository;
 use App\Repositories\Ldap\LdapDashboardRepository;
+use App\Repositories\Ldap\LdapMailingListRepository;
 use App\Repositories\Ldap\LdapDomainAliasRepository;
 use App\Repositories\Ldap\LdapAdminRepository;
 use App\Repositories\Ldap\LdapAuthRepository;
@@ -35,6 +37,7 @@ use App\Repositories\Pgsql\PgsqlDashboardRepository;
 use App\Repositories\Pgsql\PgsqlAliasRepository;
 use App\Repositories\Pgsql\PgsqlAmavisdRepository;
 use App\Repositories\Pgsql\PgsqlBccRepository;
+use App\Repositories\Pgsql\PgsqlMailingListRepository;
 use App\Repositories\Pgsql\PgsqlSpamPolicyRepository;
 use App\Repositories\Pgsql\PgsqlWhiteBlacklistRepository;
 use App\Repositories\Pgsql\PgsqlDomainAliasRepository;
@@ -63,6 +66,7 @@ class RepositoryFactory
     private static ?AliasRepositoryInterface $aliasRepo = null;
     private static ?BccRepositoryInterface $bccRepo = null;
     private static ?RelayRepositoryInterface $relayRepo = null;
+    private static ?MailingListRepositoryInterface $mailingListRepo = null;
     private static ?SpamPolicyRepositoryInterface $spamPolicyRepo = null;
     private static ?WhiteBlacklistRepositoryInterface $wblistRepo = null;
     private static ?AmavisdRepositoryInterface $amavisdRepo = null;
@@ -186,6 +190,18 @@ class RepositoryFactory
             };
         }
         return self::$relayRepo;
+    }
+
+    public static function getMailingListRepository(): MailingListRepositoryInterface
+    {
+        if (self::$mailingListRepo === null) {
+            self::$mailingListRepo = match (Settings::getInstance()->backend) {
+                'mysql' => new MysqlMailingListRepository(),
+                'pgsql' => new PgsqlMailingListRepository(),
+                default => new LdapMailingListRepository(),
+            };
+        }
+        return self::$mailingListRepo;
     }
 
     public static function getSpamPolicyRepository(): SpamPolicyRepositoryInterface

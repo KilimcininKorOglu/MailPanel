@@ -18,6 +18,7 @@ use App\Controllers\SpamPolicyController;
 use App\Controllers\WhiteBlacklistController;
 use App\Controllers\IredapdController;
 use App\Controllers\LogController;
+use App\Controllers\MailingListController;
 use App\Controllers\UserController;
 use App\Exceptions\BackendConnectionException;
 use App\Router;
@@ -117,6 +118,27 @@ $router->addRoute(['GET', 'POST'], '/domains/{domain}/bcc', function (string $do
 
 $router->addRoute(['GET', 'POST'], '/domains/{domain}/relay', function (string $domain) use ($tpl) {
     DomainController::domainView($tpl, $domain, 'relay');
+});
+
+// Mailing list management
+$router->addRoute('GET', '/mailing-lists', function () use ($tpl) {
+    MailingListController::list($tpl);
+});
+
+$router->addRoute('POST', '/mailing-lists/bulk', function () use ($tpl) {
+    MailingListController::bulkAction($tpl);
+});
+
+$router->addRoute(['GET', 'POST'], '/mailing-lists/create', function () use ($tpl) {
+    MailingListController::createForm($tpl);
+});
+
+$router->addRoute(['GET', 'POST'], '/mailing-lists/{address}', function (string $address) use ($tpl) {
+    MailingListController::view($tpl, $address);
+});
+
+$router->addRoute('POST', '/mailing-lists/{address}/delete', function (string $address) use ($tpl) {
+    MailingListController::delete($tpl, $address);
 });
 
 // Admin management
