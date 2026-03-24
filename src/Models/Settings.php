@@ -26,6 +26,11 @@ class Settings
     public readonly int $sessionTimeout;
     public readonly string $allowedIpRanges;
 
+    // Branding
+    public readonly string $brandName;
+    public readonly string $brandLogoUrl;
+    public readonly string $brandFooterText;
+
     // iRedAdmin database settings (for activity logging)
     public readonly string $iredadminDbHost;
     public readonly int $iredadminDbPort;
@@ -79,6 +84,11 @@ class Settings
         $this->paginationPerPage = $this->envInt('MAILPANEL_PAGINATION_PER_PAGE', 50);
         $this->sessionTimeout = $this->envInt('MAILPANEL_SESSION_TIMEOUT', 1800);
         $this->allowedIpRanges = $this->env('MAILPANEL_ALLOWED_IP_RANGES', '');
+
+        // Branding
+        $this->brandName = $this->env('MAILPANEL_BRAND_NAME', 'MailPanel');
+        $this->brandLogoUrl = $this->env('MAILPANEL_BRAND_LOGO_URL', '/static/logo-iredmail.png');
+        $this->brandFooterText = $this->env('MAILPANEL_BRAND_FOOTER_TEXT', '');
 
         // iRedAdmin database (optional, for activity logging)
         $this->iredadminDbHost = $this->env('MAILPANEL_IREDADMIN_DB_HOST', '');

@@ -8,6 +8,7 @@ use App\Controllers\AdminController;
 use App\Controllers\AuthController;
 use App\Controllers\BaseController;
 use App\Controllers\DashboardController;
+use App\Controllers\DeletedMailboxController;
 use App\Controllers\DomainController;
 use App\Controllers\LogController;
 use App\Controllers\UserController;
@@ -48,7 +49,11 @@ $router->addRoute(['GET', 'POST'], '/domains/create', function () use ($tpl) {
 });
 
 $router->addRoute(['GET', 'POST'], '/domains/{domain}/edit', function (string $domain) use ($tpl) {
-    DomainController::domainView($tpl, $domain);
+    DomainController::domainView($tpl, $domain, 'general');
+});
+
+$router->addRoute(['GET', 'POST'], '/domains/{domain}/settings', function (string $domain) use ($tpl) {
+    DomainController::domainView($tpl, $domain, 'settings');
 });
 
 $router->addRoute('POST', '/domains/{domain}/delete', function (string $domain) use ($tpl) {
@@ -75,6 +80,19 @@ $router->addRoute('POST', '/admins/{adminEmail}/delete', function (string $admin
 // Activity log
 $router->addRoute('GET', '/logs', function () use ($tpl) {
     LogController::logList($tpl);
+});
+
+// Deleted mailboxes
+$router->addRoute('GET', '/deleted-mailboxes', function () use ($tpl) {
+    DeletedMailboxController::list($tpl);
+});
+
+$router->addRoute('POST', '/deleted-mailboxes/{id}/cancel', function (string $id) use ($tpl) {
+    DeletedMailboxController::cancel($tpl, $id);
+});
+
+$router->addRoute('POST', '/deleted-mailboxes/{id}/reschedule', function (string $id) use ($tpl) {
+    DeletedMailboxController::reschedule($tpl, $id);
 });
 
 // User management

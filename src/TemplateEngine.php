@@ -32,6 +32,14 @@ class TemplateEngine
         $csrfToken = CsrfProtection::generateToken();
         $csrfField = '<input type="hidden" name="_csrf_token" value="' . htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') . '" />';
 
+        // Branding
+        $settings = \App\Models\Settings::getInstance();
+        $brand = [
+            'name' => $settings->brandName,
+            'logoUrl' => $settings->brandLogoUrl,
+            'footerText' => $settings->brandFooterText,
+        ];
+
         // EXTR_SKIP prevents overwriting local scope variables ($e, $localize, etc.)
         // Controller-provided keys become template variables (e.g., $domain, $users)
         extract($vars, EXTR_SKIP);

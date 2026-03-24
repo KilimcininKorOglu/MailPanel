@@ -19,11 +19,19 @@
       <p class="text-success"><?= $e($success) ?></p>
       <?php endif; ?>
 
+      <nav class="tabs">
+        <a <?php if (($editMode ?? 'general') === 'general'): ?>class="active"<?php endif; ?>
+           href="/domains/<?= $e($domain->domainName) ?>/edit">General</a>
+        <a <?php if (($editMode ?? '') === 'settings'): ?>class="active"<?php endif; ?>
+           href="/domains/<?= $e($domain->domainName) ?>/settings">Settings</a>
+      </nav>
+
       <p class="text-light">
         Users: <?= $e($domain->currentUserCount) ?> |
         Created: <?= $e($domain->created ?? 'N/A') ?>
       </p>
 
+      <?php if (($editMode ?? 'general') === 'general'): ?>
       <form method="post">
         <?= $csrfField ?>
 
@@ -90,6 +98,45 @@
         <button type="submit" class="button primary">Save changes</button>
         <a href="/domains" class="button outline">Back to domains</a>
       </form>
+
+      <?php elseif (($editMode ?? '') === 'settings'): ?>
+      <form method="post">
+        <?= $csrfField ?>
+
+        <p>
+          <label for="defaultUserQuota">Default user quota (MB, 0 = use global)</label>
+          <input id="defaultUserQuota" type="number" name="defaultUserQuota" min="0"
+            value="<?= $e($domainSettings->defaultUserQuota ?? 0) ?>"
+          />
+        </p>
+
+        <div class="row">
+          <div class="col-6">
+            <p>
+              <label for="minPasswordLength">Min password length (0 = use global)</label>
+              <input id="minPasswordLength" type="number" name="minPasswordLength" min="0"
+                value="<?= $e($domainSettings->minPasswordLength ?? 0) ?>"
+              />
+            </p>
+          </div>
+          <div class="col-6">
+            <p>
+              <label for="maxPasswordLength">Max password length (0 = unlimited)</label>
+              <input id="maxPasswordLength" type="number" name="maxPasswordLength" min="0"
+                value="<?= $e($domainSettings->maxPasswordLength ?? 0) ?>"
+              />
+            </p>
+          </div>
+        </div>
+
+        <p>
+          <label for="disclaimer">Disclaimer text</label>
+          <textarea id="disclaimer" name="disclaimer" rows="5"><?= $e($domainSettings->disclaimer ?? '') ?></textarea>
+        </p>
+
+        <button type="submit" class="button primary">Save settings</button>
+      </form>
+      <?php endif; ?>
     </div>
   </div>
 </div>

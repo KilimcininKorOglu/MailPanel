@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\CsrfProtection;
 use App\Middleware;
 use App\Models\Domain;
+use App\Models\DomainSettings;
 use App\Models\Settings;
 use App\Repositories\RepositoryFactory;
 use App\Services\ActivityLogger;
@@ -82,9 +83,15 @@ class DomainController
     /**
      * Displays and handles domain editing.
      */
-    public static function domainView(TemplateEngine $tpl, string $domainName): void
+    public static function domainView(TemplateEngine $tpl, string $domainName, string $editMode = 'general'): void
     {
         Middleware::loginRequired();
+
+        if (!in_array($editMode, ['general', 'settings'], true)) {
+            http_response_code(404);
+            $tpl->render('page404.php');
+            return;
+        }
 
         $repo = RepositoryFactory::getDomainRepository();
         $error = null;
@@ -92,21 +99,31 @@ class DomainController
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
-                $domain = Domain::fromFormData($_POST);
-                $domain = new Domain(
-                    domainName: $domainName,
-                    description: $domain->description,
-                    active: $domain->active,
-                    maxQuota: $domain->maxQuota,
-                    quota: $domain->quota,
-                    mailboxes: $domain->mailboxes,
-                    aliases: $domain->aliases,
-                    transport: $domain->transport,
-                    settings: $domain->settings,
-                );
-                $repo->updateDomain($domain);
-                ActivityLogger::logUpdate($domainName, '', "Domain updated: {$domainName}");
-                $success = 'Domain updated successfully!';
+                if ($editMode === 'general') {
+                    $formDomain = Domain::fromFormData($_POST);
+                    $domain = new Domain(
+                        domainName: $domainName,
+                        description: $formDomain->description,
+                        active: $formDomain->active,
+                        maxQuota: $formDomain->maxQuota,
+                        quota: $formDomain->quota,
+                        mailboxes: $formDomain->mailboxes,
+                        aliases: $formDomain->aliases,
+                        transport: $formDomain->transport,
+                    );
+                    $repo->updateDomain($domain);
+                    ActivityLogger::logUpdate($domainName, '', "Domain updated: {$domainName}");
+                    $success = 'Domain updated successfully!';
+                } elseif ($editMode === 'settings') {
+                    $domainSettings = DomainSettings::fromFormData($_POST);
+                    $currentDomain = $repo->getDomain($domainName);
+                    if ($currentDomain !== null) {
+                        $currentDomain->settings = $domainSettings->toSettingsString();
+                        $repo->updateDomain($currentDomain);
+                        ActivityLogger::logUpdate($domainName, '', "Domain settings updated: {$domainName}");
+                        $success = 'Domain settings updated successfully!';
+                    }
+                }
             } catch (\Exception $e) {
                 $error = $e->getMessage();
             }
@@ -119,8 +136,12 @@ class DomainController
             return;
         }
 
+        $domainSettings = DomainSettings::fromSettingsString($domain->settings);
+
         $tpl->render('domainView.php', [
             'domain' => $domain,
+            'domainSettings' => $domainSettings,
+            'editMode' => $editMode,
             'error' => $error,
             'success' => $success,
         ]);
