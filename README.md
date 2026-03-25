@@ -5,7 +5,7 @@ A full-featured PHP web application for managing [iRedMail](https://www.iredmail
 Built with vanilla PHP 8.1+ -- no framework, no ORM, no template engine dependency. Uses `vlucas/phpdotenv` for environment configuration and the Chota CSS framework for UI.
 
 ```
-kilimcininkoroglu/mailpanel v0.9.0
+kilimcininkoroglu/mailpanel v1.0.0
 ```
 
 ### Supported Backends

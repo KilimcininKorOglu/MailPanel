@@ -2,6 +2,43 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] - 2026-03-25
+
+### Added
+- PostgreSQL backend support (15 repository implementations, ancillary DB connections)
+- Mail alias management with member/moderator CRUD, per-user aliases, and catch-all
+- Mailing list management (mlmmj) with owner support and bulk operations
+- Domain/user BCC settings (sender and recipient) across all three backends
+- Sender-dependent relay host configuration per domain and user
+- Spam policy management (global, per-domain, per-user thresholds via amavisd)
+- Inbound/outbound white/blacklist management via amavisd wblist tables
+- REST API v1 with 40+ endpoints for domains, users, aliases, mailing lists, admins, spam policy, throttle, and greylisting
+- API key authentication with IP whitelist for REST API
+- API password verification endpoint for external service integration
+- Global search across domains, users, aliases, mailing lists, and admins
+- Admin resource limits (max domains, users, aliases, mailing lists, quota per admin)
+- Domain ownership verification via DNS TXT records
+- Newsletter subscription management with public endpoints and token verification
+- Last login tracking from Dovecot last_login table
+- GeoIP country/city display for Fail2ban banned IPs (MaxMind GeoLite2)
+- rDNS-based white/blacklist for iRedAPD
+- SenderScore IP permanent whitelisting for iRedAPD
+- Greylisting tracking data inspection
+- Email address rename with referential integrity across all related tables
+- Domain/admin statistics export (CSV and JSON)
+- System settings overview page
+- CSV bulk user import CLI tool
+- Quarantine notification email CLI tool (cron-compatible)
+- Domain disclaimer dump CLI tool
+- Quarantined mail export CLI tool
+- Session invalidation CLI tool
+
+### Changed
+- RepositoryFactory now uses backend-aware instantiation for Amavisd and iRedAPD controllers (was hardcoded MySQL)
+
+### Fixed
+- Amavisd and iRedAPD features now work correctly with PostgreSQL backend
+
 ## [0.9.0] - 2026-03-24
 
 ### Added
