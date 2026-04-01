@@ -104,7 +104,7 @@ class Middleware
     /**
      * Checks if an IP address is in the allowed CIDR ranges.
      */
-    private static function isIpAllowed(string $ip, string $ranges): bool
+    public static function isIpAllowed(string $ip, string $ranges): bool
     {
         $rangeList = array_map('trim', explode(',', $ranges));
         foreach ($rangeList as $cidr) {

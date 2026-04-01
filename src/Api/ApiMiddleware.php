@@ -53,13 +53,11 @@ class ApiMiddleware
             exit;
         }
 
-        // IP whitelist (applies to all keys)
+        // IP whitelist (applies to all keys) — reuses Middleware CIDR logic
         $allowedIps = $settings->apiAllowedIps;
         if ($allowedIps !== '') {
             $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
-            $allowed = array_filter(array_map('trim', explode(',', $allowedIps)));
-
-            if (!empty($allowed) && !in_array($clientIp, $allowed, true)) {
+            if (!$clientIp || !\App\Middleware::isIpAllowed($clientIp, $allowedIps)) {
                 ApiResponse::error('IP not allowed', 403);
                 exit;
             }
