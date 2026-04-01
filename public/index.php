@@ -33,6 +33,7 @@ use App\Controllers\NewsletterController;
 use App\Controllers\LogController;
 use App\Controllers\MailingListController;
 use App\Controllers\SearchController;
+use App\Controllers\PanelSettingsController;
 use App\Controllers\SystemSettingsController;
 use App\Controllers\UserController;
 use App\Exceptions\BackendConnectionException;
@@ -229,6 +230,15 @@ $router->addRoute(['GET', 'POST'], '/verify/domain-ownership', function () use (
 // System settings
 $router->addRoute('GET', '/system-settings', function () use ($tpl) {
     SystemSettingsController::view($tpl);
+});
+
+// Panel settings (editable via DB)
+$router->addRoute('GET', '/panel-settings', function () use ($tpl) {
+    PanelSettingsController::view($tpl);
+});
+
+$router->addRoute('POST', '/panel-settings', function () use ($tpl) {
+    PanelSettingsController::save($tpl);
 });
 
 // Last login tracking

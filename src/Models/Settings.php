@@ -6,41 +6,20 @@ namespace App\Models;
 
 /**
  * Application settings class. Singleton.
- * Settings are read from the .env or .env.prod file.
+ * Settings are read from the .env or .env.prod file, then overridden
+ * by values from the panel_settings database table (if available).
  * Only the active backend's connection settings are validated.
  */
 class Settings
 {
     private static ?self $instance = null;
+    private bool $dbOverridesLoaded = false;
 
+    // --- Immutable: must stay in .env (connection, bootstrap) ---
     public readonly string $backend;
     public readonly string $secretKey;
-    public readonly int $passwordMinLength;
-    public readonly bool $passwordIncludesSpecialChars;
-    public readonly bool $passwordIncludesNumbers;
-    public readonly bool $passwordIncludesLowercase;
-    public readonly bool $passwordIncludesUppercase;
-    public readonly bool $passwordHashesUsePrefixedScheme;
-    public readonly string $passwordDefaultScheme;
-    public readonly int $paginationPerPage;
-    public readonly bool $requireOldPasswordOnChange;
-    public readonly int $sessionTimeout;
-    public readonly string $allowedIpRanges;
-    public readonly bool $sessionValidateIp;
-    public readonly bool $checkUpdates;
-    public readonly string $geoIpDbPath;
-    public readonly bool $apiEnabled;
-    public readonly string $apiKey;
-    public readonly string $apiAllowedIps;
-    public readonly bool $requireDomainOwnershipVerification;
 
-    // Branding
-    public readonly string $brandName;
-    public readonly string $brandLogoUrl;
-    public readonly string $brandFooterText;
-    public readonly string $brandPrimaryColor;
-
-    // iRedAdmin database settings (for activity logging)
+    // iRedAdmin database settings (for activity logging + panel_settings)
     public readonly bool $activityLoggingEnabled;
     public readonly string $iredadminDbHost;
     public readonly int $iredadminDbPort;
@@ -48,23 +27,14 @@ class Settings
     public readonly string $iredadminDbUser;
     public readonly string $iredadminDbPassword;
 
-    // Amavisd integration
-    public readonly bool $amavisdEnabled;
-    public readonly int $amavisdRemoveQuarantinedInDays;
-    public readonly int $amavisdRemoveMaillogInDays;
+    // Amavisd DB connection
     public readonly string $amavisdDbHost;
     public readonly int $amavisdDbPort;
     public readonly string $amavisdDbName;
     public readonly string $amavisdDbUser;
     public readonly string $amavisdDbPassword;
 
-    // Fail2ban integration
-    public readonly bool $fail2banEnabled;
-    public readonly string $fail2banSocket;
-    public readonly string $fail2banJails;
-
-    // iRedAPD integration
-    public readonly bool $iredapdEnabled;
+    // iRedAPD DB connection
     public readonly string $iredapdDbHost;
     public readonly int $iredapdDbPort;
     public readonly string $iredapdDbName;
@@ -83,9 +53,9 @@ class Settings
     public readonly int $mysqlPort;
     public readonly string $mysqlDatabase;
     public readonly string $mysqlUser;
+    public readonly string $mysqlPassword;
     public readonly string $vmailPath;
     public readonly string $storageNode;
-    public readonly string $mysqlPassword;
 
     // PostgreSQL settings (populated only when backend=pgsql)
     public readonly string $pgsqlHost;
@@ -94,9 +64,88 @@ class Settings
     public readonly string $pgsqlUser;
     public readonly string $pgsqlPassword;
 
+    // --- Mutable: can be overridden from panel_settings DB table ---
+
+    // Password policy
+    public int $passwordMinLength;
+    public bool $passwordIncludesSpecialChars;
+    public bool $passwordIncludesNumbers;
+    public bool $passwordIncludesLowercase;
+    public bool $passwordIncludesUppercase;
+    public bool $passwordHashesUsePrefixedScheme;
+    public string $passwordDefaultScheme;
+
+    // Session & security
+    public bool $requireOldPasswordOnChange;
+    public int $sessionTimeout;
+    public bool $sessionValidateIp;
+    public string $allowedIpRanges;
+
+    // Branding
+    public string $brandName;
+    public string $brandLogoUrl;
+    public string $brandFooterText;
+    public string $brandPrimaryColor;
+
+    // Display & behavior
+    public int $paginationPerPage;
+    public bool $checkUpdates;
+    public bool $requireDomainOwnershipVerification;
+
+    // Integration toggles & behavior
+    public bool $amavisdEnabled;
+    public int $amavisdRemoveQuarantinedInDays;
+    public int $amavisdRemoveMaillogInDays;
+    public bool $fail2banEnabled;
+    public string $fail2banSocket;
+    public string $fail2banJails;
+    public bool $iredapdEnabled;
+    public string $geoIpDbPath;
+
+    // REST API
+    public bool $apiEnabled;
+    public string $apiKey;
+    public string $apiAllowedIps;
+
     private const ALLOWED_SCHEMES = [
         'PLAIN', 'CRYPT', 'MD5', 'PLAIN-MD5', 'SHA', 'SSHA',
         'SHA512', 'SSHA512', 'SHA512-CRYPT', 'BCRYPT', 'CRAM-MD5', 'NTLM',
+    ];
+
+    /**
+     * Property names that can be overridden from the panel_settings table.
+     * Maps setting_key (DB) → property name + type for casting.
+     */
+    public const OVERRIDABLE_KEYS = [
+        'passwordMinLength' => 'int',
+        'passwordIncludesSpecialChars' => 'bool',
+        'passwordIncludesNumbers' => 'bool',
+        'passwordIncludesLowercase' => 'bool',
+        'passwordIncludesUppercase' => 'bool',
+        'passwordHashesUsePrefixedScheme' => 'bool',
+        'passwordDefaultScheme' => 'string',
+        'requireOldPasswordOnChange' => 'bool',
+        'sessionTimeout' => 'int',
+        'sessionValidateIp' => 'bool',
+        'allowedIpRanges' => 'string',
+        'brandName' => 'string',
+        'brandLogoUrl' => 'string',
+        'brandFooterText' => 'string',
+        'brandPrimaryColor' => 'string',
+        'paginationPerPage' => 'int',
+        'checkUpdates' => 'bool',
+        'requireDomainOwnershipVerification' => 'bool',
+        'amavisdEnabled' => 'bool',
+        'amavisdRemoveQuarantinedInDays' => 'int',
+        'amavisdRemoveMaillogInDays' => 'int',
+        'fail2banEnabled' => 'bool',
+        'fail2banSocket' => 'string',
+        'fail2banJails' => 'string',
+        'iredapdEnabled' => 'bool',
+        'geoIpDbPath' => 'string',
+        'apiEnabled' => 'bool',
+        'apiKey' => 'string',
+        'apiAllowedIps' => 'string',
     ];
 
     private function __construct()
@@ -242,8 +291,68 @@ class Settings
     {
         if (self::$instance === null) {
             self::$instance = new self();
+            self::$instance->loadDatabaseOverrides();
         }
         return self::$instance;
+    }
+
+    /**
+     * Loads overridable settings from the panel_settings table in the iredadmin database.
+     * Falls back silently to .env values if the database is not available.
+     */
+    private function loadDatabaseOverrides(): void
+    {
+        if ($this->dbOverridesLoaded) {
+            return;
+        }
+        $this->dbOverridesLoaded = true;
+
+        if ($this->iredadminDbHost === '') {
+            return;
+        }
+
+        try {
+            $connectionClass = $this->backend === 'pgsql'
+                ? \App\Repositories\Pgsql\IredadminPgsqlConnection::class
+                : \App\Repositories\Mysql\IredadminConnection::class;
+
+            $pdo = $connectionClass::getInstance()->getPdo();
+            if ($pdo === null) {
+                return;
+            }
+
+            $stmt = $pdo->query("SELECT setting_key, setting_value FROM panel_settings");
+            if ($stmt === false) {
+                return;
+            }
+
+            while ($row = $stmt->fetch()) {
+                $key = $row['setting_key'];
+                $value = $row['setting_value'];
+
+                if (!isset(self::OVERRIDABLE_KEYS[$key])) {
+                    continue;
+                }
+
+                $type = self::OVERRIDABLE_KEYS[$key];
+                $this->$key = match ($type) {
+                    'int' => (int) $value,
+                    'bool' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+                    default => $value,
+                };
+            }
+        } catch (\PDOException $e) {
+            // Silently fall back to .env values
+        }
+    }
+
+    /**
+     * Forces the singleton to reload settings from both .env and database
+     * on the next getInstance() call. Used after saving panel settings.
+     */
+    public static function invalidateCache(): void
+    {
+        self::$instance = null;
     }
 
     private function rawEnv(string $key): string|false
@@ -251,7 +360,7 @@ class Settings
         return $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key) ?? false;
     }
 
-    private function env(string $key, string $default = ''): string
+    public function env(string $key, string $default = ''): string
     {
         $value = $this->rawEnv($key);
         return $value !== false ? (string) $value : $default;

@@ -1,0 +1,164 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use App\CsrfProtection;
+use App\Middleware;
+use App\Models\Settings;
+use App\Repositories\RepositoryFactory;
+use App\Services\ActivityLogger;
+use App\TemplateEngine;
+
+class PanelSettingsController
+{
+    /**
+     * Setting categories for the UI tabs.
+     * Each category maps to a list of setting keys from Settings::OVERRIDABLE_KEYS.
+     */
+    private const CATEGORIES = [
+        'branding' => [
+            'brandName', 'brandLogoUrl', 'brandFooterText', 'brandPrimaryColor',
+        ],
+        'password' => [
+            'passwordMinLength', 'passwordIncludesSpecialChars', 'passwordIncludesNumbers',
+            'passwordIncludesLowercase', 'passwordIncludesUppercase',
+            'passwordHashesUsePrefixedScheme', 'passwordDefaultScheme',
+            'requireOldPasswordOnChange',
+        ],
+        'session' => [
+            'sessionTimeout', 'sessionValidateIp', 'allowedIpRanges',
+        ],
+        'display' => [
+            'paginationPerPage', 'checkUpdates', 'requireDomainOwnershipVerification',
+        ],
+        'integrations' => [
+            'amavisdEnabled', 'amavisdRemoveQuarantinedInDays', 'amavisdRemoveMaillogInDays',
+            'fail2banEnabled', 'fail2banSocket', 'fail2banJails',
+            'iredapdEnabled', 'geoIpDbPath',
+        ],
+        'api' => [
+            'apiEnabled', 'apiKey', 'apiAllowedIps',
+        ],
+    ];
+
+    /**
+     * Human-readable labels for setting keys.
+     */
+    private const LABELS = [
+        'brandName' => 'Panel Name',
+        'brandLogoUrl' => 'Logo URL',
+        'brandFooterText' => 'Footer Text',
+        'brandPrimaryColor' => 'Primary Color (CSS)',
+        'passwordMinLength' => 'Minimum Password Length',
+        'passwordIncludesSpecialChars' => 'Require Special Characters',
+        'passwordIncludesNumbers' => 'Require Numbers',
+        'passwordIncludesLowercase' => 'Require Lowercase',
+        'passwordIncludesUppercase' => 'Require Uppercase',
+        'passwordHashesUsePrefixedScheme' => 'Use {SCHEME} Prefix in Hashes',
+        'passwordDefaultScheme' => 'Default Hashing Scheme',
+        'requireOldPasswordOnChange' => 'Require Old Password on Change',
+        'sessionTimeout' => 'Session Timeout (seconds)',
+        'sessionValidateIp' => 'Invalidate Session on IP Change',
+        'allowedIpRanges' => 'Allowed IP Ranges (CIDR)',
+        'paginationPerPage' => 'Items Per Page',
+        'checkUpdates' => 'Check for Updates on Dashboard',
+        'requireDomainOwnershipVerification' => 'Require Domain Ownership Verification',
+        'amavisdEnabled' => 'Amavisd Integration',
+        'amavisdRemoveQuarantinedInDays' => 'Quarantine Retention (days)',
+        'amavisdRemoveMaillogInDays' => 'Mail Log Retention (days)',
+        'fail2banEnabled' => 'Fail2ban Integration',
+        'fail2banSocket' => 'Fail2ban Socket Path',
+        'fail2banJails' => 'Fail2ban Jails (comma-separated)',
+        'iredapdEnabled' => 'iRedAPD Integration',
+        'geoIpDbPath' => 'GeoIP Database Path (.mmdb)',
+        'apiEnabled' => 'REST API',
+        'apiKey' => 'Legacy API Key',
+        'apiAllowedIps' => 'API Allowed IPs (comma-separated)',
+    ];
+
+    private const CATEGORY_TITLES = [
+        'branding' => 'Branding',
+        'password' => 'Password Policy',
+        'session' => 'Session & Security',
+        'display' => 'Display & Behavior',
+        'integrations' => 'Integrations',
+        'api' => 'REST API',
+    ];
+
+    public static function view(TemplateEngine $tpl): void
+    {
+        Middleware::globalAdminRequired();
+
+        $settings = Settings::getInstance();
+        $activeTab = $_GET['tab'] ?? 'branding';
+        if (!isset(self::CATEGORIES[$activeTab])) {
+            $activeTab = 'branding';
+        }
+
+        $repo = RepositoryFactory::getPanelSettingsRepository();
+        $repo->ensureTableExists();
+        $dbSettings = $repo->getAll();
+
+        $tpl->render('panelSettings.php', [
+            'categories' => self::CATEGORIES,
+            'categoryTitles' => self::CATEGORY_TITLES,
+            'labels' => self::LABELS,
+            'overridableKeys' => Settings::OVERRIDABLE_KEYS,
+            'settings' => $settings,
+            'dbSettings' => $dbSettings,
+            'activeTab' => $activeTab,
+            'allowedSchemes' => ['SSHA512', 'BCRYPT', 'SHA512', 'SSHA', 'MD5', 'PLAIN-MD5', 'CRAM-MD5', 'NTLM', 'PLAIN'],
+        ]);
+    }
+
+    public static function save(TemplateEngine $tpl): void
+    {
+        Middleware::globalAdminRequired();
+        CsrfProtection::validateToken();
+
+        $category = $_POST['category'] ?? '';
+        if (!isset(self::CATEGORIES[$category])) {
+            header('Location: /panel-settings');
+            exit;
+        }
+
+        $keys = self::CATEGORIES[$category];
+        $repo = RepositoryFactory::getPanelSettingsRepository();
+        $repo->ensureTableExists();
+        $admin = $_SESSION['email'] ?? 'system';
+
+        $toSave = [];
+        foreach ($keys as $key) {
+            $type = Settings::OVERRIDABLE_KEYS[$key] ?? null;
+            if ($type === null) {
+                continue;
+            }
+
+            if ($type === 'bool') {
+                $toSave[$key] = isset($_POST[$key]) ? 'true' : 'false';
+            } elseif ($type === 'int') {
+                $toSave[$key] = (string) max(0, (int) ($_POST[$key] ?? '0'));
+            } else {
+                $toSave[$key] = trim($_POST[$key] ?? '');
+            }
+        }
+
+        if (!empty($toSave)) {
+            $repo->setMany($toSave, $admin);
+            Settings::invalidateCache();
+
+            ActivityLogger::log(
+                'update',
+                '',
+                $admin,
+                "Panel settings updated: {$category} (" . implode(', ', array_keys($toSave)) . ')'
+            );
+        }
+
+        $_SESSION['flash_success'] = 'Settings saved successfully.';
+        header("Location: /panel-settings?tab={$category}");
+        exit;
+    }
+}
