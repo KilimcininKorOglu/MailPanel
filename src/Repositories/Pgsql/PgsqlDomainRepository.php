@@ -59,7 +59,8 @@ class PgsqlDomainRepository implements DomainRepositoryInterface
              FROM domain d
              LEFT JOIN mailbox m ON m.domain = d.domain
              WHERE {$where}
-             GROUP BY d.domain
+             GROUP BY d.domain, d.description, d.active, d.maxquota, d.quota,
+                      d.mailboxes, d.aliases, d.transport, d.settings, d.created, d.modified
              ORDER BY d.domain
              LIMIT :perPage OFFSET :offset"
         );
@@ -87,7 +88,8 @@ class PgsqlDomainRepository implements DomainRepositoryInterface
              FROM domain d
              LEFT JOIN mailbox m ON m.domain = d.domain
              WHERE d.domain = :domain
-             GROUP BY d.domain
+             GROUP BY d.domain, d.description, d.active, d.maxquota, d.quota,
+                      d.mailboxes, d.aliases, d.transport, d.settings, d.created, d.modified
              LIMIT 1"
         );
         $stmt->execute(['domain' => $domainName]);
