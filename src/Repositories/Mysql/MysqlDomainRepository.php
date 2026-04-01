@@ -179,8 +179,8 @@ class MysqlDomainRepository implements DomainRepositoryInterface
             }
 
             // Delete used_quota entries for this domain's users
-            $stmt = $pdo->prepare("DELETE FROM used_quota WHERE username LIKE :pattern");
-            $stmt->execute(['pattern' => "%@{$domainName}"]);
+            $stmt = $pdo->prepare("DELETE FROM used_quota WHERE SUBSTRING_INDEX(username, '@', -1) = :domain");
+            $stmt->execute(['domain' => $domainName]);
 
             // Delete domain alias entries referencing this domain
             $stmt = $pdo->prepare("DELETE FROM alias_domain WHERE alias_domain = :d1 OR target_domain = :d2");
@@ -214,9 +214,9 @@ class MysqlDomainRepository implements DomainRepositoryInterface
         $pdo = MysqlConnection::getInstance()->getPdo();
 
         $stmt = $pdo->prepare(
-            "SELECT COALESCE(SUM(bytes), 0) AS totalBytes FROM used_quota WHERE username LIKE :pattern"
+            "SELECT COALESCE(SUM(bytes), 0) AS totalBytes FROM used_quota WHERE SUBSTRING_INDEX(username, '@', -1) = :domain"
         );
-        $stmt->execute(['pattern' => "%@{$domainName}"]);
+        $stmt->execute(['domain' => $domainName]);
         $row = $stmt->fetch();
 
         return (int) (($row['totalBytes'] ?? 0) / 1048576);

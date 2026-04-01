@@ -15,9 +15,9 @@ class PgsqlQuotaRepository implements QuotaRepositoryInterface
         $stmt = $pdo->prepare(
             "SELECT username, COALESCE(bytes, 0) AS bytes, COALESCE(messages, 0) AS messages
              FROM used_quota
-             WHERE username LIKE :pattern"
+             WHERE SPLIT_PART(username, '@', 2) = :domain"
         );
-        $stmt->execute(['pattern' => "%@{$domain}"]);
+        $stmt->execute(['domain' => $domain]);
 
         $quotas = [];
         while ($row = $stmt->fetch()) {
