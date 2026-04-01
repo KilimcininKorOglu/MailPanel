@@ -84,9 +84,24 @@ class UserController
                         $user->domainGlobalAdmin = $existingUser ? $existingUser->domainGlobalAdmin : false;
                     }
 
-                    $userRepo->updateUser($domain, $user);
-                    ActivityLogger::logUpdate($domain, $userUid, "User profile updated");
-                    $success = 'Information updated successfully!';
+                    // Enforce domain quota limits on update
+                    $domainObj = RepositoryFactory::getDomainRepository()->getDomain($domain);
+                    if ($domainObj !== null) {
+                        if ($domainObj->maxQuota > 0 && $user->mailQuota > $domainObj->maxQuota) {
+                            $error = "User quota ({$user->mailQuota} MB) exceeds domain maximum ({$domainObj->maxQuota} MB)";
+                        } elseif ($domainObj->quota > 0 && $existingUser !== null) {
+                            $quotaDiff = $user->mailQuota - $existingUser->mailQuota;
+                            if ($quotaDiff > 0 && ($domainObj->currentQuotaUsed + $quotaDiff) > $domainObj->quota) {
+                                $error = "Total domain quota would be exceeded";
+                            }
+                        }
+                    }
+
+                    if ($error === null) {
+                        $userRepo->updateUser($domain, $user);
+                        ActivityLogger::logUpdate($domain, $userUid, "User profile updated");
+                        $success = 'Information updated successfully!';
+                    }
                 } elseif ($editMode === 'password') {
                     // Old password verification if enabled
                     $settings = Settings::getInstance();
@@ -366,17 +381,26 @@ class UserController
                             }
                         }
 
-                        // Enforce domain mailbox count limit
+                        // Enforce domain mailbox count and quota limits
                         $domainObj = RepositoryFactory::getDomainRepository()->getDomain($domain);
-                        if ($domainObj !== null && $domainObj->mailboxes > 0 && $domainObj->currentUserCount >= $domainObj->mailboxes) {
-                            $error = "Domain mailbox limit reached ({$domainObj->currentUserCount}/{$domainObj->mailboxes})";
-                            $tpl->render('userCreate.php', [
-                                'domain' => $domain,
-                                'validationErrors' => $validationErrors,
-                                'error' => $error,
-                                'user' => $user,
-                            ]);
-                            return;
+                        if ($domainObj !== null) {
+                            if ($domainObj->mailboxes > 0 && $domainObj->currentUserCount >= $domainObj->mailboxes) {
+                                $error = "Domain mailbox limit reached ({$domainObj->currentUserCount}/{$domainObj->mailboxes})";
+                            } elseif ($domainObj->maxQuota > 0 && $user->mailQuota > $domainObj->maxQuota) {
+                                $error = "User quota ({$user->mailQuota} MB) exceeds domain maximum ({$domainObj->maxQuota} MB)";
+                            } elseif ($domainObj->quota > 0 && ($domainObj->currentQuotaUsed + $user->mailQuota) > $domainObj->quota) {
+                                $error = "Total domain quota would be exceeded ({$domainObj->currentQuotaUsed} + {$user->mailQuota} > {$domainObj->quota} MB)";
+                            }
+
+                            if ($error !== null) {
+                                $tpl->render('userCreate.php', [
+                                    'domain' => $domain,
+                                    'validationErrors' => $validationErrors,
+                                    'error' => $error,
+                                    'user' => $user,
+                                ]);
+                                return;
+                            }
                         }
 
                         $passwordHash = PasswordUtils::generatePasswordHash($password);

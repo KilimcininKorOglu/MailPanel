@@ -61,11 +61,21 @@ class UserApiController
             return;
         }
 
-        // Enforce domain mailbox count limit
+        // Enforce domain limits
         $domainObj = RepositoryFactory::getDomainRepository()->getDomain($domain);
-        if ($domainObj !== null && $domainObj->mailboxes > 0 && $domainObj->currentUserCount >= $domainObj->mailboxes) {
-            ApiResponse::error("Domain mailbox limit reached ({$domainObj->currentUserCount}/{$domainObj->mailboxes})", 403);
-            return;
+        if ($domainObj !== null) {
+            if ($domainObj->mailboxes > 0 && $domainObj->currentUserCount >= $domainObj->mailboxes) {
+                ApiResponse::error("Domain mailbox limit reached ({$domainObj->currentUserCount}/{$domainObj->mailboxes})", 403);
+                return;
+            }
+            if ($domainObj->maxQuota > 0 && $user->mailQuota > $domainObj->maxQuota) {
+                ApiResponse::error("User quota exceeds domain maximum ({$domainObj->maxQuota} MB)", 403);
+                return;
+            }
+            if ($domainObj->quota > 0 && ($domainObj->currentQuotaUsed + $user->mailQuota) > $domainObj->quota) {
+                ApiResponse::error("Total domain quota would be exceeded", 403);
+                return;
+            }
         }
 
         $passwordHash = PasswordUtils::generatePasswordHash($password);
@@ -100,6 +110,23 @@ class UserApiController
 
         $user = User::fromFormData(array_merge((array) $existing, $data));
         $user->uid = $uid;
+
+        // Enforce domain quota limits on update
+        $domainObj = RepositoryFactory::getDomainRepository()->getDomain($domain);
+        if ($domainObj !== null) {
+            if ($domainObj->maxQuota > 0 && $user->mailQuota > $domainObj->maxQuota) {
+                ApiResponse::error("User quota exceeds domain maximum ({$domainObj->maxQuota} MB)", 403);
+                return;
+            }
+            if ($domainObj->quota > 0) {
+                $quotaDiff = $user->mailQuota - $existing->mailQuota;
+                if ($quotaDiff > 0 && ($domainObj->currentQuotaUsed + $quotaDiff) > $domainObj->quota) {
+                    ApiResponse::error("Total domain quota would be exceeded", 403);
+                    return;
+                }
+            }
+        }
+
         $repo->updateUser($domain, $user);
         ApiResponse::success(['message' => 'User updated']);
     }
