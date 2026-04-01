@@ -20,7 +20,7 @@ class DomainController
      */
     public static function domainList(TemplateEngine $tpl): void
     {
-        Middleware::loginRequired();
+        Middleware::globalAdminRequired();
 
         $settings = Settings::getInstance();
         $page = max(1, (int) ($_GET['page'] ?? 1));
