@@ -20,14 +20,14 @@ class TemplateFilters
     }
 
     /**
-     * Converts bytes to megabytes for display.
+     * Formats a megabyte value for display (0 = unlimited).
      */
     public static function asMegabytes(string|int $data): string
     {
-        if (is_numeric($data)) {
-            $mb = (int) $data / 1048576;
-            return number_format($mb, 0, '.', '');
+        $value = (int) $data;
+        if ($value <= 0) {
+            return '0';
         }
-        return (string) $data;
+        return number_format($value, 0, '.', ',');
     }
 }
