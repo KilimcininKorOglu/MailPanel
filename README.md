@@ -89,6 +89,8 @@ MAILPANEL_BACKEND=ldap    # or "mysql" or "pgsql"
 
 ### Optional Settings
 
+These settings serve as initial defaults. Once the iRedAdmin database is configured, they can also be managed from the **Panel Settings** UI (`/panel-settings`). Database values take precedence over `.env` values.
+
 | Variable                                | Default   | Description                                  |
 |-----------------------------------------|-----------|----------------------------------------------|
 | `PASSWORD_MIN_LENGTH`                   | `8`       | Minimum password length                      |
@@ -127,7 +129,7 @@ MAILPANEL_BACKEND=ldap    # or "mysql" or "pgsql"
 
 ### Activity Logging (optional)
 
-Connects to the `iredadmin` database for admin activity logging and system settings.
+Connects to the `iredadmin` database for admin activity logging, panel settings storage, and system settings.
 
 **Note:** Integration database port defaults are `3306` (MySQL). When using `BACKEND=pgsql`, set `*_DB_PORT` to `5432` for each integration.
 
@@ -360,9 +362,18 @@ curl -X POST -H "X-API-Key: your-key" -H "Content-Type: application/json" \
   http://localhost:8080/api/v1/verify-password/user/john@example.com
 ```
 
+### Panel Settings
+- 29 behavioral settings editable via web UI at `/panel-settings` (global admin only)
+- Categories: Branding, Password Policy, Session & Security, Display, Integrations, REST API
+- Stored in `panel_settings` table in iredadmin database (key-value)
+- Priority: database value > `.env` value > hardcoded default
+- Graceful fallback to `.env` when iRedAdmin database is not configured
+- Activity logging for all settings changes
+
 ### Branding
 - Configurable panel name, logo, footer text, and primary color
 - CSS custom property override via `BRAND_PRIMARY_COLOR`
+- Editable via Panel Settings UI or `.env`
 
 ### Security
 - CSRF token validation on all POST forms
@@ -435,11 +446,11 @@ External integrations (Amavisd, iRedAPD) connect to their own databases via dedi
 |-----------------------|-------------|----------------------------------------------------|
 | `MysqlConnection`     | `vmail`     | Mail domains, users, admins, aliases, BCC, relay   |
 | `PgsqlConnection`     | `vmail`     | Same as MySQL (PostgreSQL variant)                 |
-| `IredadminConnection` | `iredadmin` | Activity logging, domain ownership, newsletter     |
+| `IredadminConnection` | `iredadmin` | Activity logging, domain ownership, newsletter, panel settings |
 | `AmavisdConnection`   | `amavisd`   | Quarantine, mail log, spam policy, white/blacklist |
 | `IredapdConnection`   | `iredapd`   | Throttle, greylisting, rDNS, SenderScore           |
 
-### Repository Interfaces (21)
+### Repository Interfaces (22)
 
 | Interface                            | Purpose                           |
 |--------------------------------------|-----------------------------------|
@@ -464,6 +475,7 @@ External integrations (Amavisd, iRedAPD) connect to their own databases via dedi
 | `AmavisdRepositoryInterface`         | Quarantine and mail log           |
 | `IredapdRepositoryInterface`         | Throttle, greylist, rDNS, SS      |
 | `ApiKeyRepositoryInterface`          | DB-backed API key management      |
+| `PanelSettingsRepositoryInterface`   | DB-backed panel settings (key-value) |
 
 ### Field Mapping (LDAP vs MySQL/PostgreSQL)
 
@@ -501,7 +513,7 @@ cli/
   invalidateSessions.php               Invalidate all active sessions
   notifyQuarantinedRecipients.php      Cron: quarantine email notifications
 public/
-  index.php                            Front controller (107 routes)
+  index.php                            Front controller (109 routes)
   .htaccess                            Apache URL rewrite rules
   static/                              Chota CSS framework, custom styles, logo
 src/
@@ -514,7 +526,7 @@ src/
   Exceptions/
     BackendConnectionException.php     Shared base for backend connection errors
   Models/
-    Settings.php                       Singleton config with all env vars
+    Settings.php                       Singleton config (env + DB overrides via panel_settings)
     LdapConnection.php                 LDAP connection singleton (TLS/STARTTLS)
     User.php                           Mail user data model (20+ fields, quota in MB)
     UserPassword.php                   Password validation (7 rules)
@@ -529,7 +541,7 @@ src/
     DeletedMailbox.php                 Deferred deletion record
     ApiKey.php                         API key data model (RBAC, domains)
   Repositories/
-    21 interfaces                      Repository contracts
+    22 interfaces                      Repository contracts
     RepositoryFactory.php              Returns backend-specific implementations
     Ldap/                              LDAP implementations
     Mysql/                             MySQL implementations + connection singletons
@@ -573,13 +585,14 @@ src/
     AmavisdController.php              Quarantine + mail log
     Fail2banController.php             Ban/unban management + GeoIP
     IredapdController.php              Throttle, greylisting, rDNS, SenderScore
+    PanelSettingsController.php        DB-backed panel settings editor
     BaseController.php                 404 error page handler
   Utils/
     LdapUtils.php                      DN construction, LDAP modify helpers
     PasswordUtils.php                  Password hashing (10+ schemes) + random generation
     PasswordVerifier.php               Password verification utility
     SystemInfo.php                     Hostname, uptime, load, version info
-templates/                             41 native PHP templates
+templates/                             42 native PHP templates
 tests/
   bootstrap.php                        Test environment setup
   Utils/PasswordUtilsTest.php          Password hashing scheme tests
