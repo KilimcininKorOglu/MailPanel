@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\CsrfProtection;
 use App\Middleware;
 use App\Models\Settings;
 use App\Repositories\RepositoryFactory;
@@ -22,6 +23,7 @@ class IredapdController
         $error = null;
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            CsrfProtection::validateToken();
             try {
                 $kind = $_POST['kind'] ?? 'outbound';
                 $period = (int) ($_POST['period'] ?? 3600);
@@ -57,6 +59,7 @@ class IredapdController
         $error = null;
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            CsrfProtection::validateToken();
             try {
                 $action = $_POST['action'] ?? '';
 
@@ -124,6 +127,7 @@ class IredapdController
         $error = null;
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            CsrfProtection::validateToken();
             try {
                 $whitelists = array_filter(array_map('trim', explode("\n", $_POST['whitelists'] ?? '')));
                 $blacklists = array_filter(array_map('trim', explode("\n", $_POST['blacklists'] ?? '')));
@@ -155,6 +159,7 @@ class IredapdController
         $error = null;
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            CsrfProtection::validateToken();
             try {
                 $ips = array_filter(array_map('trim', explode("\n", $_POST['ips'] ?? '')));
                 $repo->setSenderScoreWhitelist($ips);
