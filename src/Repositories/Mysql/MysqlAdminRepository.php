@@ -293,7 +293,7 @@ class MysqlAdminRepository implements AdminRepositoryInterface
                     CASE WHEN da.domain = 'ALL' THEN 1 ELSE 0 END AS isGlobalAdmin
              FROM admin a
              LEFT JOIN domain_admins da ON a.username = da.username AND da.domain = 'ALL'
-             GROUP BY a.username
+             GROUP BY a.username, a.name, a.active, a.created, a.passwordlastchange, a.settings, da.domain
              ORDER BY a.username
              LIMIT :perPage OFFSET :offset"
         );
