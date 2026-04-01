@@ -15,7 +15,7 @@ class TemplateFilters
         return match ($data) {
             'yes', 'active', 'true' => '✅',
             'no', 'disabled', 'false' => '❌',
-            default => $data,
+            default => htmlspecialchars($data, ENT_QUOTES, 'UTF-8'),
         };
     }
 
