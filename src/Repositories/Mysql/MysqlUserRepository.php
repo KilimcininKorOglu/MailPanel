@@ -136,6 +136,39 @@ class MysqlUserRepository implements UserRepositoryInterface
         $settings = \App\Models\Settings::getInstance();
         $username = "{$user->uid}@{$domain}";
 
+        $pdo->beginTransaction();
+        try {
+            // Lock domain row to prevent TOCTOU race on mailbox count/quota
+            $lockStmt = $pdo->prepare(
+                "SELECT mailboxes, maxquota, quota,
+                        (SELECT COUNT(*) FROM mailbox WHERE domain = :d1) AS userCount,
+                        (SELECT COALESCE(SUM(quota), 0) FROM mailbox WHERE domain = :d2) AS quotaUsed
+                 FROM domain WHERE domain = :d3 FOR UPDATE"
+            );
+            $lockStmt->execute(['d1' => $domain, 'd2' => $domain, 'd3' => $domain]);
+            $domainRow = $lockStmt->fetch();
+
+            if ($domainRow) {
+                $mailboxes = (int) $domainRow['mailboxes'];
+                $maxQuota = (int) $domainRow['maxquota'];
+                $totalQuota = (int) $domainRow['quota'];
+                $userCount = (int) $domainRow['userCount'];
+                $quotaUsed = (int) $domainRow['quotaUsed'];
+
+                if ($mailboxes > 0 && $userCount >= $mailboxes) {
+                    $pdo->rollBack();
+                    throw new \RuntimeException("Domain mailbox limit reached ({$userCount}/{$mailboxes})");
+                }
+                if ($maxQuota > 0 && $user->mailQuota > $maxQuota) {
+                    $pdo->rollBack();
+                    throw new \RuntimeException("User quota exceeds domain maximum ({$maxQuota} MB)");
+                }
+                if ($totalQuota > 0 && ($quotaUsed + $user->mailQuota) > $totalQuota) {
+                    $pdo->rollBack();
+                    throw new \RuntimeException("Total domain quota would be exceeded");
+                }
+            }
+
         $stmt = $pdo->prepare(
             "INSERT INTO mailbox
                 (username, password, name, first_name, last_name,
@@ -167,6 +200,14 @@ class MysqlUserRepository implements UserRepositoryInterface
             'maildir' => "{$domain}/{$user->uid}/",
             'localPart' => $user->uid,
         ]);
+
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
     }
 
     public function supportsCreateUser(): bool

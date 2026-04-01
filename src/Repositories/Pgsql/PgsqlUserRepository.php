@@ -136,37 +136,75 @@ class PgsqlUserRepository implements UserRepositoryInterface
         $settings = \App\Models\Settings::getInstance();
         $username = "{$user->uid}@{$domain}";
 
-        $stmt = $pdo->prepare(
-            "INSERT INTO mailbox
-                (username, password, name, first_name, last_name,
-                 quota, employeeid, rank, mobile, phone,
-                 domain, active, isglobaladmin, storagebasedirectory,
-                 storagenode, maildir, local_part)
-             VALUES
-                (:username, :password, :cn, :givenName, :sn,
-                 :quota, :employeeNumber, :title, :mobile, :telephoneNumber,
-                 :domain, :active, :isGlobalAdmin, :storageBase,
-                 :storageNode, :maildir, :localPart)"
-        );
-        $stmt->execute([
-            'username' => $username,
-            'password' => $passwordHash,
-            'cn' => $user->cn,
-            'givenName' => $user->givenName,
-            'sn' => $user->sn,
-            'quota' => $user->mailQuota,
-            'employeeNumber' => $user->employeeNumber,
-            'title' => $user->title,
-            'mobile' => $user->mobile,
-            'telephoneNumber' => $user->telephoneNumber,
-            'domain' => $domain,
-            'active' => $user->accountStatus ? 1 : 0,
-            'isGlobalAdmin' => $user->domainGlobalAdmin ? 1 : 0,
-            'storageBase' => $settings->vmailPath,
-            'storageNode' => $settings->storageNode,
-            'maildir' => "{$domain}/{$user->uid}/",
-            'localPart' => $user->uid,
-        ]);
+        $pdo->beginTransaction();
+        try {
+            // Lock domain row to prevent TOCTOU race on mailbox count/quota
+            $lockStmt = $pdo->prepare(
+                "SELECT mailboxes, maxquota, quota,
+                        (SELECT COUNT(*) FROM mailbox WHERE domain = :d1) AS usercount,
+                        (SELECT COALESCE(SUM(quota), 0) FROM mailbox WHERE domain = :d2) AS quotaused
+                 FROM domain WHERE domain = :d3 FOR UPDATE"
+            );
+            $lockStmt->execute(['d1' => $domain, 'd2' => $domain, 'd3' => $domain]);
+            $domainRow = $lockStmt->fetch();
+
+            if ($domainRow) {
+                $mailboxes = (int) $domainRow['mailboxes'];
+                $maxQuota = (int) $domainRow['maxquota'];
+                $totalQuota = (int) $domainRow['quota'];
+                $userCount = (int) $domainRow['usercount'];
+                $quotaUsed = (int) $domainRow['quotaused'];
+
+                if ($mailboxes > 0 && $userCount >= $mailboxes) {
+                    throw new \RuntimeException("Domain mailbox limit reached ({$userCount}/{$mailboxes})");
+                }
+                if ($maxQuota > 0 && $user->mailQuota > $maxQuota) {
+                    throw new \RuntimeException("User quota exceeds domain maximum ({$maxQuota} MB)");
+                }
+                if ($totalQuota > 0 && ($quotaUsed + $user->mailQuota) > $totalQuota) {
+                    throw new \RuntimeException("Total domain quota would be exceeded");
+                }
+            }
+
+            $stmt = $pdo->prepare(
+                "INSERT INTO mailbox
+                    (username, password, name, first_name, last_name,
+                     quota, employeeid, rank, mobile, phone,
+                     domain, active, isglobaladmin, storagebasedirectory,
+                     storagenode, maildir, local_part)
+                 VALUES
+                    (:username, :password, :cn, :givenName, :sn,
+                     :quota, :employeeNumber, :title, :mobile, :telephoneNumber,
+                     :domain, :active, :isGlobalAdmin, :storageBase,
+                     :storageNode, :maildir, :localPart)"
+            );
+            $stmt->execute([
+                'username' => $username,
+                'password' => $passwordHash,
+                'cn' => $user->cn,
+                'givenName' => $user->givenName,
+                'sn' => $user->sn,
+                'quota' => $user->mailQuota,
+                'employeeNumber' => $user->employeeNumber,
+                'title' => $user->title,
+                'mobile' => $user->mobile,
+                'telephoneNumber' => $user->telephoneNumber,
+                'domain' => $domain,
+                'active' => $user->accountStatus ? 1 : 0,
+                'isGlobalAdmin' => $user->domainGlobalAdmin ? 1 : 0,
+                'storageBase' => $settings->vmailPath,
+                'storageNode' => $settings->storageNode,
+                'maildir' => "{$domain}/{$user->uid}/",
+                'localPart' => $user->uid,
+            ]);
+
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
     }
 
     public function supportsCreateUser(): bool
