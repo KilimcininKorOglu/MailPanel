@@ -14,7 +14,7 @@ interface ApiKeyRepositoryInterface
     public function findByKey(string $apiKey): ?ApiKey;
 
     /**
-     * Ensures the api_keys table exists in the iredadmin database.
+     * Ensures the panel_api_keys table exists in the iredadmin database.
      */
     public function ensureTableExists(): void;
 }

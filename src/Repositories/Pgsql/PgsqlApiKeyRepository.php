@@ -19,7 +19,7 @@ class PgsqlApiKeyRepository implements ApiKeyRepositoryInterface
         try {
             $stmt = $pdo->prepare(
                 "SELECT id, api_key, label, role, domains, read_only, active, created_at
-                 FROM api_keys
+                 FROM panel_api_keys
                  WHERE api_key = :key AND active = 1
                  LIMIT 1"
             );
@@ -41,7 +41,7 @@ class PgsqlApiKeyRepository implements ApiKeyRepositoryInterface
 
         try {
             $pdo->exec(
-                "CREATE TABLE IF NOT EXISTS api_keys (
+                "CREATE TABLE IF NOT EXISTS panel_api_keys (
                     id SERIAL PRIMARY KEY,
                     api_key VARCHAR(128) NOT NULL UNIQUE,
                     label VARCHAR(255) NOT NULL DEFAULT '',
@@ -53,7 +53,7 @@ class PgsqlApiKeyRepository implements ApiKeyRepositoryInterface
                 )"
             );
         } catch (\PDOException $e) {
-            error_log("Failed to create api_keys table: " . $e->getMessage());
+            error_log("Failed to create panel_api_keys table: " . $e->getMessage());
         }
     }
 }
