@@ -49,9 +49,12 @@ while ($row = $stmt->fetch()) {
         continue;
     }
 
-    // Safety: verify the directory path looks like a maildir
-    if (!str_contains($maildir, '/') || strlen($maildir) < 10) {
-        echo "  Suspicious path, skipping.\n";
+    // Safety: verify the directory is within the vmail base path
+    $vmailBase = realpath(\App\Models\Settings::getInstance()->vmailPath);
+    $resolvedMaildir = realpath($maildir);
+    if ($vmailBase === false || $resolvedMaildir === false
+        || !str_starts_with($resolvedMaildir, $vmailBase . DIRECTORY_SEPARATOR)) {
+        echo "  Path outside vmail base directory, skipping.\n";
         $errors++;
         continue;
     }
