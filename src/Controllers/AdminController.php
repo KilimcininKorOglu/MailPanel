@@ -121,6 +121,7 @@ class AdminController
                     } else {
                         $passwordHash = PasswordUtils::generatePasswordHash($password);
                         $repo->createAdmin($admin, $passwordHash);
+                        ActivityLogger::logCreate('', $admin->username, "Admin created: {$admin->username}");
                         header("Location: /admins");
                         exit;
                     }
@@ -179,6 +180,7 @@ class AdminController
 
                     if ($error === null) {
                         $adminRepo->updateAdmin($admin);
+                        ActivityLogger::logUpdate('', $adminEmail, "Admin updated: {$adminEmail}");
                         $success = 'Admin updated successfully!';
                     }
                 } elseif ($editMode === 'password') {
@@ -189,6 +191,7 @@ class AdminController
                     if (empty($validationErrors)) {
                         $passwordHash = PasswordUtils::generatePasswordHash($password);
                         $adminRepo->updateAdminPassword($adminEmail, $passwordHash);
+                        ActivityLogger::logUpdate('', $adminEmail, "Admin password changed: {$adminEmail}");
                         $success = 'Password updated successfully!';
                     }
                 } elseif ($editMode === 'domains') {
@@ -197,9 +200,11 @@ class AdminController
 
                     if ($action === 'assign' && !empty($domain)) {
                         $adminRepo->assignDomainToAdmin($adminEmail, $domain);
+                        ActivityLogger::logUpdate($domain, $adminEmail, "Domain assigned to admin: {$domain}");
                         $success = "Domain '{$domain}' assigned!";
                     } elseif ($action === 'revoke' && !empty($domain)) {
                         $adminRepo->revokeDomainFromAdmin($adminEmail, $domain);
+                        ActivityLogger::logUpdate($domain, $adminEmail, "Domain revoked from admin: {$domain}");
                         $success = "Domain '{$domain}' revoked!";
                     }
                 } elseif ($editMode === 'limits') {
