@@ -87,10 +87,10 @@ class DomainApiController
             domainName: $domain,
             description: $data['description'] ?? $existing->description,
             active: $data['active'] ?? $existing->active,
-            maxQuota: $data['maxQuota'] ?? $existing->maxQuota,
-            quota: $data['quota'] ?? $existing->quota,
-            mailboxes: $data['mailboxes'] ?? $existing->mailboxes,
-            aliases: $data['aliases'] ?? $existing->aliases,
+            maxQuota: max(0, (int) ($data['maxQuota'] ?? $existing->maxQuota)),
+            quota: max(0, (int) ($data['quota'] ?? $existing->quota)),
+            mailboxes: max(0, (int) ($data['mailboxes'] ?? $existing->mailboxes)),
+            aliases: max(0, (int) ($data['aliases'] ?? $existing->aliases)),
             transport: $data['transport'] ?? $existing->transport,
         );
 
