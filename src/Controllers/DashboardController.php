@@ -19,7 +19,9 @@ class DashboardController
     {
         Middleware::loginRequired();
 
-        $stats = RepositoryFactory::getDashboardRepository()->getStats();
+        $stats = Middleware::isGlobalAdmin()
+            ? RepositoryFactory::getDashboardRepository()->getStats()
+            : [];
 
         $systemInfo = null;
         $newVersion = null;
