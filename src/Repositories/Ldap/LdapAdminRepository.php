@@ -249,4 +249,16 @@ class LdapAdminRepository implements AdminRepositoryInterface
     {
         return count($this->getManagedDomains($adminUsername));
     }
+
+    public function countGlobalAdmins(): int
+    {
+        $admins = $this->getAdmins();
+        $count = 0;
+        foreach ($admins as $admin) {
+            if ($admin->isGlobalAdmin) {
+                $count++;
+            }
+        }
+        return $count;
+    }
 }

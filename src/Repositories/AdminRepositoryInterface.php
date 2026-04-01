@@ -76,4 +76,9 @@ interface AdminRepositoryInterface
      * Counts domains managed by an admin.
      */
     public function countManagedDomains(string $adminUsername): int;
+
+    /**
+     * Counts active global admin accounts.
+     */
+    public function countGlobalAdmins(): int;
 }

@@ -218,8 +218,24 @@ class AdminController
         Middleware::globalAdminRequired();
         CsrfProtection::validateToken();
 
+        // Prevent self-deletion
+        if ($adminEmail === ($_SESSION['email'] ?? '')) {
+            $_SESSION['adminError'] = 'Cannot delete your own admin account';
+            header("Location: /admins");
+            exit;
+        }
+
+        // Prevent last global admin deletion
+        $adminRepo = RepositoryFactory::getAdminRepository();
+        $targetAdmin = $adminRepo->getAdmin($adminEmail);
+        if ($targetAdmin !== null && $targetAdmin->isGlobalAdmin && $adminRepo->countGlobalAdmins() <= 1) {
+            $_SESSION['adminError'] = 'Cannot delete the last global admin account';
+            header("Location: /admins");
+            exit;
+        }
+
         try {
-            RepositoryFactory::getAdminRepository()->deleteAdmin($adminEmail);
+            $adminRepo->deleteAdmin($adminEmail);
             header("Location: /admins");
             exit;
         } catch (\Exception $e) {

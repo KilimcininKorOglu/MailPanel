@@ -322,4 +322,15 @@ class PgsqlAdminRepository implements AdminRepositoryInterface
 
         return (int) $stmt->fetch()['total'];
     }
+
+    public function countGlobalAdmins(): int
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->query(
+            "SELECT COUNT(*) AS total FROM domain_admins WHERE domain = 'ALL'"
+        );
+
+        return (int) $stmt->fetch()['total'];
+    }
 }

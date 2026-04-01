@@ -320,4 +320,15 @@ class MysqlAdminRepository implements AdminRepositoryInterface
 
         return (int) $stmt->fetch()['total'];
     }
+
+    public function countGlobalAdmins(): int
+    {
+        $pdo = MysqlConnection::getInstance()->getPdo();
+
+        $stmt = $pdo->query(
+            "SELECT COUNT(*) AS total FROM domain_admins WHERE domain = 'ALL'"
+        );
+
+        return (int) $stmt->fetch()['total'];
+    }
 }

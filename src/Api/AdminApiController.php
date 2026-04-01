@@ -83,8 +83,15 @@ class AdminApiController
     public static function delete(string $email): void
     {
         $repo = RepositoryFactory::getAdminRepository();
-        if ($repo->getAdmin($email) === null) {
+        $admin = $repo->getAdmin($email);
+        if ($admin === null) {
             ApiResponse::error('Admin not found', 404);
+            return;
+        }
+
+        // Prevent last global admin deletion
+        if ($admin->isGlobalAdmin && $repo->countGlobalAdmins() <= 1) {
+            ApiResponse::error('Cannot delete the last global admin account', 403);
             return;
         }
 
