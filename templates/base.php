@@ -44,7 +44,7 @@
       </div>
       <div class="nav-right">
         <?php if (!empty($session['email'])): ?>
-        <a class="button outline" href="/logout">Logout <?= $e($session['email']) ?></a>
+        <form method="post" action="/logout" style="display:inline;margin:0"><?= $csrfField ?><button type="submit" class="button outline">Logout <?= $e($session['email']) ?></button></form>
         <?php endif; ?>
       </div>
     </nav>

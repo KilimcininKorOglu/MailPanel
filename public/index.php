@@ -58,7 +58,8 @@ $router->addRoute(['GET', 'POST'], '/login', function () use ($tpl) {
     AuthController::loginPage($tpl);
 });
 
-$router->addRoute('GET', '/logout', function () {
+$router->addRoute('POST', '/logout', function () {
+    \App\CsrfProtection::validateToken();
     AuthController::logout();
 });
 
