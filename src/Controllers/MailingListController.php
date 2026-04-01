@@ -81,7 +81,8 @@ class MailingListController
 
     public static function view(TemplateEngine $tpl, string $address): void
     {
-        Middleware::loginRequired();
+        $domain = str_contains($address, '@') ? explode('@', $address, 2)[1] : '';
+        Middleware::domainAdminRequired($domain);
 
         $repo = RepositoryFactory::getMailingListRepository();
         $ml = $repo->getMailingList($address);
@@ -90,8 +91,6 @@ class MailingListController
             BaseController::page404($tpl);
             return;
         }
-
-        Middleware::domainAdminRequired($ml->domain);
 
         $owners = $repo->getOwners($address);
         $success = null;
