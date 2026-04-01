@@ -172,6 +172,8 @@ class PgsqlUserRepository implements UserRepositoryInterface
                 if ($totalQuota > 0 && ($quotaUsed + $user->mailQuota) > $totalQuota) {
                     throw new \RuntimeException("Total domain quota would be exceeded");
                 }
+            } else {
+                throw new \RuntimeException("Domain '{$domain}' not found");
             }
 
             $stmt = $pdo->prepare(

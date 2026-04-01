@@ -175,9 +175,12 @@ class MysqlUserRepository implements UserRepositoryInterface
                     $pdo->rollBack();
                     throw new \RuntimeException("Total domain quota would be exceeded");
                 }
+            } else {
+                $pdo->rollBack();
+                throw new \RuntimeException("Domain '{$domain}' not found");
             }
 
-        $stmt = $pdo->prepare(
+            $stmt = $pdo->prepare(
             "INSERT INTO mailbox
                 (username, password, name, first_name, last_name,
                  quota, employeeid, rank, mobile, phone,
