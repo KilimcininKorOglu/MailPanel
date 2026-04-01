@@ -46,6 +46,27 @@ class AdminController
         }
 
         $adminRepo = RepositoryFactory::getAdminRepository();
+        $currentEmail = $_SESSION['email'] ?? '';
+
+        // Exclude current user from destructive bulk actions
+        if ($action === 'delete' || $action === 'disable') {
+            $selectedAdmins = array_filter($selectedAdmins, fn($u) => $u !== $currentEmail);
+
+            // Prevent wiping all global admins
+            $globalAdminCount = $adminRepo->countGlobalAdmins();
+            $affectedGlobalAdmins = 0;
+            foreach ($selectedAdmins as $adminUsername) {
+                $admin = $adminRepo->getAdmin($adminUsername);
+                if ($admin !== null && $admin->isGlobalAdmin) {
+                    $affectedGlobalAdmins++;
+                }
+            }
+            if ($affectedGlobalAdmins >= $globalAdminCount) {
+                $_SESSION['adminError'] = 'Cannot ' . $action . ' all global admin accounts';
+                header("Location: /admins");
+                exit;
+            }
+        }
 
         foreach ($selectedAdmins as $adminUsername) {
             try {
