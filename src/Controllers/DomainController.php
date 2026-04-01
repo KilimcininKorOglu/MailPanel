@@ -68,7 +68,14 @@ class DomainController
                     // Check for duplicate
                     if ($repo->getDomain($domain->domainName) !== null) {
                         $validationErrors['domainName'] = "Domain '{$domain->domainName}' already exists";
-                    } else {
+                    } elseif (Settings::getInstance()->requireDomainOwnershipVerification) {
+                        $ownershipRepo = RepositoryFactory::getDomainOwnershipRepository();
+                        if (!$ownershipRepo->isVerified($domain->domainName)) {
+                            $validationErrors['domainName'] = 'Domain ownership must be verified before creation';
+                        }
+                    }
+
+                    if (empty($validationErrors)) {
                         $repo->createDomain($domain);
                         ActivityLogger::logCreate($domain->domainName, '', "Domain created: {$domain->domainName}");
                         header("Location: /domains");

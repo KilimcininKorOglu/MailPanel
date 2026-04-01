@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Api;
 
 use App\Models\Domain;
+use App\Models\Settings;
 use App\Repositories\RepositoryFactory;
 
 class DomainApiController
@@ -52,6 +53,14 @@ class DomainApiController
         if ($repo->getDomain($domain->domainName) !== null) {
             ApiResponse::error('Domain already exists', 409);
             return;
+        }
+
+        if (Settings::getInstance()->requireDomainOwnershipVerification) {
+            $ownershipRepo = RepositoryFactory::getDomainOwnershipRepository();
+            if (!$ownershipRepo->isVerified($domain->domainName)) {
+                ApiResponse::error('Domain ownership must be verified before creation', 403);
+                return;
+            }
         }
 
         $repo->createDomain($domain);
