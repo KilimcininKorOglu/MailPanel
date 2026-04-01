@@ -87,6 +87,12 @@ class UserApiController
             }
         }
 
+        $validationErrors = \App\Models\UserPassword::validate($password, $password);
+        if (!empty($validationErrors)) {
+            ApiResponse::error('Password policy violation: ' . implode(', ', $validationErrors));
+            return;
+        }
+
         $passwordHash = PasswordUtils::generatePasswordHash($password);
         $repo->createUser($domain, $user, $passwordHash);
         ApiResponse::created(['email' => $user->uid . '@' . $domain]);
@@ -115,6 +121,11 @@ class UserApiController
         unset($data['domainGlobalAdmin']);
 
         if (isset($data['password'])) {
+            $validationErrors = \App\Models\UserPassword::validate($data['password'], $data['password']);
+            if (!empty($validationErrors)) {
+                ApiResponse::error('Password policy violation: ' . implode(', ', $validationErrors));
+                return;
+            }
             $passwordHash = PasswordUtils::generatePasswordHash($data['password']);
             $repo->updateUserPassword($domain, $uid, $passwordHash);
         }

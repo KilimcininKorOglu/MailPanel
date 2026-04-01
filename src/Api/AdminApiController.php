@@ -56,6 +56,12 @@ class AdminApiController
             return;
         }
 
+        $validationErrors = \App\Models\UserPassword::validate($password, $password);
+        if (!empty($validationErrors)) {
+            ApiResponse::error('Password policy violation: ' . implode(', ', $validationErrors));
+            return;
+        }
+
         $passwordHash = PasswordUtils::generatePasswordHash($password);
         $repo->createAdmin($email, $passwordHash, $data['name'] ?? '', $data['isGlobalAdmin'] ?? false);
         ApiResponse::created(['email' => $email]);
@@ -75,6 +81,11 @@ class AdminApiController
         $data = ApiMiddleware::getJsonBody();
 
         if (isset($data['password'])) {
+            $validationErrors = \App\Models\UserPassword::validate($data['password'], $data['password']);
+            if (!empty($validationErrors)) {
+                ApiResponse::error('Password policy violation: ' . implode(', ', $validationErrors));
+                return;
+            }
             $passwordHash = PasswordUtils::generatePasswordHash($data['password']);
             $repo->updateAdminPassword($email, $passwordHash);
         }
