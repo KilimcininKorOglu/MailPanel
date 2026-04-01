@@ -92,7 +92,7 @@ class DomainController
      */
     public static function domainView(TemplateEngine $tpl, string $domainName, string $editMode = 'general'): void
     {
-        Middleware::loginRequired();
+        Middleware::globalAdminRequired();
 
         if (!in_array($editMode, ['general', 'settings', 'catchall', 'bcc', 'relay'], true)) {
             http_response_code(404);
