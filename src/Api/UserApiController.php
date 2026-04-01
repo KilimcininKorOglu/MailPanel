@@ -57,6 +57,11 @@ class UserApiController
             return;
         }
 
+        // Prevent privilege escalation — only global API keys may set global admin flag
+        if (!ApiMiddleware::getCurrentKey()?->isGlobal()) {
+            unset($data['domainGlobalAdmin']);
+        }
+
         $user = User::fromFormData($data);
         $password = $data['password'] ?? '';
 
