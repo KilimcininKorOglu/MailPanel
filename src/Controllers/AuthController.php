@@ -17,7 +17,7 @@ class AuthController
     public static function loginPage(TemplateEngine $tpl): void
     {
         $next = $_GET['next'] ?? $_POST['next'] ?? '/';
-        if (!str_starts_with($next, '/') || str_starts_with($next, '//')) {
+        if (!str_starts_with($next, '/') || str_starts_with($next, '//') || str_starts_with($next, '/\\')) {
             $next = '/';
         }
         $error = null;
