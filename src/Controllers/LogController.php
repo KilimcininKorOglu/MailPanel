@@ -9,11 +9,19 @@ use App\Middleware;
 use App\Models\PaginatedResult;
 use App\Models\Settings;
 use App\Repositories\Mysql\IredadminConnection;
+use App\Repositories\Pgsql\IredadminPgsqlConnection;
 use App\Services\ActivityLogger;
 use App\TemplateEngine;
 
 class LogController
 {
+    private static function getConnection(): object
+    {
+        return Settings::getInstance()->backend === 'pgsql'
+            ? IredadminPgsqlConnection::getInstance()
+            : IredadminConnection::getInstance();
+    }
+
     /**
      * Displays the activity log list page.
      */
@@ -21,7 +29,7 @@ class LogController
     {
         Middleware::globalAdminRequired();
 
-        $conn = IredadminConnection::getInstance();
+        $conn = self::getConnection();
         if (!$conn->isAvailable()) {
             $tpl->render('logList.php', [
                 'logs' => [],
@@ -93,7 +101,7 @@ class LogController
         Middleware::globalAdminRequired();
         CsrfProtection::validateToken();
 
-        $conn = IredadminConnection::getInstance();
+        $conn = self::getConnection();
         if (!$conn->isAvailable()) {
             header("Location: /logs");
             exit;

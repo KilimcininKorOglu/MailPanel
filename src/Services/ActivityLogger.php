@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\Settings;
 use App\Repositories\Mysql\IredadminConnection;
+use App\Repositories\Pgsql\IredadminPgsqlConnection;
 
 /**
  * Logs admin activities to the iredadmin.log table.
@@ -13,13 +14,20 @@ use App\Repositories\Mysql\IredadminConnection;
  */
 class ActivityLogger
 {
+    private static function getConnection(): ?object
+    {
+        return Settings::getInstance()->backend === 'pgsql'
+            ? IredadminPgsqlConnection::getInstance()
+            : IredadminConnection::getInstance();
+    }
+
     public static function log(string $event, string $domain, string $username, string $msg, string $logLevel = 'info'): void
     {
         if (!Settings::getInstance()->activityLoggingEnabled) {
             return;
         }
 
-        $conn = IredadminConnection::getInstance();
+        $conn = self::getConnection();
         if (!$conn->isAvailable()) {
             return;
         }
