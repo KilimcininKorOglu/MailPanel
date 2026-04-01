@@ -139,6 +139,15 @@ class UserApiController
 
     public static function verifyPassword(string $accountType, string $email): void
     {
+        if ($accountType === 'admin') {
+            ApiMiddleware::requireGlobalKey();
+        } else {
+            [, $domain] = self::parseEmail($email);
+            if ($domain !== null) {
+                ApiMiddleware::requireDomainAccess($domain);
+            }
+        }
+
         $data = ApiMiddleware::getJsonBody();
         $password = $data['password'] ?? '';
 
