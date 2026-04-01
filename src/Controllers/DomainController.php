@@ -75,24 +75,42 @@ class DomainController
                         }
                     }
 
-                    // Enforce admin domain creation limit
+                    // Enforce admin domain creation limit with transaction to prevent TOCTOU
                     if (empty($validationErrors)) {
-                        $adminEmail = $_SESSION['email'] ?? '';
-                        $adminRepo = RepositoryFactory::getAdminRepository();
-                        $admin = $adminRepo->getAdmin($adminEmail);
-                        if ($admin !== null && $admin->createMaxDomains >= 0) {
-                            $counts = $adminRepo->getAdminResourceCounts($adminEmail);
-                            if ($counts['domains'] >= $admin->createMaxDomains) {
-                                $validationErrors['domainName'] = "Domain creation limit reached ({$admin->createMaxDomains})";
-                            }
+                        $pdo = self::getBackendPdo();
+                        if ($pdo !== null) {
+                            $pdo->beginTransaction();
                         }
-                    }
+                        try {
+                            $adminEmail = $_SESSION['email'] ?? '';
+                            $adminRepo = RepositoryFactory::getAdminRepository();
+                            $admin = $adminRepo->getAdmin($adminEmail);
+                            if ($admin !== null && $admin->createMaxDomains >= 0) {
+                                $counts = $adminRepo->getAdminResourceCounts($adminEmail);
+                                if ($counts['domains'] >= $admin->createMaxDomains) {
+                                    $validationErrors['domainName'] = "Domain creation limit reached ({$admin->createMaxDomains})";
+                                }
+                            }
 
-                    if (empty($validationErrors)) {
-                        $repo->createDomain($domain);
-                        ActivityLogger::logCreate($domain->domainName, '', "Domain created: {$domain->domainName}");
-                        header("Location: /domains");
-                        exit;
+                            if (empty($validationErrors)) {
+                                $repo->createDomain($domain);
+                                if ($pdo !== null) {
+                                    $pdo->commit();
+                                }
+                                ActivityLogger::logCreate($domain->domainName, '', "Domain created: {$domain->domainName}");
+                                header("Location: /domains");
+                                exit;
+                            }
+
+                            if ($pdo !== null && $pdo->inTransaction()) {
+                                $pdo->rollBack();
+                            }
+                        } catch (\Throwable $e) {
+                            if ($pdo !== null && $pdo->inTransaction()) {
+                                $pdo->rollBack();
+                            }
+                            throw $e;
+                        }
                     }
                 }
             } catch (\Exception $e) {
@@ -275,5 +293,14 @@ class DomainController
             http_response_code(500);
             $tpl->render('page404.php');
         }
+    }
+
+    private static function getBackendPdo(): ?\PDO
+    {
+        return match (Settings::getInstance()->backend) {
+            'mysql' => \App\Repositories\Mysql\MysqlConnection::getInstance()->getPdo(),
+            'pgsql' => \App\Repositories\Pgsql\PgsqlConnection::getInstance()->getPdo(),
+            default => null,
+        };
     }
 }
