@@ -109,7 +109,7 @@ class PanelSettingsController
             'settings' => $settings,
             'dbSettings' => $dbSettings,
             'activeTab' => $activeTab,
-            'allowedSchemes' => ['SSHA512', 'BCRYPT', 'SHA512', 'SSHA', 'MD5', 'PLAIN-MD5', 'CRAM-MD5', 'NTLM', 'PLAIN'],
+            'allowedSchemes' => Settings::ALLOWED_SCHEMES,
         ]);
     }
 
@@ -139,9 +139,20 @@ class PanelSettingsController
             if ($type === 'bool') {
                 $toSave[$key] = isset($_POST[$key]) ? 'true' : 'false';
             } elseif ($type === 'int') {
-                $toSave[$key] = (string) max(0, (int) ($_POST[$key] ?? '0'));
+                $value = max(0, (int) ($_POST[$key] ?? '0'));
+                if ($key === 'sessionTimeout') {
+                    $value = max(60, $value);
+                }
+                $toSave[$key] = (string) $value;
             } else {
-                $toSave[$key] = trim($_POST[$key] ?? '');
+                $value = trim($_POST[$key] ?? '');
+                if ($key === 'passwordDefaultScheme') {
+                    $value = strtoupper($value);
+                    if (!in_array($value, Settings::ALLOWED_SCHEMES, true)) {
+                        continue;
+                    }
+                }
+                $toSave[$key] = $value;
             }
         }
 

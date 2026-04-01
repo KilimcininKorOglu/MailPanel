@@ -107,7 +107,7 @@ class Settings
     public string $apiKey;
     public string $apiAllowedIps;
 
-    private const ALLOWED_SCHEMES = [
+    public const ALLOWED_SCHEMES = [
         'PLAIN', 'CRYPT', 'MD5', 'PLAIN-MD5', 'SHA', 'SSHA',
         'SHA512', 'SSHA512', 'SHA512-CRYPT', 'BCRYPT', 'CRAM-MD5', 'NTLM',
     ];
@@ -332,6 +332,14 @@ class Settings
 
                 if (!isset(self::OVERRIDABLE_KEYS[$key])) {
                     continue;
+                }
+
+                // Validate password scheme against allowed list
+                if ($key === 'passwordDefaultScheme') {
+                    $value = strtoupper($value);
+                    if (!in_array($value, self::ALLOWED_SCHEMES, true)) {
+                        continue;
+                    }
                 }
 
                 $type = self::OVERRIDABLE_KEYS[$key];
