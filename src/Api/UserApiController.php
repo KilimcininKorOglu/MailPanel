@@ -61,6 +61,13 @@ class UserApiController
             return;
         }
 
+        // Enforce domain mailbox count limit
+        $domainObj = RepositoryFactory::getDomainRepository()->getDomain($domain);
+        if ($domainObj !== null && $domainObj->mailboxes > 0 && $domainObj->currentUserCount >= $domainObj->mailboxes) {
+            ApiResponse::error("Domain mailbox limit reached ({$domainObj->currentUserCount}/{$domainObj->mailboxes})", 403);
+            return;
+        }
+
         $passwordHash = PasswordUtils::generatePasswordHash($password);
         $repo->createUser($domain, $user, $passwordHash);
         ApiResponse::created(['email' => $user->uid . '@' . $domain]);

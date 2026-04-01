@@ -366,6 +366,19 @@ class UserController
                             }
                         }
 
+                        // Enforce domain mailbox count limit
+                        $domainObj = RepositoryFactory::getDomainRepository()->getDomain($domain);
+                        if ($domainObj !== null && $domainObj->mailboxes > 0 && $domainObj->currentUserCount >= $domainObj->mailboxes) {
+                            $error = "Domain mailbox limit reached ({$domainObj->currentUserCount}/{$domainObj->mailboxes})";
+                            $tpl->render('userCreate.php', [
+                                'domain' => $domain,
+                                'validationErrors' => $validationErrors,
+                                'error' => $error,
+                                'user' => $user,
+                            ]);
+                            return;
+                        }
+
                         $passwordHash = PasswordUtils::generatePasswordHash($password);
                         $userRepo->createUser($domain, $user, $passwordHash);
                         ActivityLogger::logCreate($domain, $user->uid, "User created");
