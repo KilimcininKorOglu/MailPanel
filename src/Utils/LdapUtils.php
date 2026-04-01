@@ -14,6 +14,10 @@ class LdapUtils
      */
     public static function getEmailDn(string $email): string
     {
+        if (!str_contains($email, '@')) {
+            throw new \InvalidArgumentException("Invalid email format: missing @ in '{$email}'");
+        }
+
         $settings = Settings::getInstance();
         $parts = explode('@', $email);
         $domain = $parts[1];
