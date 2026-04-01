@@ -139,10 +139,13 @@ class Settings
         $this->brandFooterText = $this->env('MAILPANEL_BRAND_FOOTER_TEXT', '');
         $this->brandPrimaryColor = $this->env('MAILPANEL_BRAND_PRIMARY_COLOR', '');
 
+        // Integration DB default port based on backend
+        $defaultDbPort = $this->backend === 'pgsql' ? 5432 : 3306;
+
         // iRedAdmin database (optional, for activity logging)
         $this->activityLoggingEnabled = $this->envBool('MAILPANEL_ACTIVITY_LOGGING_ENABLED', true);
         $this->iredadminDbHost = $this->env('MAILPANEL_IREDADMIN_DB_HOST', '');
-        $this->iredadminDbPort = $this->envInt('MAILPANEL_IREDADMIN_DB_PORT', 3306);
+        $this->iredadminDbPort = $this->envInt('MAILPANEL_IREDADMIN_DB_PORT', $defaultDbPort);
         $this->iredadminDbName = $this->env('MAILPANEL_IREDADMIN_DB_NAME', 'iredadmin');
         $this->iredadminDbUser = $this->env('MAILPANEL_IREDADMIN_DB_USER', '');
         $this->iredadminDbPassword = $this->env('MAILPANEL_IREDADMIN_DB_PASSWORD', '');
@@ -152,7 +155,7 @@ class Settings
         $this->amavisdRemoveQuarantinedInDays = $this->envInt('MAILPANEL_AMAVISD_REMOVE_QUARANTINED_IN_DAYS', 7);
         $this->amavisdRemoveMaillogInDays = $this->envInt('MAILPANEL_AMAVISD_REMOVE_MAILLOG_IN_DAYS', 7);
         $this->amavisdDbHost = $this->env('MAILPANEL_AMAVISD_DB_HOST', '');
-        $this->amavisdDbPort = $this->envInt('MAILPANEL_AMAVISD_DB_PORT', 3306);
+        $this->amavisdDbPort = $this->envInt('MAILPANEL_AMAVISD_DB_PORT', $defaultDbPort);
         $this->amavisdDbName = $this->env('MAILPANEL_AMAVISD_DB_NAME', 'amavisd');
         $this->amavisdDbUser = $this->env('MAILPANEL_AMAVISD_DB_USER', '');
         $this->amavisdDbPassword = $this->env('MAILPANEL_AMAVISD_DB_PASSWORD', '');
@@ -165,7 +168,7 @@ class Settings
         // iRedAPD integration
         $this->iredapdEnabled = $this->envBool('MAILPANEL_IREDAPD_ENABLED', false);
         $this->iredapdDbHost = $this->env('MAILPANEL_IREDAPD_DB_HOST', '');
-        $this->iredapdDbPort = $this->envInt('MAILPANEL_IREDAPD_DB_PORT', 3306);
+        $this->iredapdDbPort = $this->envInt('MAILPANEL_IREDAPD_DB_PORT', $defaultDbPort);
         $this->iredapdDbName = $this->env('MAILPANEL_IREDAPD_DB_NAME', 'iredapd');
         $this->iredapdDbUser = $this->env('MAILPANEL_IREDAPD_DB_USER', '');
         $this->iredapdDbPassword = $this->env('MAILPANEL_IREDAPD_DB_PASSWORD', '');
