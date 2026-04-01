@@ -51,10 +51,10 @@ class MysqlUserRepository implements UserRepositoryInterface
                     enableimap, enableimapsecured, enablemanagesieve,
                     enablemanagesievesecured, enablesogo
              FROM mailbox
-             WHERE domain = :domain AND username NOT LIKE CONCAT('@', :domainFilter)
+             WHERE domain = :domain
              ORDER BY username"
         );
-        $stmt->execute(['domain' => $domain, 'domainFilter' => $domain]);
+        $stmt->execute(['domain' => $domain]);
 
         $users = [];
         while ($row = $stmt->fetch()) {
