@@ -89,23 +89,24 @@ MAILPANEL_BACKEND=ldap    # or "mysql" or "pgsql"
 
 ### Optional Settings
 
-| Variable                              | Default   | Description                                  |
-| ------------------------------------- | --------- | -------------------------------------------- |
-| `PASSWORD_MIN_LENGTH`                 | `8`       | Minimum password length                      |
-| `PASSWORD_INCLUDES_SPECIAL_CHARS`     | `true`    | Require special characters in passwords      |
-| `PASSWORD_INCLUDES_NUMBERS`           | `true`    | Require digits in passwords                  |
-| `PASSWORD_INCLUDES_LOWERCASE`         | `true`    | Require lowercase letters in passwords       |
-| `PASSWORD_INCLUDES_UPPERCASE`         | `true`    | Require uppercase letters in passwords       |
-| `PASSWORD_HASHES_USE_PREFIXED_SCHEME` | `true`    | Use `{SCHEME}` prefix in password hashes     |
-| `PASSWORD_DEFAULT_SCHEME`             | `SSHA512` | Default password hashing scheme              |
-| `REQUIRE_OLD_PASSWORD_ON_CHANGE`      | `false`   | Require current password for password change |
-| `PAGINATION_PER_PAGE`                 | `50`      | Items per page on list views                 |
-| `SESSION_TIMEOUT`                     | `1800`    | Session timeout in seconds                   |
-| `ALLOWED_IP_RANGES`                   | -         | Comma-separated CIDR ranges for panel access |
-| `SESSION_VALIDATE_IP`                 | `false`   | Invalidate session on client IP change       |
-| `CHECK_UPDATES`                       | `true`    | Check GitHub for new versions on dashboard   |
-| `GEOIP_DB_PATH`                       | -         | Path to MaxMind GeoLite2-City .mmdb file     |
-| `REQUIRE_DOMAIN_OWNERSHIP_VERIFICATION` | `false` | Require DNS TXT verification for new domains |
+| Variable                                  | Default   | Description                                  |
+| ----------------------------------------- | --------- | -------------------------------------------- |
+| `PASSWORD_MIN_LENGTH`                     | `8`       | Minimum password length                      |
+| `PASSWORD_INCLUDES_SPECIAL_CHARS`         | `true`    | Require special characters in passwords      |
+| `PASSWORD_INCLUDES_NUMBERS`               | `true`    | Require digits in passwords                  |
+| `PASSWORD_INCLUDES_LOWERCASE`             | `true`    | Require lowercase letters in passwords       |
+| `PASSWORD_INCLUDES_UPPERCASE`             | `true`    | Require uppercase letters in passwords       |
+| `PASSWORD_HASHES_USE_PREFIXED_SCHEME`     | `true`    | Use `{SCHEME}` prefix in password hashes     |
+| `PASSWORD_DEFAULT_SCHEME`                 | `SSHA512` | Default password hashing scheme              |
+| `REQUIRE_OLD_PASSWORD_ON_CHANGE`          | `false`   | Require current password for password change |
+| `PAGINATION_PER_PAGE`                     | `50`      | Items per page on list views                 |
+| `SESSION_TIMEOUT`                         | `1800`    | Session timeout in seconds                   |
+| `ALLOWED_IP_RANGES`                       | -         | Comma-separated CIDR ranges for panel access |
+| `SESSION_VALIDATE_IP`                     | `false`   | Invalidate session on client IP change       |
+| `CHECK_UPDATES`                           | `true`    | Check GitHub for new versions on dashboard   |
+| `GEOIP_DB_PATH`                           | -         | Path to MaxMind GeoLite2-City .mmdb file     |
+| `REQUIRE_DOMAIN_OWNERSHIP_VERIFICATION`   | `false`   | Require DNS TXT verification for new domains |
+| `NEWSLETTER_EXPIRE_HOURS`                 | `24`      | Token expiry for newsletter confirmations    |
 
 ### Branding
 
@@ -127,6 +128,8 @@ MAILPANEL_BACKEND=ldap    # or "mysql" or "pgsql"
 ### Activity Logging (optional)
 
 Connects to the `iredadmin` database for admin activity logging and system settings.
+
+**Note:** Integration database port defaults are `3306` (MySQL). When using `BACKEND=pgsql`, set `*_DB_PORT` to `5432` for each integration.
 
 | Variable                   | Default     | Description                 |
 | -------------------------- | ----------- | --------------------------- |
@@ -309,7 +312,7 @@ server {
 - Log viewer with domain and event type filters
 - Log deletion (individual and bulk)
 
-### Deferred Mailbox Deletion
+### Deferred Mailbox Deletion (MySQL only)
 - Deleted user mailboxes recorded in `deleted_mailboxes` table
 - Management UI: view, cancel, reschedule pending deletions
 
