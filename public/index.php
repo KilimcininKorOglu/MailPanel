@@ -378,11 +378,11 @@ $router->addRoute(['GET', 'POST'], '/newsletters/unsubscribe/{mlid}', function (
     NewsletterController::unsubscribe($tpl, $mlid);
 });
 
-$router->addRoute('GET', '/newsletters/confirm-sub/{mlid}/{token}', function (string $mlid, string $token) use ($tpl) {
+$router->addRoute(['GET', 'POST'], '/newsletters/confirm-sub/{mlid}/{token}', function (string $mlid, string $token) use ($tpl) {
     NewsletterController::confirmSub($tpl, $mlid, $token);
 });
 
-$router->addRoute('GET', '/newsletters/confirm-unsub/{mlid}/{token}', function (string $mlid, string $token) use ($tpl) {
+$router->addRoute(['GET', 'POST'], '/newsletters/confirm-unsub/{mlid}/{token}', function (string $mlid, string $token) use ($tpl) {
     NewsletterController::confirmUnsub($tpl, $mlid, $token);
 });
 

@@ -152,6 +152,30 @@ class PanelSettingsController
                         continue;
                     }
                 }
+                if ($key === 'fail2banJails') {
+                    $jails = array_filter(array_map('trim', explode(',', $value)));
+                    foreach ($jails as $jail) {
+                        if (!preg_match('/^[a-zA-Z0-9_-]+$/', $jail)) {
+                            continue 2;
+                        }
+                    }
+                    $value = implode(',', $jails);
+                }
+                if ($key === 'fail2banSocket' && $value !== '') {
+                    if (!preg_match('#^(/[a-zA-Z0-9._/-]+)$#', $value)) {
+                        continue;
+                    }
+                }
+                if ($key === 'brandPrimaryColor' && $value !== '') {
+                    if (!preg_match('/^(#[0-9a-fA-F]{3,8}|[a-zA-Z]+|rgba?\(\s*[\d.,\s\/]+\)|hsla?\(\s*[\d.,%\s\/]+\))$/', $value)) {
+                        continue;
+                    }
+                }
+                if ($key === 'geoIpDbPath' && $value !== '') {
+                    if (!str_ends_with($value, '.mmdb') || str_contains($value, '..')) {
+                        continue;
+                    }
+                }
                 $toSave[$key] = $value;
             }
         }

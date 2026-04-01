@@ -87,12 +87,20 @@ class NewsletterController
             return;
         }
 
-        $aliasRepo = RepositoryFactory::getAliasRepository();
-        $aliasRepo->addAliasMember($record['mail'], $record['subscriber']);
-        self::deleteConfirmation($record['id']);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $aliasRepo = RepositoryFactory::getAliasRepository();
+            $aliasRepo->addAliasMember($record['mail'], $record['subscriber']);
+            self::deleteConfirmation($record['id']);
+
+            $tpl->render('newsletterConfirm.php', [
+                'message' => 'You have been successfully subscribed to ' . $record['mail'],
+            ]);
+            return;
+        }
 
         $tpl->render('newsletterConfirm.php', [
-            'message' => 'You have been successfully subscribed to ' . $record['mail'],
+            'message' => 'Click the button below to confirm your subscription to ' . $record['mail'],
+            'showConfirmButton' => true,
         ]);
     }
 
@@ -105,12 +113,20 @@ class NewsletterController
             return;
         }
 
-        $aliasRepo = RepositoryFactory::getAliasRepository();
-        $aliasRepo->removeAliasMember($record['mail'], $record['subscriber']);
-        self::deleteConfirmation($record['id']);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $aliasRepo = RepositoryFactory::getAliasRepository();
+            $aliasRepo->removeAliasMember($record['mail'], $record['subscriber']);
+            self::deleteConfirmation($record['id']);
+
+            $tpl->render('newsletterConfirm.php', [
+                'message' => 'You have been successfully unsubscribed from ' . $record['mail'],
+            ]);
+            return;
+        }
 
         $tpl->render('newsletterConfirm.php', [
-            'message' => 'You have been successfully unsubscribed from ' . $record['mail'],
+            'message' => 'Click the button below to confirm your unsubscription from ' . $record['mail'],
+            'showConfirmButton' => true,
         ]);
     }
 
