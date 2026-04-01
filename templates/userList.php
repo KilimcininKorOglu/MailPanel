@@ -81,7 +81,7 @@
             <td><?= $localize($user->accountStatus) ?></td>
             <td>
               <a href="/<?= $e($domain) ?>/users/<?= $e($user->uid) ?>/general" class="button primary outline">Edit</a>
-              <form method="post" action="/<?= $e($domain) ?>/users/<?= $e($user->uid) ?>/delete" style="display:inline" onsubmit="return confirm('Delete user <?= $e($user->uid) ?>?')">
+              <form method="post" action="/<?= $e($domain) ?>/users/<?= $e($user->uid) ?>/delete" style="display:inline" data-confirm="Delete user <?= $e($user->uid) ?>?">
                 <?= $csrfField ?>
                 <button type="submit" class="button error outline">Delete</button>
               </form>

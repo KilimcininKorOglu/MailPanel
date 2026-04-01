@@ -65,7 +65,7 @@
             <?php if (!empty($session['isGlobalAdmin'])): ?>
             <details style="margin-bottom:1rem;">
               <summary>Rename email address</summary>
-              <form method="post" action="/<?= $e($domain) ?>/users/<?= $e($user->uid) ?>/rename" style="margin-top:0.5rem;" onsubmit="return confirm('Rename user email?')">
+              <form method="post" action="/<?= $e($domain) ?>/users/<?= $e($user->uid) ?>/rename" style="margin-top:0.5rem;" data-confirm="Rename user email?">
                 <?= $csrfField ?>
                 <div class="row">
                   <div class="col-6">
@@ -302,7 +302,7 @@
                     <?= $csrfField ?>
                     <input type="hidden" name="action" value="remove" />
                     <input type="hidden" name="aliasAddress" value="<?= $e($aliasAddr) ?>" />
-                    <button type="submit" class="button error outline" onclick="return confirm('Remove <?= $e($aliasAddr) ?>?')">Remove</button>
+                    <button type="submit" class="button error outline" data-confirm="Remove <?= $e($aliasAddr) ?>?">Remove</button>
                   </form>
                 </td>
               </tr>

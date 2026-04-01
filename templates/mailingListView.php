@@ -70,7 +70,7 @@
       <hr />
 
       <?php if (!empty($session['isGlobalAdmin'])): ?>
-      <form method="post" action="/mailing-lists/<?= $e($ml->address) ?>/delete" onsubmit="return confirm('Delete mailing list <?= $e($ml->address) ?>?')">
+      <form method="post" action="/mailing-lists/<?= $e($ml->address) ?>/delete" data-confirm="Delete mailing list <?= $e($ml->address) ?>?">
         <?= $csrfField ?>
         <button type="submit" class="button error">Delete Mailing List</button>
       </form>

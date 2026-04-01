@@ -24,7 +24,7 @@
         <td><?= $e($mb->deleteDate ?? 'Not scheduled') ?></td>
         <td><?= $e($mb->timestamp ?? '') ?></td>
         <td>
-          <form method="post" action="/deleted-mailboxes/<?= $e($mb->id) ?>/cancel" style="display:inline" onsubmit="return confirm('Cancel deletion? The mailbox directory will be preserved.')">
+          <form method="post" action="/deleted-mailboxes/<?= $e($mb->id) ?>/cancel" style="display:inline" data-confirm="Cancel deletion? The mailbox directory will be preserved.">
             <?= $csrfField ?>
             <button type="submit" class="button outline">Cancel</button>
           </form>

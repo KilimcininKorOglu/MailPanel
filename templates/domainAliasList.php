@@ -28,7 +28,7 @@
             <td><?= $localize($alias->active ? 'active' : 'disabled') ?></td>
             <td><?= $e($alias->created ?? '') ?></td>
             <td>
-              <form method="post" action="/domain-aliases/<?= $e($alias->aliasDomain) ?>/delete" style="display:inline" onsubmit="return confirm('Delete alias <?= $e($alias->aliasDomain) ?>?')">
+              <form method="post" action="/domain-aliases/<?= $e($alias->aliasDomain) ?>/delete" style="display:inline" data-confirm="Delete alias <?= $e($alias->aliasDomain) ?>?">
                 <?= $csrfField ?>
                 <button type="submit" class="button error outline">Delete</button>
               </form>

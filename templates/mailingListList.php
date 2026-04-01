@@ -48,7 +48,7 @@
               <td><?= $e($ml->accessPolicy) ?></td>
               <td><?= $localize($ml->active ? 'active' : 'disabled') ?></td>
               <td>
-                <form method="post" action="/mailing-lists/<?= $e($ml->address) ?>/delete" style="display:inline" onsubmit="return confirm('Delete mailing list <?= $e($ml->address) ?>?')">
+                <form method="post" action="/mailing-lists/<?= $e($ml->address) ?>/delete" style="display:inline" data-confirm="Delete mailing list <?= $e($ml->address) ?>?">
                   <?= $csrfField ?>
                   <button type="submit" class="button error outline">Delete</button>
                 </form>

@@ -50,7 +50,7 @@
               <td><?= $localize($alias->active ? 'active' : 'disabled') ?></td>
               <td><?= $e($alias->created ?? '') ?></td>
               <td>
-                <form method="post" action="/aliases/<?= $e($alias->address) ?>/delete" style="display:inline" onsubmit="return confirm('Delete alias <?= $e($alias->address) ?>?')">
+                <form method="post" action="/aliases/<?= $e($alias->address) ?>/delete" style="display:inline" data-confirm="Delete alias <?= $e($alias->address) ?>?">
                   <?= $csrfField ?>
                   <button type="submit" class="button error outline">Delete</button>
                 </form>

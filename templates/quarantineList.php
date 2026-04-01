@@ -10,7 +10,7 @@
       <div class="col-6">
         <button type="submit" class="button outline">Filter</button>
         <a href="/amavisd/quarantine" class="button outline">Clear</a>
-        <form method="post" action="/amavisd/cleanup" style="display:inline" onsubmit="return confirm('Clean up old quarantined messages and mail logs?')">
+        <form method="post" action="/amavisd/cleanup" style="display:inline" data-confirm="Clean up old quarantined messages and mail logs?">
           <?= $csrfField ?>
           <button type="submit" class="button error outline">Cleanup old records</button>
         </form>
@@ -38,11 +38,11 @@
         <td><?= $e($msg['subject'] ?? '') ?></td>
         <td><?= $e($msg['spam_level'] ?? '') ?></td>
         <td>
-          <form method="post" action="/amavisd/quarantine/<?= $e($msg['mail_id'] ?? '') ?>/release" style="display:inline" onsubmit="return confirm('Release this message to the recipient?')">
+          <form method="post" action="/amavisd/quarantine/<?= $e($msg['mail_id'] ?? '') ?>/release" style="display:inline" data-confirm="Release this message to the recipient?">
             <?= $csrfField ?>
             <button type="submit" class="button primary outline">Release</button>
           </form>
-          <form method="post" action="/amavisd/quarantine/<?= $e($msg['mail_id'] ?? '') ?>/delete" style="display:inline" onsubmit="return confirm('Delete this quarantined message?')">
+          <form method="post" action="/amavisd/quarantine/<?= $e($msg['mail_id'] ?? '') ?>/delete" style="display:inline" data-confirm="Delete this quarantined message?">
             <?= $csrfField ?>
             <button type="submit" class="button error outline">Delete</button>
           </form>

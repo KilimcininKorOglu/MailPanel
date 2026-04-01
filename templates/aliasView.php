@@ -87,7 +87,7 @@
                 <?= $csrfField ?>
                 <input type="hidden" name="action" value="removeMember" />
                 <input type="hidden" name="member" value="<?= $e($member) ?>" />
-                <button type="submit" class="button error outline" onclick="return confirm('Remove <?= $e($member) ?>?')">Remove</button>
+                <button type="submit" class="button error outline" data-confirm="Remove <?= $e($member) ?>?">Remove</button>
               </form>
             </td>
           </tr>
@@ -117,7 +117,7 @@
 
       <!-- Delete -->
       <?php if (!empty($session['isGlobalAdmin'])): ?>
-      <form method="post" action="/aliases/<?= $e($alias->address) ?>/delete" onsubmit="return confirm('Permanently delete alias <?= $e($alias->address) ?>?')">
+      <form method="post" action="/aliases/<?= $e($alias->address) ?>/delete" data-confirm="Permanently delete alias <?= $e($alias->address) ?>?">
         <?= $csrfField ?>
         <button type="submit" class="button error">Delete Alias</button>
       </form>

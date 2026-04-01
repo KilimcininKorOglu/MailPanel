@@ -84,7 +84,7 @@
 
         <?php if ($policy !== null): ?>
         <button type="submit" name="action" value="delete" class="button error outline"
-          onclick="return confirm('Delete this spam policy?')">Delete Policy</button>
+          data-confirm="Delete this spam policy?">Delete Policy</button>
         <?php endif; ?>
       </form>
 

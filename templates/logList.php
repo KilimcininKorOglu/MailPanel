@@ -68,8 +68,8 @@
 
   <?php if (!empty($session['isGlobalAdmin']) && !empty($logs)): ?>
   <div style="margin-top: 0.5rem;">
-    <button type="submit" class="button error outline" onclick="return confirm('Delete selected log entries?')">Delete selected</button>
-    <button type="submit" name="deleteAll" value="1" class="button error" onclick="return confirm('Delete ALL log entries? This cannot be undone.')">Delete all</button>
+    <button type="submit" class="button error outline" data-confirm="Delete selected log entries?">Delete selected</button>
+    <button type="submit" name="deleteAll" value="1" class="button error" data-confirm="Delete ALL log entries? This cannot be undone.">Delete all</button>
   </div>
   <?php endif; ?>
   </form>

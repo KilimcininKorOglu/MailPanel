@@ -75,6 +75,11 @@
       if(f1){f1.value=result;f1.type='text';setTimeout(function(){f1.type='password';},3000);}
       if(f2)f2.value=result;
     }
+    document.querySelectorAll('[data-confirm]').forEach(function(el){
+      el.addEventListener(el.tagName==='FORM'?'submit':'click',function(e){
+        if(!confirm(el.dataset.confirm))e.preventDefault();
+      });
+    });
     </script>
   </body>
 </html>

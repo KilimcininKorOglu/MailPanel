@@ -20,7 +20,7 @@
         <tr>
           <td><?= $e($ip) ?></td>
           <td>
-            <form method="post" action="/fail2ban/unban" style="display:inline" onsubmit="return confirm('Unban <?= $e($ip) ?>?')">
+            <form method="post" action="/fail2ban/unban" style="display:inline" data-confirm="Unban <?= $e($ip) ?>?">
               <?= $csrfField ?>
               <input type="hidden" name="jail" value="<?= $e($jail) ?>" />
               <input type="hidden" name="ip" value="<?= $e($ip) ?>" />
