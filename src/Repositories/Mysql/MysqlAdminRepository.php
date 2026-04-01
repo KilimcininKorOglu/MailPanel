@@ -197,6 +197,20 @@ class MysqlAdminRepository implements AdminRepositoryInterface
 
         $pdo->beginTransaction();
         try {
+            // Lock and verify: prevent last global admin deletion (TOCTOU safe)
+            $lockStmt = $pdo->prepare(
+                "SELECT COUNT(*) AS cnt FROM domain_admins WHERE domain = 'ALL' FOR UPDATE"
+            );
+            $lockStmt->execute();
+            $globalCount = (int) $lockStmt->fetch()['cnt'];
+
+            $isGlobal = $pdo->prepare("SELECT 1 FROM domain_admins WHERE username = :u AND domain = 'ALL'");
+            $isGlobal->execute(['u' => $username]);
+            if ($isGlobal->fetch() !== false && $globalCount <= 1) {
+                $pdo->rollBack();
+                throw new \RuntimeException("Cannot delete the last global admin");
+            }
+
             // Delete from admin table
             $stmt = $pdo->prepare("DELETE FROM admin WHERE username = :username");
             $stmt->execute(['username' => $username]);

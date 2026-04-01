@@ -143,6 +143,12 @@ class PanelSettingsController
                 if ($key === 'sessionTimeout') {
                     $value = max(60, $value);
                 }
+                if ($key === 'passwordMinLength') {
+                    $value = max(1, $value);
+                }
+                if ($key === 'paginationPerPage') {
+                    $value = max(1, $value);
+                }
                 $toSave[$key] = (string) $value;
             } else {
                 $value = trim($_POST[$key] ?? '');

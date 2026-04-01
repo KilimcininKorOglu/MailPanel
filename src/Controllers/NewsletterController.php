@@ -138,6 +138,12 @@ class NewsletterController
         }
 
         try {
+            // Remove existing pending tokens for this combination to prevent flooding
+            $delStmt = $pdo->prepare(
+                "DELETE FROM newsletter_subunsub_confirms WHERE mlid = :mlid AND subscriber = :subscriber AND kind = :kind"
+            );
+            $delStmt->execute(['mlid' => $mlid, 'subscriber' => $subscriber, 'kind' => $kind]);
+
             $stmt = $pdo->prepare(
                 "INSERT INTO newsletter_subunsub_confirms (mlid, mail, subscriber, kind, token, expired)
                  VALUES (:mlid, :mail, :subscriber, :kind, :token, :expired)"

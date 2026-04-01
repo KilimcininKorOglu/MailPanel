@@ -30,10 +30,15 @@ class SearchController
             $managedDomains = [];
             if (empty($_SESSION['isGlobalAdmin'])) {
                 $managedDomains = $_SESSION['managedDomains'] ?? [];
+                if (empty($managedDomains)) {
+                    $results = [];
+                }
             }
 
-            $repo = RepositoryFactory::getSearchRepository();
-            $results = $repo->search($query, $accountTypes, $statusFilter, $managedDomains);
+            if ($results === null) {
+                $repo = RepositoryFactory::getSearchRepository();
+                $results = $repo->search($query, $accountTypes, $statusFilter, $managedDomains);
+            }
         }
 
         $tpl->render('search.php', [
