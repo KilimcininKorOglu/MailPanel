@@ -261,4 +261,47 @@ class LdapAdminRepository implements AdminRepositoryInterface
         }
         return $count;
     }
+
+    public function getAdminResourceCounts(string $adminUsername): array
+    {
+        $managedDomains = $this->getManagedDomains($adminUsername);
+        $admin = $this->getAdmin($adminUsername);
+        $isGlobal = $admin !== null && $admin->isGlobalAdmin;
+
+        $userRepo = \App\Repositories\RepositoryFactory::getUserRepository();
+        $aliasRepo = \App\Repositories\RepositoryFactory::getAliasRepository();
+        $mlRepo = \App\Repositories\RepositoryFactory::getMailingListRepository();
+        $domainRepo = \App\Repositories\RepositoryFactory::getDomainRepository();
+
+        $users = 0;
+        $aliases = 0;
+        $lists = 0;
+        $quotaMb = 0;
+
+        $domains = $isGlobal
+            ? $domainRepo->getDomainsPaginated(1, 999999)->total
+            : count($managedDomains);
+
+        $domainNames = $isGlobal
+            ? array_map(fn($d) => $d->domainName, $domainRepo->getDomainsPaginated(1, 999999)->items)
+            : $managedDomains;
+
+        foreach ($domainNames as $domainName) {
+            $userResult = $userRepo->getUsersPaginated($domainName, 1, 1);
+            $users += $userResult->total;
+
+            $domain = $domainRepo->getDomain($domainName);
+            if ($domain !== null) {
+                $quotaMb += $domain->currentUserCount * ($domain->maxQuota > 0 ? $domain->maxQuota : 0);
+            }
+        }
+
+        return [
+            'domains' => $domains,
+            'users' => $users,
+            'aliases' => $aliases,
+            'lists' => $lists,
+            'quotaMb' => $quotaMb,
+        ];
+    }
 }

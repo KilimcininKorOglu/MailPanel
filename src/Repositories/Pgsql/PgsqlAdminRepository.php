@@ -333,4 +333,42 @@ class PgsqlAdminRepository implements AdminRepositoryInterface
 
         return (int) $stmt->fetch()['total'];
     }
+
+    public function getAdminResourceCounts(string $adminUsername): array
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+
+        $isGlobal = $pdo->prepare("SELECT 1 FROM domain_admins WHERE username = :u AND domain = 'ALL' LIMIT 1");
+        $isGlobal->execute(['u' => $adminUsername]);
+
+        if ($isGlobal->fetch()) {
+            $row = $pdo->query(
+                "SELECT
+                    (SELECT COUNT(*) FROM domain) AS domains,
+                    (SELECT COUNT(*) FROM mailbox) AS users,
+                    (SELECT COUNT(*) FROM alias WHERE islist = 1) AS aliases,
+                    (SELECT COUNT(*) FROM maillists) AS lists,
+                    (SELECT COALESCE(SUM(quota), 0) FROM mailbox) AS quotamb"
+            )->fetch();
+        } else {
+            $stmt = $pdo->prepare(
+                "SELECT
+                    (SELECT COUNT(*) FROM domain_admins WHERE username = :u1 AND domain != 'ALL') AS domains,
+                    (SELECT COUNT(*) FROM mailbox WHERE domain IN (SELECT domain FROM domain_admins WHERE username = :u2 AND domain != 'ALL')) AS users,
+                    (SELECT COUNT(*) FROM alias WHERE islist = 1 AND domain IN (SELECT domain FROM domain_admins WHERE username = :u3 AND domain != 'ALL')) AS aliases,
+                    (SELECT COUNT(*) FROM maillists WHERE domain IN (SELECT domain FROM domain_admins WHERE username = :u4 AND domain != 'ALL')) AS lists,
+                    (SELECT COALESCE(SUM(quota), 0) FROM mailbox WHERE domain IN (SELECT domain FROM domain_admins WHERE username = :u5 AND domain != 'ALL')) AS quotamb"
+            );
+            $stmt->execute(['u1' => $adminUsername, 'u2' => $adminUsername, 'u3' => $adminUsername, 'u4' => $adminUsername, 'u5' => $adminUsername]);
+            $row = $stmt->fetch();
+        }
+
+        return [
+            'domains' => (int) ($row['domains'] ?? 0),
+            'users' => (int) ($row['users'] ?? 0),
+            'aliases' => (int) ($row['aliases'] ?? 0),
+            'lists' => (int) ($row['lists'] ?? 0),
+            'quotaMb' => (int) ($row['quotamb'] ?? 0),
+        ];
+    }
 }

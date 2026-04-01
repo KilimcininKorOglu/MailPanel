@@ -81,4 +81,11 @@ interface AdminRepositoryInterface
      * Counts active global admin accounts.
      */
     public function countGlobalAdmins(): int;
+
+    /**
+     * Returns resource counts for an admin across their managed domains.
+     *
+     * @return array{domains: int, users: int, aliases: int, lists: int, quotaMb: int}
+     */
+    public function getAdminResourceCounts(string $adminUsername): array;
 }

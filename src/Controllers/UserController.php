@@ -348,6 +348,24 @@ class UserController
                     $validationErrors = UserPassword::validate($password, $passwordRepeat);
 
                     if (empty($validationErrors)) {
+                        // Enforce admin resource limits
+                        $adminEmail = $_SESSION['email'] ?? '';
+                        $adminRepo = RepositoryFactory::getAdminRepository();
+                        $admin = $adminRepo->getAdmin($adminEmail);
+                        if ($admin !== null && $admin->createMaxUsers >= 0) {
+                            $counts = $adminRepo->getAdminResourceCounts($adminEmail);
+                            if ($counts['users'] >= $admin->createMaxUsers) {
+                                $error = "User creation limit reached ({$admin->createMaxUsers})";
+                                $tpl->render('userCreate.php', [
+                                    'domain' => $domain,
+                                    'validationErrors' => $validationErrors,
+                                    'error' => $error,
+                                    'user' => $user,
+                                ]);
+                                return;
+                            }
+                        }
+
                         $passwordHash = PasswordUtils::generatePasswordHash($password);
                         $userRepo->createUser($domain, $user, $passwordHash);
                         ActivityLogger::logCreate($domain, $user->uid, "User created");

@@ -75,6 +75,19 @@ class DomainController
                         }
                     }
 
+                    // Enforce admin domain creation limit
+                    if (empty($validationErrors)) {
+                        $adminEmail = $_SESSION['email'] ?? '';
+                        $adminRepo = RepositoryFactory::getAdminRepository();
+                        $admin = $adminRepo->getAdmin($adminEmail);
+                        if ($admin !== null && $admin->createMaxDomains >= 0) {
+                            $counts = $adminRepo->getAdminResourceCounts($adminEmail);
+                            if ($counts['domains'] >= $admin->createMaxDomains) {
+                                $validationErrors['domainName'] = "Domain creation limit reached ({$admin->createMaxDomains})";
+                            }
+                        }
+                    }
+
                     if (empty($validationErrors)) {
                         $repo->createDomain($domain);
                         ActivityLogger::logCreate($domain->domainName, '', "Domain created: {$domain->domainName}");
