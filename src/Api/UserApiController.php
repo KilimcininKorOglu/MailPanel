@@ -83,6 +83,9 @@ class UserApiController
 
         $data = ApiMiddleware::getJsonBody();
 
+        // Prevent privilege escalation via API: domainGlobalAdmin cannot be changed via API
+        unset($data['domainGlobalAdmin']);
+
         if (isset($data['password'])) {
             $passwordHash = PasswordUtils::generatePasswordHash($data['password']);
             $repo->updateUserPassword($domain, $uid, $passwordHash);

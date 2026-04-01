@@ -75,8 +75,15 @@ class UserController
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 if ($editMode === 'general') {
+                    $existingUser = $userRepo->getUser($domain, $userUid);
                     $user = User::fromFormData($_POST);
                     $user->uid = $userUid;
+
+                    // Prevent privilege escalation: only global admins can change domainGlobalAdmin
+                    if (!Middleware::isGlobalAdmin()) {
+                        $user->domainGlobalAdmin = $existingUser ? $existingUser->domainGlobalAdmin : false;
+                    }
+
                     $userRepo->updateUser($domain, $user);
                     ActivityLogger::logUpdate($domain, $userUid, "User profile updated");
                     $success = 'Information updated successfully!';
