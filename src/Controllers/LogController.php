@@ -19,7 +19,7 @@ class LogController
      */
     public static function logList(TemplateEngine $tpl): void
     {
-        Middleware::loginRequired();
+        Middleware::globalAdminRequired();
 
         $conn = IredadminConnection::getInstance();
         if (!$conn->isAvailable()) {
