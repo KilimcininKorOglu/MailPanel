@@ -11,7 +11,7 @@ kilimcininkoroglu/mailpanel v1.0.0
 ### Supported Backends
 
 | iRedMail Backend | Supported |
-| ---------------- | --------- |
+|------------------|-----------|
 | OpenLDAP         | Yes       |
 | MySQL/MariaDB    | Yes       |
 | PostgreSQL       | Yes       |
@@ -51,13 +51,13 @@ MAILPANEL_BACKEND=ldap    # or "mysql" or "pgsql"
 ### General Settings
 
 | Variable     | Required | Description            |
-| ------------ | -------- | ---------------------- |
+|--------------|----------|------------------------|
 | `SECRET_KEY` | Yes      | Application secret key |
 
 ### LDAP Settings (required when `BACKEND=ldap`)
 
 | Variable          | Default | Description                               | Example                    |
-| ----------------- | ------- | ----------------------------------------- | -------------------------- |
+|-------------------|---------|-------------------------------------------|----------------------------|
 | `LDAP_URI`        | -       | LDAP server URI (`ldap://` or `ldaps://`) | `ldaps://ldap.example.com` |
 | `LDAP_ROOT_DN`    | -       | LDAP root DN                              | `dc=example,dc=com`        |
 | `LDAP_USER`       | -       | Admin email or CN for LDAP bind           | `postmaster@example.com`   |
@@ -67,7 +67,7 @@ MAILPANEL_BACKEND=ldap    # or "mysql" or "pgsql"
 ### MySQL Settings (required when `BACKEND=mysql`)
 
 | Variable         | Default      | Description                         |
-| ---------------- | ------------ | ----------------------------------- |
+|------------------|--------------|-------------------------------------|
 | `MYSQL_HOST`     | -            | MySQL server hostname               |
 | `MYSQL_PORT`     | `3306`       | MySQL server port                   |
 | `MYSQL_DATABASE` | -            | Database name (e.g. `vmail`)        |
@@ -78,40 +78,40 @@ MAILPANEL_BACKEND=ldap    # or "mysql" or "pgsql"
 
 ### PostgreSQL Settings (required when `BACKEND=pgsql`)
 
-| Variable          | Default | Description                          |
-| ----------------- | ------- | ------------------------------------ |
-| `PGSQL_HOST`      | -       | PostgreSQL server hostname           |
-| `PGSQL_PORT`      | `5432`  | PostgreSQL server port               |
-| `PGSQL_DATABASE`  | -       | Database name (e.g. `vmail`)         |
-| `PGSQL_USER`      | -       | Database user                        |
-| `PGSQL_PASSWORD`  | -       | Database password                    |
-| `STORAGE_NODE`    | `vmail1`| Storage node name for new mailboxes  |
+| Variable         | Default  | Description                         |
+|------------------|----------|-------------------------------------|
+| `PGSQL_HOST`     | -        | PostgreSQL server hostname          |
+| `PGSQL_PORT`     | `5432`   | PostgreSQL server port              |
+| `PGSQL_DATABASE` | -        | Database name (e.g. `vmail`)        |
+| `PGSQL_USER`     | -        | Database user                       |
+| `PGSQL_PASSWORD` | -        | Database password                   |
+| `STORAGE_NODE`   | `vmail1` | Storage node name for new mailboxes |
 
 ### Optional Settings
 
-| Variable                                  | Default   | Description                                  |
-| ----------------------------------------- | --------- | -------------------------------------------- |
-| `PASSWORD_MIN_LENGTH`                     | `8`       | Minimum password length                      |
-| `PASSWORD_INCLUDES_SPECIAL_CHARS`         | `true`    | Require special characters in passwords      |
-| `PASSWORD_INCLUDES_NUMBERS`               | `true`    | Require digits in passwords                  |
-| `PASSWORD_INCLUDES_LOWERCASE`             | `true`    | Require lowercase letters in passwords       |
-| `PASSWORD_INCLUDES_UPPERCASE`             | `true`    | Require uppercase letters in passwords       |
-| `PASSWORD_HASHES_USE_PREFIXED_SCHEME`     | `true`    | Use `{SCHEME}` prefix in password hashes     |
-| `PASSWORD_DEFAULT_SCHEME`                 | `SSHA512` | Default password hashing scheme              |
-| `REQUIRE_OLD_PASSWORD_ON_CHANGE`          | `false`   | Require current password for password change |
-| `PAGINATION_PER_PAGE`                     | `50`      | Items per page on list views                 |
-| `SESSION_TIMEOUT`                         | `1800`    | Session timeout in seconds                   |
-| `ALLOWED_IP_RANGES`                       | -         | Comma-separated CIDR ranges for panel access |
-| `SESSION_VALIDATE_IP`                     | `false`   | Invalidate session on client IP change       |
-| `CHECK_UPDATES`                           | `true`    | Check GitHub for new versions on dashboard   |
-| `GEOIP_DB_PATH`                           | -         | Path to MaxMind GeoLite2-City .mmdb file     |
-| `REQUIRE_DOMAIN_OWNERSHIP_VERIFICATION`   | `false`   | Require DNS TXT verification for new domains |
-| `NEWSLETTER_EXPIRE_HOURS`                 | `24`      | Token expiry for newsletter confirmations    |
+| Variable                                | Default   | Description                                  |
+|-----------------------------------------|-----------|----------------------------------------------|
+| `PASSWORD_MIN_LENGTH`                   | `8`       | Minimum password length                      |
+| `PASSWORD_INCLUDES_SPECIAL_CHARS`       | `true`    | Require special characters in passwords      |
+| `PASSWORD_INCLUDES_NUMBERS`             | `true`    | Require digits in passwords                  |
+| `PASSWORD_INCLUDES_LOWERCASE`           | `true`    | Require lowercase letters in passwords       |
+| `PASSWORD_INCLUDES_UPPERCASE`           | `true`    | Require uppercase letters in passwords       |
+| `PASSWORD_HASHES_USE_PREFIXED_SCHEME`   | `true`    | Use `{SCHEME}` prefix in password hashes     |
+| `PASSWORD_DEFAULT_SCHEME`               | `SSHA512` | Default password hashing scheme              |
+| `REQUIRE_OLD_PASSWORD_ON_CHANGE`        | `false`   | Require current password for password change |
+| `PAGINATION_PER_PAGE`                   | `50`      | Items per page on list views                 |
+| `SESSION_TIMEOUT`                       | `1800`    | Session timeout in seconds                   |
+| `ALLOWED_IP_RANGES`                     | -         | Comma-separated CIDR ranges for panel access |
+| `SESSION_VALIDATE_IP`                   | `false`   | Invalidate session on client IP change       |
+| `CHECK_UPDATES`                         | `true`    | Check GitHub for new versions on dashboard   |
+| `GEOIP_DB_PATH`                         | -         | Path to MaxMind GeoLite2-City .mmdb file     |
+| `REQUIRE_DOMAIN_OWNERSHIP_VERIFICATION` | `false`   | Require DNS TXT verification for new domains |
+| `NEWSLETTER_EXPIRE_HOURS`               | `24`      | Token expiry for newsletter confirmations    |
 
 ### Branding
 
 | Variable              | Default                     | Description                |
-| --------------------- | --------------------------- | -------------------------- |
+|-----------------------|-----------------------------|----------------------------|
 | `BRAND_NAME`          | `MailPanel`                 | Panel name in UI and title |
 | `BRAND_LOGO_URL`      | `/static/logo-iredmail.png` | Logo URL in navigation     |
 | `BRAND_FOOTER_TEXT`   | -                           | Custom footer text         |
@@ -119,11 +119,11 @@ MAILPANEL_BACKEND=ldap    # or "mysql" or "pgsql"
 
 ### REST API (optional)
 
-| Variable          | Default | Description                                     |
-| ----------------- | ------- | ----------------------------------------------- |
-| `API_ENABLED`     | `false` | Enable REST API at `/api/v1/*`                  |
-| `API_KEY`         | -       | API authentication key (sent via X-API-Key)     |
-| `API_ALLOWED_IPS` | -       | Comma-separated IPs allowed to access the API   |
+| Variable          | Default | Description                                   |
+|-------------------|---------|-----------------------------------------------|
+| `API_ENABLED`     | `false` | Enable REST API at `/api/v1/*`                |
+| `API_KEY`         | -       | API authentication key (sent via X-API-Key)   |
+| `API_ALLOWED_IPS` | -       | Comma-separated IPs allowed to access the API |
 
 ### Activity Logging (optional)
 
@@ -132,7 +132,7 @@ Connects to the `iredadmin` database for admin activity logging and system setti
 **Note:** Integration database port defaults are `3306` (MySQL). When using `BACKEND=pgsql`, set `*_DB_PORT` to `5432` for each integration.
 
 | Variable                   | Default     | Description                 |
-| -------------------------- | ----------- | --------------------------- |
+|----------------------------|-------------|-----------------------------|
 | `ACTIVITY_LOGGING_ENABLED` | `true`      | Enable/disable activity log |
 | `IREDADMIN_DB_HOST`        | -           | iRedAdmin database host     |
 | `IREDADMIN_DB_PORT`        | `3306`      | iRedAdmin database port     |
@@ -145,7 +145,7 @@ Connects to the `iredadmin` database for admin activity logging and system setti
 Enables quarantine viewer, mail log, spam policy management, and white/blacklist management.
 
 | Variable                             | Default   | Description               |
-| ------------------------------------ | --------- | ------------------------- |
+|--------------------------------------|-----------|---------------------------|
 | `AMAVISD_ENABLED`                    | `false`   | Enable Amavisd features   |
 | `AMAVISD_DB_HOST`                    | -         | Amavisd database host     |
 | `AMAVISD_DB_PORT`                    | `3306`    | Amavisd database port     |
@@ -158,7 +158,7 @@ Enables quarantine viewer, mail log, spam policy management, and white/blacklist
 ### Fail2ban Integration (optional)
 
 | Variable           | Default                        | Description                   |
-| ------------------ | ------------------------------ | ----------------------------- |
+|--------------------|--------------------------------|-------------------------------|
 | `FAIL2BAN_ENABLED` | `false`                        | Enable ban/unban management   |
 | `FAIL2BAN_SOCKET`  | -                              | Custom fail2ban-client socket |
 | `FAIL2BAN_JAILS`   | `dovecot,postfix,postfix-sasl` | Comma-separated jail names    |
@@ -167,14 +167,14 @@ Enables quarantine viewer, mail log, spam policy management, and white/blacklist
 
 Enables throttle settings, greylisting, rDNS white/blacklist, and SenderScore whitelist.
 
-| Variable              | Default   | Description                 |
-| --------------------- | --------- | --------------------------- |
-| `IREDAPD_ENABLED`     | `false`   | Enable iRedAPD features     |
-| `IREDAPD_DB_HOST`     | -         | iRedAPD database host       |
-| `IREDAPD_DB_PORT`     | `3306`    | iRedAPD database port       |
-| `IREDAPD_DB_NAME`     | `iredapd` | iRedAPD database name       |
-| `IREDAPD_DB_USER`     | -         | iRedAPD database user       |
-| `IREDAPD_DB_PASSWORD` | -         | iRedAPD database password   |
+| Variable              | Default   | Description               |
+|-----------------------|-----------|---------------------------|
+| `IREDAPD_ENABLED`     | `false`   | Enable iRedAPD features   |
+| `IREDAPD_DB_HOST`     | -         | iRedAPD database host     |
+| `IREDAPD_DB_PORT`     | `3306`    | iRedAPD database port     |
+| `IREDAPD_DB_NAME`     | `iredapd` | iRedAPD database name     |
+| `IREDAPD_DB_USER`     | -         | iRedAPD database user     |
+| `IREDAPD_DB_PASSWORD` | -         | iRedAPD database password |
 
 ### Password Schemes
 
@@ -409,7 +409,7 @@ Authentication depends on the selected backend:
 ### Role-Based Access Control
 
 | Role         | Access                                                |
-| ------------ | ----------------------------------------------------- |
+|--------------|-------------------------------------------------------|
 | Global admin | Full access to all domains, users, admins, and system |
 | Domain admin | Access only to assigned domains and their users       |
 
@@ -431,54 +431,55 @@ External integrations (Amavisd, iRedAPD) connect to their own databases via dedi
 
 ### Database Connections
 
-| Connection             | Database    | Purpose                                          |
-| ---------------------- | ----------- | ------------------------------------------------ |
-| `MysqlConnection`      | `vmail`     | Mail domains, users, admins, aliases, BCC, relay |
-| `PgsqlConnection`      | `vmail`     | Same as MySQL (PostgreSQL variant)               |
-| `IredadminConnection`  | `iredadmin` | Activity logging, domain ownership, newsletter   |
-| `AmavisdConnection`    | `amavisd`   | Quarantine, mail log, spam policy, white/blacklist |
-| `IredapdConnection`    | `iredapd`   | Throttle, greylisting, rDNS, SenderScore         |
+| Connection            | Database    | Purpose                                            |
+|-----------------------|-------------|----------------------------------------------------|
+| `MysqlConnection`     | `vmail`     | Mail domains, users, admins, aliases, BCC, relay   |
+| `PgsqlConnection`     | `vmail`     | Same as MySQL (PostgreSQL variant)                 |
+| `IredadminConnection` | `iredadmin` | Activity logging, domain ownership, newsletter     |
+| `AmavisdConnection`   | `amavisd`   | Quarantine, mail log, spam policy, white/blacklist |
+| `IredapdConnection`   | `iredapd`   | Throttle, greylisting, rDNS, SenderScore           |
 
-### Repository Interfaces (20)
+### Repository Interfaces (21)
 
-| Interface                              | Purpose                           |
-| -------------------------------------- | --------------------------------- |
-| `AuthRepositoryInterface`              | Authentication + RBAC             |
-| `DomainRepositoryInterface`            | Domain CRUD                       |
-| `UserRepositoryInterface`              | User CRUD + rename                |
-| `AdminRepositoryInterface`             | Admin CRUD + resource limits      |
-| `ForwardingRepositoryInterface`        | Email forwarding                  |
-| `QuotaRepositoryInterface`             | Used quota queries                |
-| `DashboardRepositoryInterface`         | Dashboard statistics              |
-| `DomainAliasRepositoryInterface`       | Domain alias CRUD                 |
-| `DeletedMailboxRepositoryInterface`    | Deferred mailbox deletion         |
-| `AliasRepositoryInterface`             | Mail alias + catch-all + per-user |
-| `BccRepositoryInterface`               | Domain/user BCC settings          |
-| `RelayRepositoryInterface`             | Sender-dependent relay            |
-| `MailingListRepositoryInterface`       | Mailing list CRUD + owners        |
-| `SpamPolicyRepositoryInterface`        | Spam thresholds per account       |
-| `WhiteBlacklistRepositoryInterface`    | Inbound/outbound white/blacklist  |
-| `LastLoginRepositoryInterface`         | Dovecot last login tracking       |
-| `SearchRepositoryInterface`            | Global search                     |
-| `DomainOwnershipRepositoryInterface`   | DNS domain verification           |
-| `AmavisdRepositoryInterface`           | Quarantine and mail log           |
-| `IredapdRepositoryInterface`           | Throttle, greylist, rDNS, SS      |
+| Interface                            | Purpose                           |
+|--------------------------------------|-----------------------------------|
+| `AuthRepositoryInterface`            | Authentication + RBAC             |
+| `DomainRepositoryInterface`          | Domain CRUD                       |
+| `UserRepositoryInterface`            | User CRUD + rename                |
+| `AdminRepositoryInterface`           | Admin CRUD + resource limits      |
+| `ForwardingRepositoryInterface`      | Email forwarding                  |
+| `QuotaRepositoryInterface`           | Used quota queries                |
+| `DashboardRepositoryInterface`       | Dashboard statistics              |
+| `DomainAliasRepositoryInterface`     | Domain alias CRUD                 |
+| `DeletedMailboxRepositoryInterface`  | Deferred mailbox deletion         |
+| `AliasRepositoryInterface`           | Mail alias + catch-all + per-user |
+| `BccRepositoryInterface`             | Domain/user BCC settings          |
+| `RelayRepositoryInterface`           | Sender-dependent relay            |
+| `MailingListRepositoryInterface`     | Mailing list CRUD + owners        |
+| `SpamPolicyRepositoryInterface`      | Spam thresholds per account       |
+| `WhiteBlacklistRepositoryInterface`  | Inbound/outbound white/blacklist  |
+| `LastLoginRepositoryInterface`       | Dovecot last login tracking       |
+| `SearchRepositoryInterface`          | Global search                     |
+| `DomainOwnershipRepositoryInterface` | DNS domain verification           |
+| `AmavisdRepositoryInterface`         | Quarantine and mail log           |
+| `IredapdRepositoryInterface`         | Throttle, greylist, rDNS, SS      |
+| `ApiKeyRepositoryInterface`          | DB-backed API key management      |
 
 ### Field Mapping (LDAP vs MySQL/PostgreSQL)
 
-| User Model Field    | LDAP Attribute      | MySQL/PgSQL Column          |
-| ------------------- | ------------------- | --------------------------- |
-| `uid`               | `uid`               | `username` (before `@`)     |
-| `accountStatus`     | `accountStatus`     | `active` (1/0)              |
-| `mailQuota`         | `mailQuota` (bytes) | `quota` (MB)                |
-| `cn`                | `cn`                | `name`                      |
-| `givenName`         | `givenName`         | `first_name`                |
-| `sn`                | `sn`                | `last_name`                 |
-| `employeeNumber`    | `employeeNumber`    | `employeeid`                |
-| `title`             | `title`             | `rank`                      |
-| `mobile`            | `mobile`            | `mobile`                    |
-| `telephoneNumber`   | `telephoneNumber`   | `phone`                     |
-| `domainGlobalAdmin` | `domainGlobalAdmin` | `isglobaladmin` (1/0)       |
+| User Model Field    | LDAP Attribute      | MySQL/PgSQL Column      |
+|---------------------|---------------------|-------------------------|
+| `uid`               | `uid`               | `username` (before `@`) |
+| `accountStatus`     | `accountStatus`     | `active` (1/0)          |
+| `mailQuota`         | `mailQuota` (bytes) | `quota` (MB)            |
+| `cn`                | `cn`                | `name`                  |
+| `givenName`         | `givenName`         | `first_name`            |
+| `sn`                | `sn`                | `last_name`             |
+| `employeeNumber`    | `employeeNumber`    | `employeeid`            |
+| `title`             | `title`             | `rank`                  |
+| `mobile`            | `mobile`            | `mobile`                |
+| `telephoneNumber`   | `telephoneNumber`   | `phone`                 |
+| `domainGlobalAdmin` | `domainGlobalAdmin` | `isglobaladmin` (1/0)   |
 
 ## Project Structure
 
@@ -526,8 +527,9 @@ src/
     DomainSettings.php                 Per-domain settings (key:value format)
     PaginatedResult.php                Pagination wrapper
     DeletedMailbox.php                 Deferred deletion record
+    ApiKey.php                         API key data model (RBAC, domains)
   Repositories/
-    20 interfaces                      Repository contracts
+    21 interfaces                      Repository contracts
     RepositoryFactory.php              Returns backend-specific implementations
     Ldap/                              LDAP implementations
     Mysql/                             MySQL implementations + connection singletons
