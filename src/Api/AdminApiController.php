@@ -12,6 +12,7 @@ class AdminApiController
 {
     public static function list(): void
     {
+        ApiMiddleware::requireGlobalKey();
         $repo = RepositoryFactory::getAdminRepository();
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $perPage = (int) ($_GET['perPage'] ?? 50);
@@ -27,6 +28,7 @@ class AdminApiController
 
     public static function get(string $email): void
     {
+        ApiMiddleware::requireGlobalKey();
         $admin = RepositoryFactory::getAdminRepository()->getAdmin($email);
         if ($admin === null) {
             ApiResponse::error('Admin not found', 404);
@@ -37,6 +39,8 @@ class AdminApiController
 
     public static function create(): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $data = ApiMiddleware::getJsonBody();
         $email = $data['email'] ?? '';
         $password = $data['password'] ?? '';
@@ -59,6 +63,8 @@ class AdminApiController
 
     public static function update(string $email): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $repo = RepositoryFactory::getAdminRepository();
         $admin = $repo->getAdmin($email);
         if ($admin === null) {
@@ -82,6 +88,8 @@ class AdminApiController
 
     public static function delete(string $email): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $repo = RepositoryFactory::getAdminRepository();
         $admin = $repo->getAdmin($email);
         if ($admin === null) {

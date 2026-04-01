@@ -4,10 +4,18 @@ declare(strict_types=1);
 
 namespace App\Api;
 
+use App\Models\ApiKey;
 use App\Models\Settings;
+use App\Repositories\RepositoryFactory;
 
 class ApiMiddleware
 {
+    private static ?ApiKey $currentKey = null;
+
+    /**
+     * Authenticates the API request via X-API-Key header.
+     * Supports database-backed keys with RBAC and legacy env-based key.
+     */
     public static function authenticate(): void
     {
         $settings = Settings::getInstance();
@@ -17,18 +25,35 @@ class ApiMiddleware
             exit;
         }
 
-        $apiKey = self::getApiKeyFromRequest();
-
-        if ($apiKey === '' || $settings->apiKey === '') {
-            ApiResponse::error('Unauthorized', 401);
+        $providedKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+        if ($providedKey === '') {
+            ApiResponse::error('Unauthorized: X-API-Key header required', 401);
             exit;
         }
 
-        if (!hash_equals($settings->apiKey, $apiKey)) {
+        // Try database-backed key first
+        $apiKeyRepo = RepositoryFactory::getApiKeyRepository();
+        $apiKeyRepo->ensureTableExists();
+        $keyRecord = $apiKeyRepo->findByKey($providedKey);
+
+        if ($keyRecord !== null) {
+            self::$currentKey = $keyRecord;
+        } elseif ($settings->apiKey !== '' && hash_equals($settings->apiKey, $providedKey)) {
+            // Legacy env-based key: treated as global with full access
+            self::$currentKey = new ApiKey(
+                id: 0,
+                apiKey: $providedKey,
+                label: 'Legacy env key',
+                role: 'global',
+                readOnly: false,
+                active: true,
+            );
+        } else {
             ApiResponse::error('Invalid API key', 401);
             exit;
         }
 
+        // IP whitelist (applies to all keys)
         $allowedIps = $settings->apiAllowedIps;
         if ($allowedIps !== '') {
             $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
@@ -41,14 +66,45 @@ class ApiMiddleware
         }
     }
 
-    private static function getApiKeyFromRequest(): string
+    /**
+     * Returns the authenticated API key context.
+     */
+    public static function getCurrentKey(): ?ApiKey
     {
-        $header = $_SERVER['HTTP_X_API_KEY'] ?? '';
-        if ($header !== '') {
-            return $header;
-        }
+        return self::$currentKey;
+    }
 
-        return $_GET['apiKey'] ?? '';
+    /**
+     * Requires the current key to have global admin role.
+     */
+    public static function requireGlobalKey(): void
+    {
+        if (self::$currentKey === null || !self::$currentKey->isGlobal()) {
+            ApiResponse::error('This operation requires a global API key', 403);
+            exit;
+        }
+    }
+
+    /**
+     * Requires the current key to have access to the given domain.
+     */
+    public static function requireDomainAccess(string $domain): void
+    {
+        if (self::$currentKey === null || !self::$currentKey->hasDomainAccess($domain)) {
+            ApiResponse::error('API key does not have access to this domain', 403);
+            exit;
+        }
+    }
+
+    /**
+     * Requires the current key to allow write operations.
+     */
+    public static function requireWriteAccess(): void
+    {
+        if (self::$currentKey === null || !self::$currentKey->canWrite()) {
+            ApiResponse::error('This API key is read-only', 403);
+            exit;
+        }
     }
 
     public static function getJsonBody(): array

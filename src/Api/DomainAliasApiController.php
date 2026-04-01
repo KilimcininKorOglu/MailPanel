@@ -11,6 +11,7 @@ class DomainAliasApiController
 {
     public static function list(): void
     {
+        ApiMiddleware::requireGlobalKey();
         $repo = RepositoryFactory::getDomainAliasRepository();
         $result = $repo->getAllAliasesPaginated(
             max(1, (int) ($_GET['page'] ?? 1)),
@@ -25,6 +26,8 @@ class DomainAliasApiController
 
     public static function create(): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $data = ApiMiddleware::getJsonBody();
         $aliasDomain = $data['aliasDomain'] ?? '';
         $targetDomain = $data['targetDomain'] ?? '';
@@ -41,6 +44,8 @@ class DomainAliasApiController
 
     public static function delete(string $aliasDomain): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         RepositoryFactory::getDomainAliasRepository()->deleteAlias($aliasDomain);
         ApiResponse::deleted();
     }

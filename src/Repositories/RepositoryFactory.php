@@ -81,6 +81,7 @@ class RepositoryFactory
     private static ?WhiteBlacklistRepositoryInterface $wblistRepo = null;
     private static ?AmavisdRepositoryInterface $amavisdRepo = null;
     private static ?IredapdRepositoryInterface $iredapdRepo = null;
+    private static ?ApiKeyRepositoryInterface $apiKeyRepo = null;
 
     public static function getAuthRepository(): AuthRepositoryInterface
     {
@@ -302,5 +303,16 @@ class RepositoryFactory
             };
         }
         return self::$iredapdRepo;
+    }
+
+    public static function getApiKeyRepository(): ApiKeyRepositoryInterface
+    {
+        if (self::$apiKeyRepo === null) {
+            self::$apiKeyRepo = match (Settings::getInstance()->backend) {
+                'pgsql' => new Pgsql\PgsqlApiKeyRepository(),
+                default => new Mysql\MysqlApiKeyRepository(),
+            };
+        }
+        return self::$apiKeyRepo;
     }
 }

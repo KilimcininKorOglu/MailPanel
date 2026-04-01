@@ -11,6 +11,7 @@ class MailingListApiController
 {
     public static function list(): void
     {
+        ApiMiddleware::requireGlobalKey();
         $repo = RepositoryFactory::getMailingListRepository();
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $perPage = (int) ($_GET['perPage'] ?? 50);
@@ -28,6 +29,7 @@ class MailingListApiController
 
     public static function get(string $address): void
     {
+        ApiMiddleware::requireGlobalKey();
         $repo = RepositoryFactory::getMailingListRepository();
         $ml = $repo->getMailingList($address);
         if ($ml === null) {
@@ -41,6 +43,8 @@ class MailingListApiController
 
     public static function create(): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $data = ApiMiddleware::getJsonBody();
         $address = $data['address'] ?? '';
         $domain = $data['domain'] ?? '';
@@ -68,6 +72,8 @@ class MailingListApiController
 
     public static function update(string $address): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $repo = RepositoryFactory::getMailingListRepository();
         $ml = $repo->getMailingList($address);
         if ($ml === null) {
@@ -89,6 +95,8 @@ class MailingListApiController
 
     public static function delete(string $address): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $repo = RepositoryFactory::getMailingListRepository();
         if ($repo->getMailingList($address) === null) {
             ApiResponse::error('Mailing list not found', 404);

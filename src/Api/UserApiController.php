@@ -12,6 +12,7 @@ class UserApiController
 {
     public static function list(string $domain): void
     {
+        ApiMiddleware::requireDomainAccess($domain);
         $repo = RepositoryFactory::getUserRepository();
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $perPage = (int) ($_GET['perPage'] ?? 50);
@@ -33,6 +34,7 @@ class UserApiController
             ApiResponse::error('Invalid email format');
             return;
         }
+        ApiMiddleware::requireDomainAccess($domain);
 
         $user = RepositoryFactory::getUserRepository()->getUser($domain, $uid);
         if ($user === null) {
@@ -45,6 +47,8 @@ class UserApiController
 
     public static function create(string $domain): void
     {
+        ApiMiddleware::requireDomainAccess($domain);
+        ApiMiddleware::requireWriteAccess();
         $data = ApiMiddleware::getJsonBody();
         $repo = RepositoryFactory::getUserRepository();
 
@@ -85,11 +89,13 @@ class UserApiController
 
     public static function update(string $email): void
     {
+        ApiMiddleware::requireWriteAccess();
         [$uid, $domain] = self::parseEmail($email);
         if ($uid === null) {
             ApiResponse::error('Invalid email format');
             return;
         }
+        ApiMiddleware::requireDomainAccess($domain);
 
         $repo = RepositoryFactory::getUserRepository();
         $existing = $repo->getUser($domain, $uid);
@@ -166,11 +172,13 @@ class UserApiController
 
     public static function delete(string $email): void
     {
+        ApiMiddleware::requireWriteAccess();
         [$uid, $domain] = self::parseEmail($email);
         if ($uid === null) {
             ApiResponse::error('Invalid email format');
             return;
         }
+        ApiMiddleware::requireDomainAccess($domain);
 
         $repo = RepositoryFactory::getUserRepository();
         if ($repo->getUser($domain, $uid) === null) {

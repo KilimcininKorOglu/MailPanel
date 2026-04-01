@@ -11,6 +11,7 @@ class AliasApiController
 {
     public static function list(): void
     {
+        ApiMiddleware::requireGlobalKey();
         $repo = RepositoryFactory::getAliasRepository();
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $perPage = (int) ($_GET['perPage'] ?? 50);
@@ -28,6 +29,7 @@ class AliasApiController
 
     public static function get(string $address): void
     {
+        ApiMiddleware::requireGlobalKey();
         $repo = RepositoryFactory::getAliasRepository();
         $alias = $repo->getAlias($address);
         if ($alias === null) {
@@ -51,6 +53,8 @@ class AliasApiController
 
     public static function create(): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $data = ApiMiddleware::getJsonBody();
         $address = $data['address'] ?? '';
         $domain = $data['domain'] ?? '';
@@ -75,6 +79,8 @@ class AliasApiController
 
     public static function update(string $address): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $repo = RepositoryFactory::getAliasRepository();
         $alias = $repo->getAlias($address);
         if ($alias === null) {
@@ -95,6 +101,8 @@ class AliasApiController
 
     public static function delete(string $address): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $repo = RepositoryFactory::getAliasRepository();
         if ($repo->getAlias($address) === null) {
             ApiResponse::error('Alias not found', 404);

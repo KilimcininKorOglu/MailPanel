@@ -10,6 +10,7 @@ class WhiteBlacklistApiController
 {
     public static function get(string $account): void
     {
+        ApiMiddleware::requireGlobalKey();
         $repo = RepositoryFactory::getWhiteBlacklistRepository();
         ApiResponse::success([
             'inbound' => $repo->getInboundList($account),
@@ -19,6 +20,8 @@ class WhiteBlacklistApiController
 
     public static function update(string $account): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $data = ApiMiddleware::getJsonBody();
         $repo = RepositoryFactory::getWhiteBlacklistRepository();
 
@@ -42,6 +45,8 @@ class WhiteBlacklistApiController
 
     public static function delete(string $account): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $data = ApiMiddleware::getJsonBody();
         $repo = RepositoryFactory::getWhiteBlacklistRepository();
 

@@ -10,12 +10,15 @@ class ThrottleApiController
 {
     public static function get(string $account): void
     {
+        ApiMiddleware::requireGlobalKey();
         $settings = RepositoryFactory::getIredapdRepository()->getThrottleSettings($account);
         ApiResponse::success(['account' => $account, 'settings' => $settings]);
     }
 
     public static function update(string $account): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $data = ApiMiddleware::getJsonBody();
         $repo = RepositoryFactory::getIredapdRepository();
 

@@ -10,6 +10,7 @@ class GreylistApiController
 {
     public static function get(string $account): void
     {
+        ApiMiddleware::requireGlobalKey();
         $repo = RepositoryFactory::getIredapdRepository();
         $settings = $repo->getGreylistSettings($account);
         $whitelisted = $repo->getWhitelistedSenders($account);
@@ -23,6 +24,8 @@ class GreylistApiController
 
     public static function update(string $account): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $data = ApiMiddleware::getJsonBody();
         $repo = RepositoryFactory::getIredapdRepository();
 

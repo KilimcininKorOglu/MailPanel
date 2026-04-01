@@ -11,6 +11,7 @@ class SpamPolicyApiController
 {
     public static function get(string $account): void
     {
+        ApiMiddleware::requireGlobalKey();
         $policy = RepositoryFactory::getSpamPolicyRepository()->getPolicy($account);
         if ($policy === null) {
             ApiResponse::error('No policy found for account', 404);
@@ -21,6 +22,8 @@ class SpamPolicyApiController
 
     public static function update(string $account): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $data = ApiMiddleware::getJsonBody();
         $policy = SpamPolicy::fromFormData($data);
         RepositoryFactory::getSpamPolicyRepository()->createOrUpdatePolicy($account, $policy);

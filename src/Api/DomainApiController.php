@@ -12,6 +12,7 @@ class DomainApiController
 {
     public static function list(): void
     {
+        ApiMiddleware::requireGlobalKey();
         $repo = RepositoryFactory::getDomainRepository();
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $perPage = (int) ($_GET['perPage'] ?? 50);
@@ -31,6 +32,7 @@ class DomainApiController
 
     public static function get(string $domain): void
     {
+        ApiMiddleware::requireDomainAccess($domain);
         $d = RepositoryFactory::getDomainRepository()->getDomain($domain);
         if ($d === null) {
             ApiResponse::error('Domain not found', 404);
@@ -41,6 +43,8 @@ class DomainApiController
 
     public static function create(): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $data = ApiMiddleware::getJsonBody();
         $domain = Domain::fromFormData($data);
 
@@ -69,6 +73,8 @@ class DomainApiController
 
     public static function update(string $domain): void
     {
+        ApiMiddleware::requireDomainAccess($domain);
+        ApiMiddleware::requireWriteAccess();
         $repo = RepositoryFactory::getDomainRepository();
         $existing = $repo->getDomain($domain);
         if ($existing === null) {
@@ -94,6 +100,8 @@ class DomainApiController
 
     public static function delete(string $domain): void
     {
+        ApiMiddleware::requireGlobalKey();
+        ApiMiddleware::requireWriteAccess();
         $repo = RepositoryFactory::getDomainRepository();
         if ($repo->getDomain($domain) === null) {
             ApiResponse::error('Domain not found', 404);
