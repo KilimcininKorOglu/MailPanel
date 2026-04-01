@@ -193,11 +193,11 @@ class AdminController
                     CsrfProtection::validateToken();
                     $admin = $adminRepo->getAdmin($adminEmail);
                     if ($admin !== null) {
-                        $admin->createMaxDomains = (int) ($_POST['createMaxDomains'] ?? -1);
-                        $admin->createMaxUsers = (int) ($_POST['createMaxUsers'] ?? -1);
-                        $admin->createMaxAliases = (int) ($_POST['createMaxAliases'] ?? -1);
-                        $admin->createMaxLists = (int) ($_POST['createMaxLists'] ?? -1);
-                        $admin->createMaxQuota = (int) ($_POST['createMaxQuota'] ?? -1);
+                        $admin->createMaxDomains = max(-1, (int) ($_POST['createMaxDomains'] ?? -1));
+                        $admin->createMaxUsers = max(-1, (int) ($_POST['createMaxUsers'] ?? -1));
+                        $admin->createMaxAliases = max(-1, (int) ($_POST['createMaxAliases'] ?? -1));
+                        $admin->createMaxLists = max(-1, (int) ($_POST['createMaxLists'] ?? -1));
+                        $admin->createMaxQuota = max(-1, (int) ($_POST['createMaxQuota'] ?? -1));
                         $admin->createNewDomains = isset($_POST['createNewDomains']);
                         $adminRepo->updateAdminSettings($adminEmail, $admin->toSettingsJson());
                         ActivityLogger::logUpdate('', $adminEmail, "Admin resource limits updated");

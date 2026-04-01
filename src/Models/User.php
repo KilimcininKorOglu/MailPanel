@@ -81,7 +81,7 @@ class User
         return new self(
             uid: trim($post['uid'] ?? ''),
             accountStatus: isset($post['accountStatus']),
-            mailQuota: (int) ($post['mailQuota'] ?? 100),
+            mailQuota: max(0, (int) ($post['mailQuota'] ?? 100)),
             cn: trim($post['cn'] ?? ''),
             givenName: trim($post['givenName'] ?? ''),
             sn: trim($post['sn'] ?? ''),
