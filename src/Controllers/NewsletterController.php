@@ -32,7 +32,7 @@ class NewsletterController
                 $expired = time() + ($expireHours * 3600);
 
                 self::saveConfirmation($mlid, $ml->address, $email, 'subscribe', $token, $expired);
-                $success = 'A confirmation link has been generated. Token: ' . $token;
+                $success = 'A confirmation email has been sent. Please check your inbox.';
             }
         }
 
@@ -66,7 +66,7 @@ class NewsletterController
                 $expired = time() + ($expireHours * 3600);
 
                 self::saveConfirmation($mlid, $ml->address, $email, 'unsubscribe', $token, $expired);
-                $success = 'A confirmation link has been generated. Token: ' . $token;
+                $success = 'A confirmation email has been sent. Please check your inbox.';
             }
         }
 
