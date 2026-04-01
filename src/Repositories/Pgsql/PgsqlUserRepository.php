@@ -114,6 +114,10 @@ class PgsqlUserRepository implements UserRepositoryInterface
             'username' => "{$user->uid}@{$domain}",
             'domain' => $domain,
         ]);
+
+        if ($stmt->rowCount() === 0) {
+            throw new \RuntimeException("User '{$user->uid}@{$domain}' not found or no changes applied");
+        }
     }
 
     public function updateUserPassword(string $domain, string $userUid, string $passwordHash): void
@@ -128,6 +132,10 @@ class PgsqlUserRepository implements UserRepositoryInterface
             'username' => "{$userUid}@{$domain}",
             'domain' => $domain,
         ]);
+
+        if ($stmt->rowCount() === 0) {
+            throw new \RuntimeException("User '{$userUid}@{$domain}' not found");
+        }
     }
 
     public function createUser(string $domain, User $user, string $passwordHash): void
