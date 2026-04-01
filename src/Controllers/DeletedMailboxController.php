@@ -7,7 +7,7 @@ namespace App\Controllers;
 use App\CsrfProtection;
 use App\Middleware;
 use App\Models\Settings;
-use App\Repositories\Mysql\MysqlDeletedMailboxRepository;
+use App\Repositories\RepositoryFactory;
 use App\Services\ActivityLogger;
 use App\TemplateEngine;
 
@@ -24,7 +24,7 @@ class DeletedMailboxController
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $perPage = $settings->paginationPerPage;
 
-        $repo = new MysqlDeletedMailboxRepository();
+        $repo = RepositoryFactory::getDeletedMailboxRepository();
         $paginatedResult = $repo->getPendingDeletions($page, $perPage);
 
         $tpl->render('deletedMailboxList.php', [
@@ -42,7 +42,7 @@ class DeletedMailboxController
         CsrfProtection::validateToken();
 
         try {
-            $repo = new MysqlDeletedMailboxRepository();
+            $repo = RepositoryFactory::getDeletedMailboxRepository();
             $repo->cancelDeletion((int) $id);
             ActivityLogger::log('update', '', '', "Cancelled mailbox deletion #{$id}");
             header("Location: /deleted-mailboxes");
@@ -68,7 +68,7 @@ class DeletedMailboxController
         }
 
         try {
-            $repo = new MysqlDeletedMailboxRepository();
+            $repo = RepositoryFactory::getDeletedMailboxRepository();
             $repo->reschedule((int) $id, $newDate);
             ActivityLogger::log('update', '', '', "Rescheduled mailbox deletion #{$id} to {$newDate}");
             header("Location: /deleted-mailboxes");

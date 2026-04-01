@@ -82,6 +82,7 @@ class RepositoryFactory
     private static ?AmavisdRepositoryInterface $amavisdRepo = null;
     private static ?IredapdRepositoryInterface $iredapdRepo = null;
     private static ?ApiKeyRepositoryInterface $apiKeyRepo = null;
+    private static ?DeletedMailboxRepositoryInterface $deletedMailboxRepo = null;
 
     public static function getAuthRepository(): AuthRepositoryInterface
     {
@@ -314,5 +315,16 @@ class RepositoryFactory
             };
         }
         return self::$apiKeyRepo;
+    }
+
+    public static function getDeletedMailboxRepository(): DeletedMailboxRepositoryInterface
+    {
+        if (self::$deletedMailboxRepo === null) {
+            self::$deletedMailboxRepo = match (Settings::getInstance()->backend) {
+                'pgsql' => new Pgsql\PgsqlDeletedMailboxRepository(),
+                default => new Mysql\MysqlDeletedMailboxRepository(),
+            };
+        }
+        return self::$deletedMailboxRepo;
     }
 }
