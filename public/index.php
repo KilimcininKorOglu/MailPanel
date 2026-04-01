@@ -193,7 +193,7 @@ $router->addRoute('POST', '/logs/delete', function () use ($tpl) {
 
 // Domain ownership verification
 $router->addRoute(['GET', 'POST'], '/verify/domain-ownership', function () use ($tpl) {
-    \App\Middleware::loginRequired();
+    \App\Middleware::globalAdminRequired();
 
     $repo = \App\Repositories\RepositoryFactory::getDomainOwnershipRepository();
     $success = null;
