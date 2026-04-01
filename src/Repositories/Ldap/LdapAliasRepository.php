@@ -322,4 +322,18 @@ class LdapAliasRepository implements AliasRepositoryInterface
 
         return "mail={$safeAddress},ou=Groups,domainName={$safeDomain},o=domains,{$settings->ldapRootDn}";
     }
+
+    public function countAliasesForDomain(string $domain): int
+    {
+        $conn = LdapConnection::getInstance();
+        $settings = \App\Models\Settings::getInstance();
+        $safeDomain = ldap_escape($domain, '', LDAP_ESCAPE_FILTER);
+        $baseDn = "ou=Groups,domainName={$safeDomain},o=domains,{$settings->ldapRootDn}";
+
+        $result = @ldap_search($conn->getConnection(), $baseDn, '(objectClass=mailList)', ['dn']);
+        if ($result === false) {
+            return 0;
+        }
+        return ldap_count_entries($conn->getConnection(), $result);
+    }
 }

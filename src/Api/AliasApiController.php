@@ -73,6 +73,16 @@ class AliasApiController
             return;
         }
 
+        // Enforce domain alias limit
+        $domainObj = RepositoryFactory::getDomainRepository()->getDomain($domain);
+        if ($domainObj !== null && $domainObj->aliases > 0) {
+            $aliasCount = $repo->countAliasesForDomain($domain);
+            if ($aliasCount >= $domainObj->aliases) {
+                ApiResponse::error("Domain alias limit reached ({$aliasCount}/{$domainObj->aliases})", 403);
+                return;
+            }
+        }
+
         $repo->createAlias($address, $domain, $name, $members, $accessPolicy);
         ApiResponse::created(['address' => $address]);
     }

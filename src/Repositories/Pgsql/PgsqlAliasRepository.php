@@ -404,6 +404,16 @@ class PgsqlAliasRepository implements AliasRepositoryInterface
         return true;
     }
 
+    public function countAliasesForDomain(string $domain): int
+    {
+        $pdo = PgsqlConnection::getInstance()->getPdo();
+        $stmt = $pdo->prepare(
+            "SELECT COUNT(*) AS cnt FROM alias WHERE domain = :domain AND islist = 1"
+        );
+        $stmt->execute(['domain' => $domain]);
+        return (int) $stmt->fetch()['cnt'];
+    }
+
     private function rowToAlias(array $row): Alias
     {
         return new Alias(

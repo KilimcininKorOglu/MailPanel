@@ -66,6 +66,15 @@ class AliasController
                     throw new \RuntimeException('Alias already exists: ' . $address);
                 }
 
+                // Enforce domain alias limit
+                $domainObj = RepositoryFactory::getDomainRepository()->getDomain($domain);
+                if ($domainObj !== null && $domainObj->aliases > 0) {
+                    $aliasCount = $repo->countAliasesForDomain($domain);
+                    if ($aliasCount >= $domainObj->aliases) {
+                        throw new \RuntimeException("Domain alias limit reached ({$aliasCount}/{$domainObj->aliases})");
+                    }
+                }
+
                 $repo->createAlias($address, $domain, $name, $members, $accessPolicy);
                 ActivityLogger::logCreate('alias', $domain, "Created mail alias: {$address}");
 

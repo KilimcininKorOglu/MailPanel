@@ -44,4 +44,9 @@ interface AliasRepositoryInterface
     public function setCatchall(string $domain, ?string $targetEmail): bool;
 
     public function enableDisableAlias(string $address, bool $active): bool;
+
+    /**
+     * Counts total aliases + mailing lists for a domain (for limit enforcement).
+     */
+    public function countAliasesForDomain(string $domain): int;
 }

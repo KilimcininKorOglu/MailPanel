@@ -63,6 +63,16 @@ class MailingListController
                     throw new \RuntimeException('Mailing list already exists: ' . $address);
                 }
 
+                // Enforce domain alias limit (mailing lists count as aliases)
+                $domainObj = RepositoryFactory::getDomainRepository()->getDomain($domain);
+                if ($domainObj !== null && $domainObj->aliases > 0) {
+                    $aliasRepo = RepositoryFactory::getAliasRepository();
+                    $aliasCount = $aliasRepo->countAliasesForDomain($domain);
+                    if ($aliasCount >= $domainObj->aliases) {
+                        throw new \RuntimeException("Domain alias limit reached ({$aliasCount}/{$domainObj->aliases})");
+                    }
+                }
+
                 $repo->createMailingList($address, $domain, $name, $accessPolicy, $maxMsgSize, $maxMembers);
                 ActivityLogger::logCreate('mailinglist', $domain, "Created mailing list: {$address}");
 
