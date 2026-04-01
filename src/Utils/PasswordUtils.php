@@ -77,7 +77,9 @@ class PasswordUtils
             'SSHA' => self::generateSshaPassword($password),
             'MD5' => '{CRYPT}' . self::generateMd5Password($password),
             'CRAM-MD5' => self::generatePasswordWithDoveadmPw('CRAM-MD5', $password),
-            'PLAIN-MD5' => self::generatePlainMd5Password($password),
+            'PLAIN-MD5' => $settings->passwordHashesUsePrefixedScheme
+                ? '{PLAIN-MD5}' . self::generatePlainMd5Password($password)
+                : self::generatePlainMd5Password($password),
             'NTLM' => self::generatePasswordWithDoveadmPw('NTLM', $password),
             'PLAIN' => $settings->passwordHashesUsePrefixedScheme
                 ? '{PLAIN}' . $password
