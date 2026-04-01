@@ -159,15 +159,28 @@ class AdminController
             try {
                 if ($editMode === 'general') {
                     $formAdmin = Admin::fromFormData($_POST);
+                    $existingAdmin = $adminRepo->getAdmin($adminEmail);
                     $admin = new Admin(
                         username: $adminEmail,
                         name: $formAdmin->name,
                         active: $formAdmin->active,
                         isGlobalAdmin: $formAdmin->isGlobalAdmin,
-                        isMailboxAdmin: $adminRepo->getAdmin($adminEmail)?->isMailboxAdmin ?? false,
+                        isMailboxAdmin: $existingAdmin?->isMailboxAdmin ?? false,
                     );
-                    $adminRepo->updateAdmin($admin);
-                    $success = 'Admin updated successfully!';
+
+                    // Prevent demoting or disabling the last global admin
+                    if ($existingAdmin !== null && $existingAdmin->isGlobalAdmin) {
+                        $wouldLoseGlobalAdmin = !$admin->isGlobalAdmin || !$admin->active;
+                        if ($wouldLoseGlobalAdmin && $adminRepo->countGlobalAdmins() <= 1) {
+                            $error = 'Cannot remove global admin role or disable the last global admin';
+                            $admin = $existingAdmin;
+                        }
+                    }
+
+                    if ($error === null) {
+                        $adminRepo->updateAdmin($admin);
+                        $success = 'Admin updated successfully!';
+                    }
                 } elseif ($editMode === 'password') {
                     $password = $_POST['password'] ?? '';
                     $passwordRepeat = $_POST['password_repeat'] ?? '';

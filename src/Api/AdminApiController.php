@@ -80,6 +80,11 @@ class AdminApiController
         }
 
         if (isset($data['active'])) {
+            // Prevent disabling the last global admin
+            if (!$data['active'] && $admin->isGlobalAdmin && $repo->countGlobalAdmins() <= 1) {
+                ApiResponse::error('Cannot disable the last global admin', 403);
+                return;
+            }
             $repo->enableDisableAdmin($email, (bool) $data['active']);
         }
 
