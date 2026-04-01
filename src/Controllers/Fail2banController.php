@@ -50,7 +50,8 @@ class Fail2banController
         $jail = $_POST['jail'] ?? '';
         $ip = $_POST['ip'] ?? '';
 
-        if (!empty($jail) && !empty($ip) && filter_var($ip, FILTER_VALIDATE_IP)) {
+        $allowedJails = Fail2banService::getJails();
+        if (!empty($jail) && !empty($ip) && filter_var($ip, FILTER_VALIDATE_IP) && in_array($jail, $allowedJails, true)) {
             try {
                 Fail2banService::banIp($jail, $ip);
                 ActivityLogger::log('update', '', '', "Banned IP {$ip} in jail {$jail}");
